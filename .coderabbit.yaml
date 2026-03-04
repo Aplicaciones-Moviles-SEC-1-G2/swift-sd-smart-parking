@@ -1,0 +1,73 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+language: "en-US"
+
+reviews:
+  profile: "assertive"
+  request_changes_workflow: true
+  high_level_summary: true
+  poem: false
+  review_status: true
+  collapse_walkthrough: false
+  auto_review:
+    enabled: true
+    drafts: false
+
+  path_filters:
+    - "!**/*.xcodeproj/**"
+    - "!**/*.xcworkspace/**"
+    - "!**/Pods/**"
+    - "!**/DerivedData/**"
+    - "!**/*.pbxproj"
+    - "!**/*.strings"
+
+  path_instructions:
+    - path: "**/*.swift"
+      instructions: |
+        ## Architecture
+        - Flag any business logic placed inside Views or ViewControllers. Logic belongs in ViewModel, Interactor, or equivalent layer.
+        - Prefer protocol-oriented design and composition over class inheritance.
+        - Enforce single responsibility: flag functions or types doing more than one thing.
+
+        ## Swift Safety
+        - Force unwraps (`!`) must be flagged unless there is a documented, provable guarantee the value is non-nil.
+        - Flag nullable chains like `?.?.?.` — restructure using `guard let` or `if let`.
+        - Flag `unowned` captures in closures unless the lifecycle is explicitly guaranteed. Prefer `[weak self]`.
+
+        ## Concurrency
+        - Flag any use of GCD (`DispatchQueue`) or callback-based async where Swift Concurrency (async/await, Actor) is applicable.
+        - Flag `@MainActor` violations: UI mutations not dispatched to the main actor.
+        - Flag Task { } without explicit cancellation handling where cancellation matters.
+
+        ## Memory
+        - Flag strong reference cycles in closures. Verify `[weak self]` usage.
+        - Flag Notification observers not removed on deinit.
+
+        ## SwiftUI (if applicable)
+        - Flag state management placed in Views instead of ObservableObject/ViewModel.
+        - Flag side effects directly in `body`. Use `.task`, `.onAppear` appropriately.
+
+        ## Code Quality
+        - Flag deprecated Apple APIs.
+        - Flag `TODO`, `FIXME`, or commented-out code blocks.
+        - Public APIs must have DocC (`///`) comments.
+
+    - path: "**/*Tests*/**/*.swift"
+      instructions: |
+        - Tests must not depend on execution order.
+        - Flag use of real network calls, filesystem, or shared state in unit tests.
+        - Prefer explicit mocks/stubs over concrete dependencies.
+        - Flag missing assertions — a test that only checks it doesn't crash is not a test.
+
+    - path: "**/Package.swift"
+      instructions: |
+        - Flag exact version pinning absence — prefer exact versions over ranges.
+        - Flag unused dependencies.
+
+chat:
+  auto_reply: true
+
+knowledge_base:
+  web_search:
+    enabled: true
+  learnings:
+    scope: auto
