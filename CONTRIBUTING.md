@@ -26,7 +26,7 @@ This is a university project. Every team member is expected to **review pull req
 
 Branches must follow this pattern:
 
-```
+```text
 <type>/<issue-number>-<short-description>
 ```
 
@@ -36,7 +36,7 @@ Use lowercase and hyphens — no spaces, no uppercase.
 |------|-------------|
 | `feat/` | New feature |
 | `fix/` | Bug fix |
-| `hotfix/` | Critical fix that goes directly to main |
+| `hotfix/` | Critical fix that opens a PR directly against `main` (bypasses `develop`) |
 | `chore/` | Maintenance, configs, dependencies |
 | `refactor/` | Code restructuring without behavior change |
 | `docs/` | Documentation only |
@@ -46,7 +46,7 @@ Use lowercase and hyphens — no spaces, no uppercase.
 
 ### Examples
 
-```
+```text
 feat/42-user-authentication
 fix/87-token-expiration-bug
 chore/12-add-pr-template
@@ -155,21 +155,45 @@ flowchart TD
     E -->|Failing| F[Fix issues in branch]
     F --> B
     E -->|Passing| G[Assign reviewer]
-    G --> H{Code review}
+    G --> CR[Wait for CodeRabbit review]
+    CR --> CRR{Address CodeRabbit comments}
+    CRR -->|Fix or justify| H{Code review}
     H -->|Changes requested| I[Address comments and push fixes]
     I --> H
     H -->|Approved| J[Squash and Merge into develop]
     J --> K{Is it a release?}
     K -->|No| L([Done])
-    K -->|Yes| M[Open release or hotfix PR into main]
+    K -->|Yes| M[Open release PR into main]
     M --> N[Merge Commit into main]
     N --> O([Deployed])
 
+    HA([Create hotfix branch from main]) --> HB[Make changes and commit]
+    HB --> HC[Push branch to origin]
+    HC --> HD[Open PR directly against main]
+    HD --> HE{CI checks}
+    HE -->|Failing| HF[Fix issues in branch]
+    HF --> HB
+    HE -->|Passing| HCR[Wait for CodeRabbit review]
+    HCR --> HCRR{Address CodeRabbit comments}
+    HCRR -->|Fix or justify| HH{Code review}
+    HH -->|Changes requested| HI[Address comments and push fixes]
+    HI --> HH
+    HH -->|Approved| HN[Merge Commit into main]
+    HN --> HO([Deployed — backport fix to develop])
+
     style A fill:#4a9eff,color:#fff
+    style HA fill:#dc3545,color:#fff
     style L fill:#28a745,color:#fff
     style O fill:#28a745,color:#fff
+    style HO fill:#28a745,color:#fff
     style F fill:#dc3545,color:#fff
+    style HF fill:#dc3545,color:#fff
     style I fill:#fd7e14,color:#fff
+    style HI fill:#fd7e14,color:#fff
+    style CR fill:#6f42c1,color:#fff
+    style CRR fill:#fd7e14,color:#fff
+    style HCR fill:#6f42c1,color:#fff
+    style HCRR fill:#fd7e14,color:#fff
 ```
 
 ### Before Opening a PR
@@ -179,23 +203,49 @@ flowchart TD
 - [ ] The PR has a clear title following the commit convention
 - [ ] The PR description is filled out using the template
 
+### PR Metadata (Required)
+
+Every PR **must** have the following fields set before requesting review. A PR missing any of these will not be reviewed.
+
+| Field | Requirement |
+|-------|-------------|
+| **Milestone** | Set the milestone that this PR contributes to (e.g., `Sprint 3`, `v1.2.0`) |
+| **Project** | Link the PR to the corresponding GitHub Project board |
+| **Linked issue** | Reference the issue this PR resolves using `Closes #<issue-number>` in the description |
+| **Label** | Apply the label that matches the PR type (e.g., `feature`, `bug`, `chore`, `docs`) |
+
+> **Rule:** If no issue exists for your work, create one before opening the PR. PRs must always trace back to a tracked issue.
+
 ### PR Title Format
 
 Same as commit format:
 
-```
+```text
 ✨ feat(auth): add JWT refresh token logic
 🐛 fix(worker): handle rate limit on auth endpoint
 ```
 
+### CodeRabbit Review
+
+Every PR is automatically reviewed by **CodeRabbit** after it is opened. You must wait for CodeRabbit's review and address it before the PR is considered ready for human review.
+
+**For each CodeRabbit comment, you must do one of the following:**
+
+- **Fix it** — apply the suggested change and push the fix to the branch.
+- **Dismiss it with justification** — reply to the comment explaining clearly why the suggestion is not applicable or relevant in this context (e.g., false positive, out of scope, intentional design decision).
+
+Ignoring CodeRabbit comments without resolution is not acceptable. Human reviewers will check that all CodeRabbit comments have been addressed before approving.
+
 ### Review Process
 
 1. Open your PR against `develop` (not `main`)
-2. Assign at least **one reviewer**
-3. Address all review comments before merging
-4. PRs require **at least 1 approval** to merge
-5. The author merges after approval — not the reviewer
-6. Use **Squash and Merge** to keep the history clean
+2. Fill out all required PR metadata (milestone, project, linked issue, label)
+3. Wait for CodeRabbit's automated review and resolve all comments
+4. Assign at least **one reviewer**
+5. Address all review comments before merging
+6. PRs require **at least 1 approval** to merge
+7. The author merges after approval — not the reviewer
+8. Use **Squash and Merge** to keep the history clean
 
 ### Merge Strategy
 
