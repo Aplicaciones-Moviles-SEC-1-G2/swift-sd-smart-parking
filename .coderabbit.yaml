@@ -19,6 +19,10 @@ reviews:
     - "!**/DerivedData/**"
     - "!**/*.pbxproj"
     - "!**/*.strings"
+    - "!.github/**"
+    - "!CONTRIBUTING.md"
+    - "!README.md"
+    - "!.coderabbit.yaml"
 
   path_instructions:
     - path: "**/*.swift"
