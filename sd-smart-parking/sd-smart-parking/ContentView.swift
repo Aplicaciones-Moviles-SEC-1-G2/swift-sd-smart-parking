@@ -8,17 +8,30 @@
 import SwiftUI
 
 struct ContentView: View {
+    @StateObject private var authVM = AuthViewModel()
+    @StateObject private var parkingVM = ParkingViewModel()
+    @State private var selectedTab: Int = 0
+    @State private var scrollOffset: CGFloat = 0
+    
     var body: some View {
-        VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Hello, world!")
+        Group {
+            if authVM.isLoggedIn {
+                if authVM.isGerente {
+                    GerenteTabView()
+                } else {
+                    UsuarioTabView(selectedTab: $selectedTab, scrollOffset: $scrollOffset)
+                }
+            } else {
+                LoginView()
+            }
         }
-        .padding()
+        .environmentObject(authVM)
+        .environmentObject(parkingVM)
+        .task {
+            await parkingVM.generateSpotsIfEmpty()
+        }
     }
 }
-
 #Preview {
     ContentView()
 }
