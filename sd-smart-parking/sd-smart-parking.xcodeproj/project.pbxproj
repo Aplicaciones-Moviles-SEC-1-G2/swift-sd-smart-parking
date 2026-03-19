@@ -6,6 +6,15 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		A21A2FAE2F6C4C82005E5098 /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = A21A2FAD2F6C4C82005E5098 /* GoogleSignIn */; };
+		A21A2FB02F6C4C82005E5098 /* GoogleSignInSwift in Frameworks */ = {isa = PBXBuildFile; productRef = A21A2FAF2F6C4C82005E5098 /* GoogleSignInSwift */; };
+		A21A2FB32F6C4D45005E5098 /* GoogleMaps in Frameworks */ = {isa = PBXBuildFile; productRef = A21A2FB22F6C4D45005E5098 /* GoogleMaps */; };
+		A21A2FB62F6C4E02005E5098 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = A21A2FB52F6C4E02005E5098 /* FirebaseAuth */; };
+		A21A2FB82F6C4E02005E5098 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = A21A2FB72F6C4E02005E5098 /* FirebaseFirestore */; };
+		A21A2FBA2F6C4E02005E5098 /* FirebaseStorage in Frameworks */ = {isa = PBXBuildFile; productRef = A21A2FB92F6C4E02005E5098 /* FirebaseStorage */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		A21A2E762F6C3EFD005E5098 /* sd-smart-parking.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "sd-smart-parking.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -23,6 +32,12 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A21A2FAE2F6C4C82005E5098 /* GoogleSignIn in Frameworks */,
+				A21A2FB02F6C4C82005E5098 /* GoogleSignInSwift in Frameworks */,
+				A21A2FB32F6C4D45005E5098 /* GoogleMaps in Frameworks */,
+				A21A2FB82F6C4E02005E5098 /* FirebaseFirestore in Frameworks */,
+				A21A2FB62F6C4E02005E5098 /* FirebaseAuth in Frameworks */,
+				A21A2FBA2F6C4E02005E5098 /* FirebaseStorage in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -65,6 +80,12 @@
 			);
 			name = "sd-smart-parking";
 			packageProductDependencies = (
+				A21A2FAD2F6C4C82005E5098 /* GoogleSignIn */,
+				A21A2FAF2F6C4C82005E5098 /* GoogleSignInSwift */,
+				A21A2FB22F6C4D45005E5098 /* GoogleMaps */,
+				A21A2FB52F6C4E02005E5098 /* FirebaseAuth */,
+				A21A2FB72F6C4E02005E5098 /* FirebaseFirestore */,
+				A21A2FB92F6C4E02005E5098 /* FirebaseStorage */,
 			);
 			productName = "sd-smart-parking";
 			productReference = A21A2E762F6C3EFD005E5098 /* sd-smart-parking.app */;
@@ -94,6 +115,11 @@
 			);
 			mainGroup = A21A2E6D2F6C3EFD005E5098;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				A21A2FAC2F6C4C82005E5098 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */,
+				A21A2FB12F6C4D45005E5098 /* XCRemoteSwiftPackageReference "ios-maps-sdk" */,
+				A21A2FB42F6C4E02005E5098 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = A21A2E772F6C3EFD005E5098 /* Products */;
 			projectDirPath = "";
@@ -332,6 +358,66 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		A21A2FAC2F6C4C82005E5098 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/google/GoogleSignIn-iOS";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 9.1.0;
+			};
+		};
+		A21A2FB12F6C4D45005E5098 /* XCRemoteSwiftPackageReference "ios-maps-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/googlemaps/ios-maps-sdk";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 10.10.0;
+			};
+		};
+		A21A2FB42F6C4E02005E5098 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/firebase/firebase-ios-sdk";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 12.11.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		A21A2FAD2F6C4C82005E5098 /* GoogleSignIn */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A21A2FAC2F6C4C82005E5098 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */;
+			productName = GoogleSignIn;
+		};
+		A21A2FAF2F6C4C82005E5098 /* GoogleSignInSwift */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A21A2FAC2F6C4C82005E5098 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */;
+			productName = GoogleSignInSwift;
+		};
+		A21A2FB22F6C4D45005E5098 /* GoogleMaps */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A21A2FB12F6C4D45005E5098 /* XCRemoteSwiftPackageReference "ios-maps-sdk" */;
+			productName = GoogleMaps;
+		};
+		A21A2FB52F6C4E02005E5098 /* FirebaseAuth */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A21A2FB42F6C4E02005E5098 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAuth;
+		};
+		A21A2FB72F6C4E02005E5098 /* FirebaseFirestore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A21A2FB42F6C4E02005E5098 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseFirestore;
+		};
+		A21A2FB92F6C4E02005E5098 /* FirebaseStorage */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A21A2FB42F6C4E02005E5098 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseStorage;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = A21A2E6E2F6C3EFD005E5098 /* Project object */;
 }
