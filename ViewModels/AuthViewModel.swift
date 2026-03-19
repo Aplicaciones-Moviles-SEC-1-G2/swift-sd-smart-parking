@@ -1,0 +1,270 @@
+//
+//  AuthViewModel.swift
+//  ParkingApp
+//
+//  Created by Mateo on 19/02/26.
+//
+import SwiftUI
+import Combine
+import FirebaseAuth
+import FirebaseFirestore
+import GoogleSignIn
+import GoogleSignInSwift
+
+class AuthViewModel: ObservableObject {
+    @Published var isLoggedIn: Bool = false
+    @Published var isLoading: Bool = false
+    @Published var errorMessage: String? = nil
+    @Published var currentUser: User? = nil
+    @Published var isGerente: Bool = false
+    @Published var currentUserEmail: String? = nil
+
+    private let db = Firestore.firestore()
+    private var authStateListener: AuthStateDidChangeListenerHandle?
+
+    init() {
+        authStateListener = Auth.auth().addStateDidChangeListener { [weak self] _, firebaseUser in
+            guard let self else { return }
+            if let firebaseUser = firebaseUser {
+                self.currentUserEmail = firebaseUser.email
+                Task { await self.fetchUserData(uid: firebaseUser.uid) }
+            } else {
+                DispatchQueue.main.async {
+                    self.isLoggedIn = false
+                    self.isGerente = false
+                    self.currentUser = nil
+                    self.currentUserEmail = nil
+                }
+            }
+        }
+    }
+
+    deinit {
+        if let listener = authStateListener {
+            Auth.auth().removeStateDidChangeListener(listener)
+        }
+    }
+
+    // MARK: - Fetch user data from Firestore
+
+    private func fetchUserData(uid: String) async {
+        do {
+            let doc = try await db.collection("users").document(uid).getDocument()
+
+            // Si el documento no existe aún (primer login con Google), lo creamos
+            if !doc.exists {
+                guard let firebaseUser = Auth.auth().currentUser else { return }
+                try await db.collection("users").document(uid).setData([
+                    "name": firebaseUser.displayName ?? "User",
+                    "email": firebaseUser.email ?? "",
+                    "role": "driver",
+                    "createdAt": Timestamp(),
+                    "cars": []
+                ])
+                await fetchUserData(uid: uid)
+                return
+            }
+
+            guard let data = doc.data() else { return }
+
+            let name = data["name"] as? String ?? ""
+            let email = data["email"] as? String ?? ""
+            let role = data["role"] as? String ?? "driver"
+
+            let carsData = data["cars"] as? [[String: Any]] ?? []
+            let cars: [Car] = carsData.compactMap { carData in
+                guard let plate = carData["plate"] as? String,
+                      let name = carData["name"] as? String else { return nil }
+                return Car(id: UUID(), plate: plate, UserID: UUID(uuidString: uid) ?? UUID(), name: name)
+            }
+
+            let user = User(id: UUID(uuidString: uid) ?? UUID(), name: name, email: email, password: "", cars: cars)
+
+            await MainActor.run {
+                self.currentUser = user
+                self.isGerente = role == "manager"
+                self.isLoggedIn = true
+                self.isLoading = false
+            }
+        } catch {
+            await MainActor.run {
+                self.errorMessage = "Error loading user data."
+                self.isLoading = false
+            }
+        }
+    }
+
+    // MARK: - Sign In with Email
+
+    func signIn(username: String, password: String) async {
+        await MainActor.run {
+            isLoading = true
+            errorMessage = nil
+        }
+
+        do {
+            try await Auth.auth().signIn(withEmail: username, password: password)
+        } catch {
+            await MainActor.run {
+                self.errorMessage = firebaseErrorMessage(error)
+                self.isLoading = false
+            }
+        }
+    }
+
+    // MARK: - Sign In with Google
+
+    func signInWithGoogle() async {
+        await MainActor.run {
+            isLoading = true
+            errorMessage = nil
+        }
+
+        guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+              let rootVC = windowScene.windows.first?.rootViewController else {
+            await MainActor.run {
+                self.errorMessage = "Could not present Google Sign-In."
+                self.isLoading = false
+            }
+            return
+        }
+
+        do {
+            let result = try await GIDSignIn.sharedInstance.signIn(withPresenting: rootVC)
+            guard let idToken = result.user.idToken?.tokenString else {
+                await MainActor.run {
+                    self.errorMessage = "Google authentication failed."
+                    self.isLoading = false
+                }
+                return
+            }
+
+            let credential = GoogleAuthProvider.credential(
+                withIDToken: idToken,
+                accessToken: result.user.accessToken.tokenString
+            )
+
+            try await Auth.auth().signIn(with: credential)
+            // fetchUserData se llama automáticamente desde el authStateListener
+        } catch {
+            await MainActor.run {
+                self.errorMessage = "Google Sign-In was cancelled or failed."
+                self.isLoading = false
+            }
+        }
+    }
+
+    // MARK: - Register
+
+    func register(name: String, email: String, password: String) async {
+        await MainActor.run {
+            isLoading = true
+            errorMessage = nil
+        }
+
+        do {
+            let result = try await Auth.auth().createUser(withEmail: email, password: password)
+            let uid = result.user.uid
+
+            try await db.collection("users").document(uid).setData([
+                "name": name,
+                "email": email,
+                "role": "driver",
+                "createdAt": Timestamp(),
+                "cars": []
+            ])
+        } catch {
+            await MainActor.run {
+                self.errorMessage = firebaseErrorMessage(error)
+                self.isLoading = false
+            }
+        }
+    }
+
+    // MARK: - Sign Out
+
+    func signOut() {
+        try? Auth.auth().signOut()
+        GIDSignIn.sharedInstance.signOut()
+    }
+
+    // MARK: - Add Car
+
+    func addCar(name: String, plate: String) async {
+        guard let uid = Auth.auth().currentUser?.uid,
+              var user = currentUser else { return }
+
+        let newCar = Car(id: UUID(), plate: plate, UserID: user.id, name: name)
+        user = User(id: user.id, name: user.name, email: user.email, password: "", cars: user.cars + [newCar])
+
+        let carsData = user.cars.map { ["plate": $0.plate, "name": $0.name] }
+
+        do {
+            try await db.collection("users").document(uid).updateData(["cars": carsData])
+            await MainActor.run { self.currentUser = user }
+        } catch {
+            await MainActor.run { self.errorMessage = "Error saving car." }
+        }
+    }
+
+    // MARK: - Update Profile
+
+    func updateProfile(newName: String, newEmail: String) async {
+        guard let uid = Auth.auth().currentUser?.uid,
+              let current = currentUser else { return }
+
+        do {
+            try await db.collection("users").document(uid).updateData([
+                "name": newName,
+                "email": newEmail
+            ])
+            let updatedUser = User(id: current.id, name: newName, email: newEmail, password: "", cars: current.cars)
+            await MainActor.run { self.currentUser = updatedUser }
+        } catch {
+            await MainActor.run { self.errorMessage = "Error updating profile." }
+        }
+    }
+
+    // MARK: - Error messages
+
+    private func firebaseErrorMessage(_ error: Error) -> String {
+        let code = (error as NSError).code
+        switch code {
+        case AuthErrorCode.wrongPassword.rawValue,
+             AuthErrorCode.invalidCredential.rawValue:
+            return "Incorrect email or password."
+        case AuthErrorCode.userNotFound.rawValue:
+            return "No account found with this email."
+        case AuthErrorCode.emailAlreadyInUse.rawValue:
+            return "This email is already registered."
+        case AuthErrorCode.weakPassword.rawValue:
+            return "Password must be at least 6 characters."
+        case AuthErrorCode.invalidEmail.rawValue:
+            return "Please enter a valid email address."
+        default:
+            return "Something went wrong. Please try again."
+        }
+    }
+
+    // MARK: - Dev helpers
+    #if DEBUG
+    func loginAsUser() {
+        let mockCars = [
+            Car(id: UUID(), plate: "ABC-123", UserID: UUID(), name: "Mi Camioneta"),
+            Car(id: UUID(), plate: "XYZ-789", UserID: UUID(), name: "Carro de Ciudad")
+        ]
+        currentUser = User(id: UUID(), name: "Usuario Andes", email: "usuario@uniandes.edu.co", password: "", cars: mockCars)
+        isLoggedIn = true
+        isGerente = false
+        currentUserEmail = "usuario@uniandes.edu.co"
+    }
+
+    func loginAsGerente() {
+        currentUser = User(id: UUID(), name: "Gerente Andes", email: "gerente@uniandes.edu.co", password: "", cars: [])
+        isLoggedIn = true
+        isGerente = true
+        currentUserEmail = "gerente@uniandes.edu.co"
+    }
+    #endif
+}
+    
