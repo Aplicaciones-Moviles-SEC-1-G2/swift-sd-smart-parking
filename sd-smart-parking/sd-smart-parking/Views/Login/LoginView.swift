@@ -5,20 +5,26 @@
 //  Created by Mateo on 19/02/26.
 //
 import SwiftUI
-
-import SwiftUI
 import GoogleSignInSwift
+import LocalAuthentication
 
 struct LoginView: View {
     @EnvironmentObject var authVM: AuthViewModel
     @State private var email = ""
     @State private var password = ""
-    
+    private var biometricIcon: String {
+        authVM.biometricType == .touchID ? "touchid" : "faceid"
+    }
+
+    private var biometricLabel: String {
+        authVM.biometricType == .touchID ? "Continue with Touch ID" : "Continue with Face ID"
+    }
+
     var body: some View {
         NavigationStack {
             VStack(spacing: 30) {
                 Spacer()
-                
+
                 // MARK: - Logo/Header
                 VStack(spacing: 10) {
                     Image(systemName: "car.side.lock.fill")
@@ -27,10 +33,9 @@ struct LoginView: View {
                     Text("SD parking")
                         .font(.largeTitle.bold())
                 }
-                
-                // MARK: - Formulario
+
+                // MARK: - Form
                 VStack(spacing: 20) {
-                    // Email
                     HStack {
                         Image(systemName: "envelope.fill")
                             .foregroundColor(.blue.opacity(0.7))
@@ -44,8 +49,7 @@ struct LoginView: View {
                     .padding()
                     .background(Color(.systemGray6))
                     .cornerRadius(12)
-                    
-                    // Password
+
                     HStack {
                         Image(systemName: "lock.fill")
                             .foregroundColor(.blue.opacity(0.7))
@@ -57,15 +61,15 @@ struct LoginView: View {
                     .cornerRadius(12)
                 }
                 .padding(.horizontal, 24)
-                
+
                 if let error = authVM.errorMessage {
                     Text(error)
                         .font(.caption)
                         .foregroundColor(.red)
                         .padding(.horizontal, 24)
                 }
-                
-                // MARK: - Botón Login
+
+                // MARK: - Login Button
                 Button {
                     Task { await authVM.signIn(username: email, password: password) }
                 } label: {
@@ -85,7 +89,7 @@ struct LoginView: View {
                 .disabled(authVM.isLoading || email.isEmpty || password.count < 4)
                 .padding(.horizontal, 24)
 
-                // MARK: - Separador
+                // MARK: - Divider
                 HStack {
                     Rectangle().frame(height: 1).foregroundColor(.gray.opacity(0.3))
                     Text("or").font(.caption).foregroundColor(.secondary)
@@ -93,35 +97,56 @@ struct LoginView: View {
                 }
                 .padding(.horizontal, 24)
 
-                // MARK: - Botón Google
+                // MARK: - Google Button
                 Button {
-                    Task {
-                        await authVM.signInWithGoogle()
-                    }
+                    Task { await authVM.signInWithGoogle() }
                 } label: {
-                    HStack(spacing: 12) { // Changed to HStack for a standard look
+                    HStack(spacing: 12) {
                         Image("Google_Logo")
                             .resizable()
                             .scaledToFit()
-                            .frame(width: 20, height: 20) // Slightly smaller icon for HStack
-                        
+                            .frame(width: 20, height: 20)
                         Text("Continue with Google")
-                            .font(.body) // Slightly larger font for better readability
+                            .font(.body)
                             .fontWeight(.semibold)
                             .foregroundColor(.primary)
                     }
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 14)
-                    .background(Color(.systemBackground)) // Adapts better to Light/Dark mode
-                    .cornerRadius(12) // Slightly tighter corners
+                    .background(Color(.systemBackground))
+                    .cornerRadius(12)
                     .overlay(
                         RoundedRectangle(cornerRadius: 12)
                             .stroke(Color.gray.opacity(0.2), lineWidth: 1)
                     )
-                    .shadow(color: Color.black.opacity(0.05), radius: 3, x: 0, y: 2) // Subtle lift
+                    .shadow(color: Color.black.opacity(0.05), radius: 3, x: 0, y: 2)
                 }
-                .contentShape(Rectangle()) // Ensures the whole button is tappable
+                .contentShape(Rectangle())
                 .padding(.horizontal, 24)
+
+                // MARK: - Face ID / Touch ID Button
+                Button {
+                    Task { await authVM.signInWithBiometrics() }
+                } label: {
+                    HStack(spacing: 12) {
+                        Image(systemName: biometricIcon)
+                            .font(.system(size: 20))
+                        Text(biometricLabel)
+                            .font(.body)
+                            .fontWeight(.semibold)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 14)
+                    .background(Color(.systemBackground))
+                    .cornerRadius(12)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(Color.blue.opacity(0.3), lineWidth: 1)
+                    )
+                }
+                .foregroundColor(.blue)
+                .padding(.horizontal, 24)
+
                 // MARK: - Registration Link
                 NavigationLink {
                     RegistrationView()
@@ -137,13 +162,13 @@ struct LoginView: View {
             }
             .navigationBarHidden(true)
         }
-        
+
         #if DEBUG
         VStack(spacing: 12) {
             Text("Dev Tools")
                 .font(.caption)
                 .foregroundColor(.secondary)
-            
+
             HStack(spacing: 12) {
                 Button("Login as User") { authVM.loginAsUser() }
                     .font(.caption)
@@ -152,7 +177,7 @@ struct LoginView: View {
                     .background(Color.blue.opacity(0.1))
                     .foregroundColor(.blue)
                     .cornerRadius(8)
-                
+
                 Button("Login as Manager") { authVM.loginAsGerente() }
                     .font(.caption)
                     .padding(.horizontal, 16)

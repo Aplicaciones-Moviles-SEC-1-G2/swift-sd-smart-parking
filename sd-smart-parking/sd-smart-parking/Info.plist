@@ -31,6 +31,10 @@
 	</array>
 	<key>GIDClientID</key>
 	<string>19078843613-p56jc0qiint7lq72gin826ffhoitvnq3.apps.googleusercontent.com</string>
+	<key>NSCameraUsageDescription</key>
+	<string>The camera is used to scan QR codes at parking spots to confirm your reservation.</string>
+	<key>NSFaceIDUsageDescription</key>
+	<string>Face ID lets you sign in to SD Parking without entering your password.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
