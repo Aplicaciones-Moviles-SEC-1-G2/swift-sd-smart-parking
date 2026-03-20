@@ -78,7 +78,7 @@ struct CarsView: View {
     }
 }
 
-// A dedicated component for the car card
+/// A card component that displays a vehicle's name and license plate.
 struct CarCard: View {
     let car: Car
     
