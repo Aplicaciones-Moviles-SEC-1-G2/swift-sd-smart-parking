@@ -15,7 +15,9 @@ struct ContentView: View {
     
     var body: some View {
         Group {
-            if authVM.isLoggedIn {
+            if authVM.requiresBiometricUnlock {
+                BiometricLockView()
+            } else if authVM.isLoggedIn {
                 if authVM.isGerente {
                     GerenteTabView()
                 } else {

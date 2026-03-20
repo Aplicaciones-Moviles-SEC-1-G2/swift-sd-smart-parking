@@ -10,6 +10,7 @@ import FirebaseAuth
 import FirebaseFirestore
 import GoogleSignIn
 import GoogleSignInSwift
+import LocalAuthentication
 
 class AuthViewModel: ObservableObject {
     @Published var isLoggedIn: Bool = false
@@ -18,6 +19,19 @@ class AuthViewModel: ObservableObject {
     @Published var currentUser: User? = nil
     @Published var isGerente: Bool = false
     @Published var currentUserEmail: String? = nil
+    @Published var requiresBiometricUnlock: Bool = false
+
+    @AppStorage("biometricsEnabled") var biometricsEnabled: Bool = false
+
+    // The biometric type available on this device (.faceID, .touchID, or .none)
+    var biometricType: LABiometryType {
+        let ctx = LAContext()
+        var error: NSError?
+        guard ctx.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &error) else {
+            return .none
+        }
+        return ctx.biometryType
+    }
 
     private let db = Firestore.firestore()
     private var authStateListener: AuthStateDidChangeListenerHandle?
@@ -34,6 +48,7 @@ class AuthViewModel: ObservableObject {
                     self.isGerente = false
                     self.currentUser = nil
                     self.currentUserEmail = nil
+                    // Don't touch requiresBiometricUnlock here — signOut() sets it directly
                 }
             }
         }
@@ -51,7 +66,6 @@ class AuthViewModel: ObservableObject {
         do {
             let doc = try await db.collection("users").document(uid).getDocument()
 
-            // Si el documento no existe aún (primer login con Google), lo creamos
             if !doc.exists {
                 guard let firebaseUser = Auth.auth().currentUser else { return }
                 try await db.collection("users").document(uid).setData([
@@ -85,6 +99,10 @@ class AuthViewModel: ObservableObject {
                 self.isGerente = role == "manager"
                 self.isLoggedIn = true
                 self.isLoading = false
+                // Show biometric lock if the user has opted in
+                if self.biometricsEnabled {
+                    self.requiresBiometricUnlock = true
+                }
             }
         } catch {
             await MainActor.run {
@@ -145,11 +163,96 @@ class AuthViewModel: ObservableObject {
             )
 
             try await Auth.auth().signIn(with: credential)
-            // fetchUserData se llama automáticamente desde el authStateListener
         } catch {
             await MainActor.run {
                 self.errorMessage = "Google Sign-In was cancelled or failed."
                 self.isLoading = false
+            }
+        }
+    }
+
+    // MARK: - Biometric Sign In (from login screen)
+
+    func signInWithBiometrics() async {
+        let context = LAContext()
+        do {
+            let success = try await context.evaluatePolicy(
+                .deviceOwnerAuthenticationWithBiometrics,
+                localizedReason: "Sign in to SD Parking"
+            )
+            if success {
+                if let firebaseUser = Auth.auth().currentUser {
+                    await fetchUserData(uid: firebaseUser.uid)
+                } else {
+                    #if DEBUG
+                    await MainActor.run { self.loginAsUser() }
+                    #endif
+                }
+            }
+        } catch let error as LAError {
+            await MainActor.run {
+                switch error.code {
+                case .userCancel, .systemCancel, .appCancel:
+                    break
+                case .biometryNotEnrolled:
+                    self.errorMessage = "No biometrics enrolled. Use your password."
+                case .biometryLockout:
+                    self.errorMessage = "Biometrics locked. Use your password."
+                default:
+                    self.errorMessage = "Biometric authentication failed."
+                }
+            }
+        } catch {
+            await MainActor.run { self.errorMessage = "Biometric authentication failed." }
+        }
+    }
+
+    // MARK: - Biometric Authentication
+
+    func authenticateWithBiometrics() async {
+        let context = LAContext()
+        let reason = "Sign in to SD Parking"
+
+        do {
+            let success = try await context.evaluatePolicy(
+                .deviceOwnerAuthenticationWithBiometrics,
+                localizedReason: reason
+            )
+            if success {
+                if let firebaseUser = Auth.auth().currentUser {
+                    await fetchUserData(uid: firebaseUser.uid)
+                } else {
+                    #if DEBUG
+                    await MainActor.run {
+                        if self._lastGerente {
+                            self.loginAsGerente()
+                        } else {
+                            self.loginAsUser()
+                        }
+                    }
+                    #endif
+                }
+                await MainActor.run {
+                    self.requiresBiometricUnlock = false
+                    self.errorMessage = nil
+                }
+            }
+        } catch let error as LAError {
+            await MainActor.run {
+                switch error.code {
+                case .userCancel, .systemCancel, .appCancel:
+                    break // user dismissed, no error shown
+                case .biometryNotEnrolled:
+                    self.errorMessage = "No biometrics enrolled. Use your password instead."
+                case .biometryLockout:
+                    self.errorMessage = "Biometrics locked. Use your password to unlock."
+                default:
+                    self.errorMessage = "Biometric authentication failed."
+                }
+            }
+        } catch {
+            await MainActor.run {
+                self.errorMessage = "Biometric authentication failed."
             }
         }
     }
@@ -183,10 +286,34 @@ class AuthViewModel: ObservableObject {
 
     // MARK: - Sign Out
 
+    @MainActor
     func signOut() {
-        try? Auth.auth().signOut()
-        GIDSignIn.sharedInstance.signOut()
+        let ctx = LAContext()
+        var err: NSError?
+        let hasBiometrics = ctx.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &err)
+
+        if hasBiometrics {
+            // Soft logout: keep role info so Face ID can restore the session
+            _lastGerente = isGerente
+            try? Auth.auth().signOut()
+            GIDSignIn.sharedInstance.signOut()
+            isLoggedIn = false
+            requiresBiometricUnlock = true
+            errorMessage = nil
+        } else {
+            try? Auth.auth().signOut()
+            GIDSignIn.sharedInstance.signOut()
+            isLoggedIn = false
+            isGerente = false
+            currentUser = nil
+            currentUserEmail = nil
+            requiresBiometricUnlock = false
+            errorMessage = nil
+        }
     }
+
+    // Stores the last role so biometric re-login can restore it in dev mode
+    private var _lastGerente: Bool = false
 
     // MARK: - Add Car
 
@@ -267,4 +394,3 @@ class AuthViewModel: ObservableObject {
     }
     #endif
 }
-    
