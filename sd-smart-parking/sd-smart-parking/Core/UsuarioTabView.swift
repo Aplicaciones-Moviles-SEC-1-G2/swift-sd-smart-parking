@@ -1,10 +1,3 @@
-//
-//  UsuarioTabView.swift
-//  ParkingApp
-//
-//  Created by Mateo on 27/02/26.
-//
-// UsuarioTabView.swift — lo que ya tienes
 import SwiftUI
 
 struct UsuarioTabView: View {
