@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="Xcode">
+  <trk>
+    <name>Drive to SD Building</name>
+    <trkseg>
+      <trkpt lat="4.598500" lon="-74.072500"></trkpt>
+      <trkpt lat="4.599000" lon="-74.071000"></trkpt>
+      <trkpt lat="4.599500" lon="-74.069500"></trkpt>
+      <trkpt lat="4.600000" lon="-74.068000"></trkpt>
+      <trkpt lat="4.600400" lon="-74.066800"></trkpt>
+      <trkpt lat="4.600800" lon="-74.065800"></trkpt>
+      <trkpt lat="4.601100" lon="-74.065200"></trkpt>
+      <trkpt lat="4.601300" lon="-74.064950"></trkpt>
+      <trkpt lat="4.601400" lon="-74.064900"></trkpt>
+    </trkseg>
+  </trk>
+</gpx>
