@@ -12,5 +12,8 @@ struct Car: Identifiable, Codable {
     let UserID: UUID
     let name: String
 
+    var normalizedPlate: String {
+            plate.uppercased().replacingOccurrences(of: " ", with: "")
+        }
 
 }

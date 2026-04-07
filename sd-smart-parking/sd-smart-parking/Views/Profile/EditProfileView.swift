@@ -16,14 +16,14 @@ struct EditProfileView: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section("Información Personal") {
-                    TextField("Nombre", text: $name)
-                    TextField("Correo", text: $email)
+                Section("Personal information") {
+                    TextField("Name", text: $name)
+                    TextField("E-mail", text: $email)
                         .keyboardType(.emailAddress)
                         .autocapitalization(.none)
                 }
             }
-            .navigationTitle("Editar Perfil")
+            .navigationTitle("Edit Profile")
             .onAppear {
                 // Populate fields with current data
                 if let user = authVM.currentUser {
@@ -33,10 +33,10 @@ struct EditProfileView: View {
             }
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancelar") { dismiss() }
+                    Button("Cancel") { dismiss() }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Guardar") {
+                    Button("Save") {
                         Task {
                             await authVM.updateProfile(newName: name, newEmail: email)
                         }

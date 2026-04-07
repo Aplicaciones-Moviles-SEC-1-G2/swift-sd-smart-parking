@@ -13,15 +13,17 @@ struct RegistroVehiculosView: View {
     @State private var searchText: String = ""
     @State private var selectedFilter: RecordFilter = .all
     @State private var selectedRecord: VehicleRecord? = nil
-    
-    // 🔹 USAMOS BOOL PARA LA NAVEGACIÓN
     @State private var showingCreateRecord: Bool = false
+    
+    
+    
     
     enum RecordFilter: String, CaseIterable {
         case all = "All"
         case entry = "Entries"
         case exit = "Exits"
-        case unregistered = "Unregistered"
+        case today = "Today"
+        //case unregistered = "Unregistered"
     }
     
     var filteredRecords: [VehicleRecord] {
@@ -34,7 +36,8 @@ struct RegistroVehiculosView: View {
                 case .all: return true
                 case .entry: return record.type == .entry
                 case .exit: return record.type == .exit
-                case .unregistered: return !record.isRegistered
+                case.today: return Calendar.current.isDateInToday(record.timestamp)
+                //case .unregistered: return !record.isRegistered
                 }
             }
     }
@@ -77,11 +80,17 @@ struct RegistroVehiculosView: View {
                             .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
                             .listRowSeparator(.hidden)
                             .listRowBackground(Color(.systemGroupedBackground))
+                            .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                                Button(role: .destructive) {
+                                    vm.deleteRecord(record)
+                                } label: {
+                                    Label("Delete", systemImage: "trash")
+                                }
+                            }
                         }
                     }
                     .listStyle(.plain)
                     .background(Color(.systemGroupedBackground))
-                    // 🔹 FORZAR LA VISIBILIDAD DE LA BARRA DE NAVEGACIÓN
                     .toolbarBackground(.visible, for: .navigationBar)
                 }
             }
@@ -91,7 +100,7 @@ struct RegistroVehiculosView: View {
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button {
-                        // 🔹 CAMBIAMOS EL BOOL A TRUE
+                        
                         showingCreateRecord = true
                     } label: {
                         Image(systemName: "plus")
@@ -106,7 +115,7 @@ struct RegistroVehiculosView: View {
                 CreateRecordView()
             }
             .sheet(item: $selectedRecord) { record in
-                RecordDetailView(record: record)
+                RecordDetailView(record: record).environmentObject(vm)
             }
         }
     }

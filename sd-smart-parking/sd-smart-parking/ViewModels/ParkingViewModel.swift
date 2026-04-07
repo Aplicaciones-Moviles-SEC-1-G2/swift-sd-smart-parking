@@ -16,8 +16,9 @@ class ParkingViewModel: ObservableObject {
     @Published var hourlyRate: Double = 2000
     @Published var isLoading: Bool = false
     @Published var errorMessage: String? = nil
- 
-    private let db = Firestore.firestore()
+    @Published var activeUserRecords: [VehicleRecord] = []
+     
+    let db = Firestore.firestore()
     private var spotsListener: ListenerRegistration?
     private var recordsListener: ListenerRegistration?
  
@@ -79,7 +80,7 @@ class ParkingViewModel: ObservableObject {
                     else { return nil }
  
                     return VehicleRecord(
-                        id: UUID(uuidString: doc.documentID) ?? UUID(),
+                        id: doc.documentID,
                         plate: plate,
                         type: type,
                         timestamp: timestamp,
@@ -118,46 +119,80 @@ class ParkingViewModel: ObservableObject {
         if record.type == .exit {
             Task { await calculateAndSaveExit(record: record, data: data) }
         } else {
-            db.collection("vehicleRecords").document(record.id.uuidString).setData(data) { error in
-                if let error { print("Error saving record: \(error.localizedDescription)") }
+            if let recordId = record.id {
+                db.collection("vehicleRecords").document(recordId).setData(data)
+            } else {
+                // Si es un registro nuevo sin ID, dejamos que Firestore cree uno
+                db.collection("vehicleRecords").addDocument(data: data)
+            }
             }
         }
-    }
+    
  
     // MARK: - Calculate exit fee
  
     private func calculateAndSaveExit(record: VehicleRecord, data: [String: Any]) async {
-        var data = data
- 
-        // Buscar el entry correspondiente a esta placa
         do {
-            let snapshot = try await db.collection("vehicleRecords")
+            // 1. Buscamos el registro MÁS RECIENTE de cualquier tipo para esa placa
+            let lastRecordQuery = try await db.collection("vehicleRecords")
                 .whereField("plate", isEqualTo: record.plate)
-                .whereField("type", isEqualTo: RecordType.entry.rawValue)
                 .order(by: "timestamp", descending: true)
                 .limit(to: 1)
                 .getDocuments()
- 
-            if let entryDoc = snapshot.documents.first,
-               let entryTimestamp = (entryDoc.data()["timestamp"] as? Timestamp)?.dateValue() {
-                let durationHours = record.timestamp.timeIntervalSince(entryTimestamp) / 3600
-                let totalFee = ParkingConfig.calculateFee(hours: durationHours, currentDayTotal: 0)
-                let hitCap = totalFee >= ParkingConfig.dailyCap
- 
-                data["durationHours"] = durationHours
-                data["totalFee"]      = totalFee
-                data["hitDailyCap"]   = hitCap
+
+            if let lastDoc = lastRecordQuery.documents.first {
+                let lastType = lastDoc.data()["type"] as? String
+                
+                // 2. Si el último registro ya es una SALIDA, abortamos
+                if lastType == RecordType.exit.rawValue {
+                    print("⚠️ Vehicle not in parking")
+                    return
+                }
             }
- 
-            try await db.collection("vehicleRecords")
-                .document(record.id.uuidString)
-                .setData(data)
- 
+
+            // 3. Si pasó la prueba (el último era entrada), procedemos a guardar la salida
+            try await db.collection("vehicleRecords").addDocument(data: data)
+            print("✅ Salida única registrada.")
+
         } catch {
-            print("Error saving exit record: \(error.localizedDescription)")
+            print("Error en validación de salida: \(error.localizedDescription)")
         }
     }
- 
+    
+    // MARK: -- Delete Record
+    func deleteRecord(_ record: VehicleRecord) {
+        guard let id = record.id else { return }
+        db.collection("vehicleRecords").document(id).delete() { error in
+            if let error = error {
+                print("Error eliminando: \(error.localizedDescription)")
+            }
+        }
+    }
+    // MARK: - Is vehicle in parking
+    func isVehicleInParking(plate: String) async -> Bool {
+        let db = Firestore.firestore()
+        
+        do {
+            // Buscamos el registro MÁS RECIENTE de esta placa
+            let snapshot = try await db.collection("vehicleRecords")
+                .whereField("plate", isEqualTo: plate)
+                .order(by: "timestamp", descending: true)
+                .limit(to: 1)
+                .getDocuments()
+            
+            guard let lastDoc = snapshot.documents.first else {
+                return false // Si no hay registros, no está en el parking
+            }
+            
+            let typeRaw = lastDoc.data()["type"] as? String ?? ""
+            // Si el último registro es una entrada, el carro está en el parking
+            return typeRaw == RecordType.entry.rawValue
+            
+        } catch {
+            print("❌ Error verificando estado: \(error.localizedDescription)")
+            return false
+        }
+    }
     // MARK: - Reserve / Toggle Spot
  
     func reserveSpot(_ spot: ParkingSpot) {
@@ -265,6 +300,64 @@ class ParkingViewModel: ObservableObject {
             case .week:  return calendar.isDate(record.timestamp, equalTo: now, toGranularity: .weekOfYear)
             case .month: return calendar.isDate(record.timestamp, equalTo: now, toGranularity: .month)
             }
+        }
+    }
+}
+
+
+extension ParkingViewModel {
+    
+    // Esta función filtra los registros de los carros del usuario
+    func listenToUserCars(for user: User) {
+        let plates = user.cars.map { $0.plate.uppercased() }
+        print("DEBUG: Buscando estas placas: \(plates)") // <--- Check 1
+        
+        guard !plates.isEmpty else {
+            print("DEBUG: El usuario no tiene placas registradas.")
+            return
+        }
+        
+        db.collection("vehicleRecords")
+            .whereField("plate", in: plates)
+            .order(by: "timestamp", descending: true)
+            .addSnapshotListener { [weak self] snapshot, error in
+                
+                // --- AQUÍ VA EL PRINT CLAVE ---
+                if let error = error {
+                    print("❌ ERROR DE FIREBASE: \(error.localizedDescription)")
+                }
+                
+                let count = snapshot?.documents.count ?? 0
+                print("DEBUG: Documentos recibidos de Firestore: \(count)") // <--- Check 2
+                // ------------------------------
+                
+                guard let self = self, let docs = snapshot?.documents else { return }
+                
+                let records = docs.compactMap { self.mapDocumentToRecord($0) }
+                print("DEBUG: Registros mapeados con éxito: \(records.count)") // <--- Check 3
+                
+                var latestStatus: [String: VehicleRecord] = [:]
+                for record in records {
+                    if latestStatus[record.plate] == nil {
+                        latestStatus[record.plate] = record
+                    }
+                }
+                
+                DispatchQueue.main.async {
+                    self.activeUserRecords = Array(latestStatus.values).filter { $0.type == .entry }
+                    print("DEBUG: Registros finales en pantalla: \(self.activeUserRecords.count)") // <--- Check 4
+                }
+            }
+    }
+    
+    // MARK: - Mapeo con Codable
+    func mapDocumentToRecord(_ doc: QueryDocumentSnapshot) -> VehicleRecord? {
+        do {
+            // Opción A: Si usas FirebaseFirestoreSwift
+            return try doc.data(as: VehicleRecord.self)
+        } catch {
+            print("❌ ERROR DE MAPEO en placa \(doc.get("plate") ?? "desconocida"): \(error)")
+            return nil
         }
     }
 }

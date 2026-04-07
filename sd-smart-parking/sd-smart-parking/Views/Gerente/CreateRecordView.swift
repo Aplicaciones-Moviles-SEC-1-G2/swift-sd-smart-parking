@@ -48,8 +48,8 @@ struct CreateRecordView: View {
                     Picker("Type", selection: $recordType) {
                         Label("Entry", systemImage: "arrow.down.circle.fill")
                             .tag(RecordType.entry)
-                        Label("Exit", systemImage: "arrow.up.circle.fill")
-                            .tag(RecordType.exit)
+                        //Label("Exit", systemImage: "arrow.up.circle.fill")
+                            //.tag(RecordType.exit)
                     }
                     .pickerStyle(.segmented)
                     .padding(.vertical, 4)
@@ -66,6 +66,7 @@ struct CreateRecordView: View {
                 }
 
                 // MARK: - Owner
+                /*
                 Section {
                     Toggle("Registered Vehicle", isOn: $isRegistered)
 
@@ -81,7 +82,7 @@ struct CreateRecordView: View {
                 } header: {
                     Label("Owner", systemImage: "person.fill")
                 }
-
+                */
                 // MARK: - OCR Confidence
                 Section {
                     VStack(alignment: .leading, spacing: 8) {
@@ -136,7 +137,7 @@ struct CreateRecordView: View {
     // MARK: - Save
     private func saveRecord() {
         let record = VehicleRecord(
-            id: UUID(),
+            id: nil,
             plate: plate.uppercased().trimmingCharacters(in: .whitespaces),
             type: recordType,
             timestamp: .now,
