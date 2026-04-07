@@ -20,7 +20,7 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		A21A2FBB2F6C4E10005E5098 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
+		A21A2FBB2F6C4E10005E5098 /* Exceptions for "sd-smart-parking" folder in "sd-smart-parking" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
@@ -33,7 +33,7 @@
 		A21A2E782F6C3EFD005E5098 /* sd-smart-parking */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				A21A2FBB2F6C4E10005E5098 /* PBXFileSystemSynchronizedBuildFileExceptionSet */,
+				A21A2FBB2F6C4E10005E5098 /* Exceptions for "sd-smart-parking" folder in "sd-smart-parking" target */,
 			);
 			path = "sd-smart-parking";
 			sourceTree = "<group>";

@@ -6,9 +6,10 @@
 //
 import Foundation
 import SwiftUI
+import FirebaseFirestore
 
 struct VehicleRecord: Identifiable, Codable, Hashable {
-    let id: UUID
+    @DocumentID var id: String?
     let plate: String
     let type: RecordType
     let timestamp: Date

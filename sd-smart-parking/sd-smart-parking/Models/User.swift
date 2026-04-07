@@ -13,5 +13,10 @@ struct User: Identifiable, Codable {
     let password: String
     let cars: [Car]
     
+    // Extrae todas las placas del usuario para la consulta
+        var allPlates: [String] {
+            cars.map { $0.normalizedPlate }
+        }
+    
     
 }

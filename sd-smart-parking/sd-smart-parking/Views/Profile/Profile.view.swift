@@ -5,10 +5,18 @@
 //  Created by Mateo on 19/02/26.
 //
 import SwiftUI
+import Foundation
+import Combine
+import FirebaseFirestoreInternal
 
 struct ProfileView: View {
     @EnvironmentObject var authVM: AuthViewModel
     @State private var isEditing = false
+    @EnvironmentObject var parkingVM: ParkingViewModel
+    //let user: User
+    @State private var now = Date()
+        
+    let timer = Timer.publish(every: 60, on: .main, in: .common).autoconnect()
     
     var body: some View {
         NavigationStack {
@@ -42,6 +50,15 @@ struct ProfileView: View {
                     } else {
                         Text("No se encontró información del usuario")
                             .foregroundStyle(.secondary)
+                    }
+                }
+                if !parkingVM.activeUserRecords.isEmpty {
+                    Section("Current Status") {
+                        ForEach(parkingVM.activeUserRecords) { record in
+                            VehicleStatusCard(record: record, now: now)
+                                .listRowInsets(EdgeInsets()) // Para que la tarjeta use todo el ancho
+                                .background(Color.clear)
+                        }
                     }
                 }
                 
@@ -91,11 +108,22 @@ struct ProfileView: View {
                         }
                     
         
+        }.onAppear {
+            print("🚀 PROBANDO CONEXIÓN EN PROFILEVIEW")
+            
+            // Forzamos una lectura manual sin importar el usuario
+            parkingVM.db.collection("vehicleRecords").limit(to: 1).getDocuments { snap, _ in
+                print("📡 CONEXIÓN FIREBASE: Llegaron \(snap?.documents.count ?? 0) documentos")
+            }
+
+            if let user = authVM.currentUser {
+                print("👤 USUARIO ENCONTRADO: \(user.name) con \(user.cars.count) carros")
+                parkingVM.listenToUserCars(for: user)
+            } else {
+                print("❌ ERROR: authVM.currentUser es NIL")
+            }
         }
     }
+    
 }
-#Preview {
-    ProfileView()
-        .environmentObject(AuthViewModel())
-        .environmentObject(ParkingViewModel())
-}
+
