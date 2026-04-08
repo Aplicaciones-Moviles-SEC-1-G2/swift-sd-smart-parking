@@ -17,12 +17,12 @@ struct SDNavigationView: View {
         NavigationStack {
             VStack(spacing: 16) {
                 
-                // 🔹 LIVE CAPACITY CARD
-                LiveCapacityCard(available: 40, total: 120, queue: 3)
                 
+                //LiveCapacityCard(available: 40, total: 120, queue: 3)
+                AIRecommendationCard()
                 // MAP VIEW WITH INFO OVERLAY
                 ZStack(alignment: .bottomTrailing) {
-                    AppleMapsView(navManager: navManager)
+                    AppleMapsView(navManager: navManager).frame(maxWidth: .infinity)
                         .frame(maxHeight: .infinity) // ✅ El mapa ocupa el espacio disponible
                         .clipShape(RoundedRectangle(cornerRadius: 20))
                     

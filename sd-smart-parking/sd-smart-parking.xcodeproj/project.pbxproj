@@ -13,6 +13,7 @@
 		A21A2FB62F6C4E02005E5098 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = A21A2FB52F6C4E02005E5098 /* FirebaseAuth */; };
 		A21A2FB82F6C4E02005E5098 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = A21A2FB72F6C4E02005E5098 /* FirebaseFirestore */; };
 		A21A2FBA2F6C4E02005E5098 /* FirebaseStorage in Frameworks */ = {isa = PBXBuildFile; productRef = A21A2FB92F6C4E02005E5098 /* FirebaseStorage */; };
+		A25DD9602F86A2C80062B4FF /* GoogleGenerativeAI in Frameworks */ = {isa = PBXBuildFile; productRef = A25DD95F2F86A2C80062B4FF /* GoogleGenerativeAI */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -49,6 +50,7 @@
 				A21A2FB02F6C4C82005E5098 /* GoogleSignInSwift in Frameworks */,
 				A21A2FB32F6C4D45005E5098 /* GoogleMaps in Frameworks */,
 				A21A2FB82F6C4E02005E5098 /* FirebaseFirestore in Frameworks */,
+				A25DD9602F86A2C80062B4FF /* GoogleGenerativeAI in Frameworks */,
 				A21A2FB62F6C4E02005E5098 /* FirebaseAuth in Frameworks */,
 				A21A2FBA2F6C4E02005E5098 /* FirebaseStorage in Frameworks */,
 			);
@@ -99,6 +101,7 @@
 				A21A2FB52F6C4E02005E5098 /* FirebaseAuth */,
 				A21A2FB72F6C4E02005E5098 /* FirebaseFirestore */,
 				A21A2FB92F6C4E02005E5098 /* FirebaseStorage */,
+				A25DD95F2F86A2C80062B4FF /* GoogleGenerativeAI */,
 			);
 			productName = "sd-smart-parking";
 			productReference = A21A2E762F6C3EFD005E5098 /* sd-smart-parking.app */;
@@ -132,6 +135,7 @@
 				A21A2FAC2F6C4C82005E5098 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */,
 				A21A2FB12F6C4D45005E5098 /* XCRemoteSwiftPackageReference "ios-maps-sdk" */,
 				A21A2FB42F6C4E02005E5098 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+				A25DD95E2F86A2C80062B4FF /* XCRemoteSwiftPackageReference "generative-ai-swift" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = A21A2E772F6C3EFD005E5098 /* Products */;
@@ -391,6 +395,14 @@
 				minimumVersion = 12.11.0;
 			};
 		};
+		A25DD95E2F86A2C80062B4FF /* XCRemoteSwiftPackageReference "generative-ai-swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/google/generative-ai-swift";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.5.6;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -423,6 +435,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = A21A2FB42F6C4E02005E5098 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
 			productName = FirebaseStorage;
+		};
+		A25DD95F2F86A2C80062B4FF /* GoogleGenerativeAI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A25DD95E2F86A2C80062B4FF /* XCRemoteSwiftPackageReference "generative-ai-swift" */;
+			productName = GoogleGenerativeAI;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
