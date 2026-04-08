@@ -12,76 +12,85 @@ import SwiftUI
 
 struct AIRecommendationCard: View {
     @State private var aiResponse: String = "Press generate to have an AI preview of your trip to Uniandes"
-    @State private var isLoading: Bool = false
-    
-    // El VM de parqueo para sacar los datos reales
-    @EnvironmentObject var parkingVM: ParkingViewModel
-    
-    private let model: GenerativeModel
-    
-    init() {
-        let safetySettings = [
-            SafetySetting(harmCategory: .harassment, threshold: .blockNone),
-            SafetySetting(harmCategory: .hateSpeech, threshold: .blockNone),
-            SafetySetting(harmCategory: .sexuallyExplicit, threshold: .blockNone),
-            SafetySetting(harmCategory: .dangerousContent, threshold: .blockNone)
-        ]
+        @State private var isLoading: Bool = false
+        @EnvironmentObject var parkingVM: ParkingViewModel
         
-        self.model = GenerativeModel(
-            name: "gemini-2.5-flash-lite",
-            apiKey: "AIzaSyD_te2nJttAzp07IHJOb8KFuBbzWuWVqyw",
-            safetySettings: safetySettings
-        )
-    }
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            HStack {
-                Image(systemName: "sparkles")
-                    .foregroundColor(.blue)
-                Text("IA suggestions")
-                    .font(.headline)
-            }
+        private let model: GenerativeModel
+        
+        init() {
+            let safetySettings = [
+                SafetySetting(harmCategory: .harassment, threshold: .blockNone),
+                SafetySetting(harmCategory: .hateSpeech, threshold: .blockNone),
+                SafetySetting(harmCategory: .sexuallyExplicit, threshold: .blockNone),
+                SafetySetting(harmCategory: .dangerousContent, threshold: .blockNone)
+            ]
             
-            ZStack {
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(Color(.systemGray6))
-                
-                if isLoading {
-                    ProgressView("Generating suggestions...")
-                        .padding()
-                } else {
-                    Text(aiResponse)
-                                .font(.subheadline)
-                                .fixedSize(horizontal: false, vertical: true) // ✅ Esto asegura que el texto no se corte
-                                .padding()
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                    .frame(maxHeight: 150)
-                }
-            }
-            
-            Button(action: {
-                // Obtenemos los datos actuales y llamamos a la función
-                let free = parkingVM.totalAvailable
-                let occupied = parkingVM.totalOccupied
-                fetchAIRecommendation(free: free, occupied: occupied)
-                
-            }) {
-                Text(isLoading ? "Generating..." : "Generate")
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(Color.blue)
-                    .foregroundColor(.white)
-                    .cornerRadius(10)
-            }
-            .disabled(isLoading)
+            self.model = GenerativeModel(
+                name: "gemini-2.5-flash-lite", // Cambiado a flash estable para evitar errores
+                apiKey: "AIzaSyD_te2nJttAzp07IHJOb8KFuBbzWuWVqyw",
+                safetySettings: safetySettings
+            )
         }
-        .padding()
-        .background(Color.white)
-        .cornerRadius(16)
-        .shadow(radius: 5)
-        .padding()
-    }
+
+        var body: some View {
+            VStack(alignment: .leading, spacing: 16) {
+                // Header con Sparkles
+                HStack(spacing: 8) {
+                    Image(systemName: "sparkles")
+                        .font(.subheadline.bold())
+                        .foregroundColor(.blue)
+                    Text("AI Suggestions")
+                        .font(.headline)
+                    Spacer()
+                    if isLoading {
+                        ProgressView()
+                            .scaleEffect(0.8)
+                    }
+                }
+                
+                // Área de texto dinámica
+                VStack(alignment: .leading, spacing: 12) {
+                    Text(aiResponse)
+                        .font(.system(.subheadline, design: .rounded))
+                        .foregroundColor(.primary.opacity(0.8))
+                        .lineSpacing(4)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .multilineTextAlignment(.leading)
+                }
+                .padding(16)
+                .background(Color(.systemGray6).opacity(0.6))
+                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                
+                // Botón de acción unificado
+                Button(action: {
+                    let free = parkingVM.totalAvailable
+                    let occupied = parkingVM.totalOccupied
+                    fetchAIRecommendation(free: free, occupied: occupied)
+                }) {
+                    HStack {
+                        if isLoading {
+                            Text("Analyzing Data...")
+                        } else {
+                            Image(systemName: "bolt.fill")
+                            Text("Generate Suggestion")
+                        }
+                    }
+                    .font(.subheadline.bold())
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 12)
+                    .background(isLoading ? Color.gray : Color.blue)
+                    .foregroundColor(.white)
+                    .clipShape(Capsule())
+                }
+                .disabled(isLoading)
+            }
+            .padding(20) // Igual que la LiveCapacityCard
+            .frame(maxWidth: .infinity) // 👈 CLAVE: Se expande para llenar el ancho
+            .background(Color.white)
+            .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous)) // Igual que la otra card
+            .shadow(color: .black.opacity(0.04), radius: 12, x: 0, y: 6)
+        }
     
     // FUNCIÓN ACTUALIZADA CON PARÁMETROS
     func fetchAIRecommendation(free: Int, occupied: Int) {

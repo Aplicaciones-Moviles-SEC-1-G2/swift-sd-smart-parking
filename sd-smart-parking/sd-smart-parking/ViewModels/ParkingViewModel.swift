@@ -99,41 +99,44 @@ class ParkingViewModel: ObservableObject {
  
     // MARK: - Add Record
  
-    func addRecord(_ record: VehicleRecord) {
-        var data: [String: Any] = [
-            "plate":         record.plate,
-            "type":          record.type.rawValue,
-            "timestamp":     Timestamp(date: record.timestamp),
-            "isRegistered":  record.isRegistered,
-            "ocrConfidence": record.ocrConfidence,
-            "hitDailyCap":   record.hitDailyCap
-        ]
- 
-        if let floor       = record.floor       { data["floor"]         = floor }
-        if let spotNumber  = record.spotNumber  { data["spotNumber"]    = spotNumber }
-        if let photoURL    = record.photoURL    { data["photoURL"]      = photoURL }
-        if let ownerEmail  = record.ownerEmail  { data["ownerEmail"]    = ownerEmail }
-        if let duration    = record.durationHours { data["durationHours"] = duration }
- 
-        // Si es una salida, calculamos duración y tarifa
-        if record.type == .exit {
-            Task { await calculateAndSaveExit(record: record, data: data) }
-        } else {
-            if let recordId = record.id {
-                db.collection("vehicleRecords").document(recordId).setData(data)
+    // MARK: - Add Record (CORREGIDO)
+        func addRecord(_ record: VehicleRecord) {
+            var data: [String: Any] = [
+                "plate":         record.plate,
+                "type":          record.type.rawValue,
+                "timestamp":     Timestamp(date: record.timestamp),
+                "isRegistered":  record.isRegistered,
+                "ocrConfidence": record.ocrConfidence,
+                "hitDailyCap":   record.hitDailyCap
+            ]
+
+            if let floor       = record.floor       { data["floor"]         = floor }
+            if let spotNumber  = record.spotNumber  { data["spotNumber"]    = spotNumber }
+            if let photoURL    = record.photoURL    { data["photoURL"]      = photoURL }
+            if let ownerEmail  = record.ownerEmail  { data["ownerEmail"]    = ownerEmail }
+            if let duration    = record.durationHours { data["durationHours"] = duration }
+
+            if record.type == .exit {
+                // Lógica de salida: Valida, guarda y libera cupo
+                Task { await calculateAndSaveExit(record: record, data: data) }
             } else {
-                // Si es un registro nuevo sin ID, dejamos que Firestore cree uno
-                db.collection("vehicleRecords").addDocument(data: data)
-            }
+                // Lógica de entrada: Guarda y ocupa cupo
+                if let recordId = record.id {
+                    db.collection("vehicleRecords").document(recordId).setData(data)
+                } else {
+                    db.collection("vehicleRecords").addDocument(data: data)
+                }
+                
+                // Si tiene ubicación, ocupamos el spot en tiempo real
+                if let floor = record.floor, let spotNumber = record.spotNumber {
+                    Task { await updateSpotAvailability(floor: floor, spotNumber: spotNumber, available: false) }
+                }
             }
         }
-    
  
-    // MARK: - Calculate exit fee
- 
-    private func calculateAndSaveExit(record: VehicleRecord, data: [String: Any]) async {
+// MARK: - Calculate exit fee & Spot Release (UNIFICADO)
+    func calculateAndSaveExit(record: VehicleRecord, data: [String: Any]) async {
         do {
-            // 1. Buscamos el registro MÁS RECIENTE de cualquier tipo para esa placa
             let lastRecordQuery = try await db.collection("vehicleRecords")
                 .whereField("plate", isEqualTo: record.plate)
                 .order(by: "timestamp", descending: true)
@@ -142,22 +145,42 @@ class ParkingViewModel: ObservableObject {
 
             if let lastDoc = lastRecordQuery.documents.first {
                 let lastType = lastDoc.data()["type"] as? String
-                
-                // 2. Si el último registro ya es una SALIDA, abortamos
                 if lastType == RecordType.exit.rawValue {
-                    print("⚠️ Vehicle not in parking")
+                    print("⚠️ Vehicle already exited")
                     return
                 }
             }
 
-            // 3. Si pasó la prueba (el último era entrada), procedemos a guardar la salida
+            // Guardar la salida
             try await db.collection("vehicleRecords").addDocument(data: data)
-            print("✅ Salida única registrada.")
+            print("✅ Salida registrada.")
+
+            // LIBERAR EL CUPO (De origin/develop)
+            if let floor = record.floor, let spotNumber = record.spotNumber {
+                await updateSpotAvailability(floor: floor, spotNumber: spotNumber, available: true)
+            }
 
         } catch {
-            print("Error en validación de salida: \(error.localizedDescription)")
+            print("Error en proceso de salida: \(error.localizedDescription)")
         }
     }
+
+    // MARK: - Update spot availability (Lógica de Develop)
+        func updateSpotAvailability(floor: Int, spotNumber: Int, available: Bool) async {
+            let targetNumber = (floor * 100) + spotNumber
+            do {
+                let snapshot = try await db.collection("parkingSpots")
+                    .whereField("floor", isEqualTo: floor)
+                    .whereField("number", isEqualTo: targetNumber)
+                    .limit(to: 1)
+                    .getDocuments()
+                if let ref = snapshot.documents.first?.reference {
+                    try await ref.updateData(["isAvailable": available])
+                }
+            } catch {
+                print("Error actualizando spot: \(error.localizedDescription)")
+            }
+        }
     
     // MARK: -- Delete Record
     func deleteRecord(_ record: VehicleRecord) {
@@ -361,3 +384,4 @@ extension ParkingViewModel {
         }
     }
 }
+
