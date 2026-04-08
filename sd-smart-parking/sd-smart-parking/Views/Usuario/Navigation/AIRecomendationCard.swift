@@ -4,6 +4,12 @@
 //
 //  Created by Mateo on 8/04/26.
 //
+//
+//  AIRecomendationCard.swift
+//  sd-smart-parking
+//
+//  Created by Mateo on 8/04/26.
+//
 import SwiftUI
 import GoogleGenerativeAI
 import SwiftUI
