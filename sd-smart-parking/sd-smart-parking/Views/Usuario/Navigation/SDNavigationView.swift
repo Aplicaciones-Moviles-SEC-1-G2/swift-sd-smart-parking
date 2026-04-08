@@ -8,28 +8,52 @@
 import SwiftUI
 
 struct SDNavigationView: View {
-    
-    
+
     @StateObject private var navManager = NavigationManager()
+    @StateObject private var weatherVM  = WeatherViewModel()
     @State private var showNavigation = false
-    
+
     var body: some View {
         NavigationStack {
             VStack(spacing: 16) {
-                
-                // 🔹 LIVE CAPACITY CARD
+
+                // LIVE CAPACITY CARD
                 LiveCapacityCard(available: 40, total: 120, queue: 3)
-                
-                // MAP VIEW WITH INFO OVERLAY
+
+                // MAP VIEW WITH OVERLAYS
                 ZStack(alignment: .bottomTrailing) {
                     AppleMapsView(navManager: navManager)
-                        .frame(maxHeight: .infinity) // ✅ El mapa ocupa el espacio disponible
+                        .frame(maxHeight: .infinity)
                         .clipShape(RoundedRectangle(cornerRadius: 20))
-                    
+
+                    // Weather overlay — top leading
+                    Group {
+                        if let weather = weatherVM.weather {
+                            HStack(spacing: 6) {
+                                Image(systemName: weather.symbolName)
+                                    .foregroundColor(weather.symbolColor)
+                                Text("\(Int(weather.temperature))°C")
+                                    .font(.subheadline.bold())
+                            }
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 8)
+                            .background(.ultraThinMaterial)
+                            .cornerRadius(12)
+                        } else if weatherVM.isLoading {
+                            ProgressView()
+                                .padding(8)
+                                .background(.ultraThinMaterial)
+                                .cornerRadius(12)
+                        }
+                    }
+                    .padding(10)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+
+                    // Route info — bottom trailing
                     VStack(alignment: .trailing, spacing: 6) {
                         Text("Route to SD Building")
                             .font(.caption.bold())
-                        
+
                         HStack(spacing: 16) {
                             Label(navManager.travelTime, systemImage: "clock.fill")
                             Label(navManager.distance, systemImage: "road.lanes")

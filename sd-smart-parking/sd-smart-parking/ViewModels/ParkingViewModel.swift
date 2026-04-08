@@ -122,11 +122,14 @@ class ParkingViewModel: ObservableObject {
             if let recordId = record.id {
                 db.collection("vehicleRecords").document(recordId).setData(data)
             } else {
-                // Si es un registro nuevo sin ID, dejamos que Firestore cree uno
                 db.collection("vehicleRecords").addDocument(data: data)
             }
+            // Mark spot as occupied when an entry is registered with location
+            if let floor = record.floor, let spotNumber = record.spotNumber {
+                Task { await updateSpotAvailability(floor: floor, spotNumber: spotNumber, available: false) }
             }
         }
+    }
     
  
     // MARK: - Calculate exit fee
@@ -154,11 +157,34 @@ class ParkingViewModel: ObservableObject {
             try await db.collection("vehicleRecords").addDocument(data: data)
             print("✅ Salida única registrada.")
 
+            // 4. Free the spot when exit is registered
+            if let floor = record.floor, let spotNumber = record.spotNumber {
+                await updateSpotAvailability(floor: floor, spotNumber: spotNumber, available: true)
+            }
+
         } catch {
             print("Error en validación de salida: \(error.localizedDescription)")
         }
     }
-    
+
+    // MARK: - Update spot availability by floor and spot number
+
+    func updateSpotAvailability(floor: Int, spotNumber: Int, available: Bool) async {
+        let targetNumber = (floor * 100) + spotNumber
+        do {
+            let snapshot = try await db.collection("parkingSpots")
+                .whereField("floor", isEqualTo: floor)
+                .whereField("number", isEqualTo: targetNumber)
+                .limit(to: 1)
+                .getDocuments()
+            if let ref = snapshot.documents.first?.reference {
+                try await ref.updateData(["isAvailable": available])
+            }
+        } catch {
+            print("Error updating spot availability: \(error.localizedDescription)")
+        }
+    }
+
     // MARK: -- Delete Record
     func deleteRecord(_ record: VehicleRecord) {
         guard let id = record.id else { return }
