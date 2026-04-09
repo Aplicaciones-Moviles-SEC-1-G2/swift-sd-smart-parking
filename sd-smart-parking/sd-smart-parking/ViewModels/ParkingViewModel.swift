@@ -31,6 +31,37 @@ class ParkingViewModel: ObservableObject {
         guard !spots.isEmpty else { return 0 }
         return Double(totalOccupied) / Double(spots.count)
     }
+
+    /// Per-floor availability counts, keyed by floor number.
+    var floorAvailability: [Int: (available: Int, total: Int)] {
+        let grouped = Dictionary(grouping: spots, by: { $0.floor })
+        return grouped.mapValues { floorSpots in
+            let available = floorSpots.filter { $0.isAvailable }.count
+            return (available: available, total: floorSpots.count)
+        }
+    }
+
+    /// The floor with the most available spots, or `nil` when no clear winner.
+    var recommendedFloor: Int? {
+        let avail = floorAvailability
+        guard !avail.isEmpty else { return nil }
+
+        let sorted = avail.sorted { $0.value.available > $1.value.available }
+        let best = sorted[0]
+
+        // No spots available on the best floor
+        guard best.value.available > 0 else { return nil }
+
+        // Tie: if a second floor is within 2 spots, suppress recommendation
+        if sorted.count >= 2 {
+            let second = sorted[1]
+            if best.value.available - second.value.available <= 2 {
+                return nil
+            }
+        }
+
+        return best.key
+    }
  
     // MARK: - Init
  
