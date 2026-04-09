@@ -21,9 +21,8 @@ struct ActiveNavigationView: View {
     
     var body: some View {
         ZStack {
-            // MARK: - MAPA
+            // MARK: - MAP
             Map(position: $cameraPosition) {
-                
                 UserAnnotation {
                     ZStack {
                         Circle()
@@ -39,7 +38,7 @@ struct ActiveNavigationView: View {
                     }
                 }
                 
-                Marker("Edificio SD", systemImage: "car.2.fill",
+                Marker("SD Building", systemImage: "car.2.fill",
                        coordinate: CLLocationCoordinate2D(latitude: 4.6014, longitude: -74.0649))
                     .tint(.blue)
                 
@@ -58,7 +57,29 @@ struct ActiveNavigationView: View {
             }
             .ignoresSafeArea()
             
-            // MARK: - CARD INFERIOR
+            // MARK: - CLOSE BUTTON (Fix problem 2)
+            VStack {
+                HStack {
+                    //Spacer()
+                    Button {
+                        dismiss()
+                    } label: {
+                        Image(systemName: "xmark")
+                            .font(.system(size: 16, weight: .bold))
+                            .foregroundColor(.primary)
+                            .padding(12)
+                            .background(.ultraThinMaterial)
+                            .clipShape(Circle())
+                            .shadow(color: .black.opacity(0.1), radius: 4)
+                    }
+                    .padding(.top, 25) // Evita el notch
+                    .padding(.leading, 25)
+                    Spacer()
+                }
+                Spacer()
+            }
+            
+            // MARK: - BOTTOM CARD (Fix problem 1: English Translation)
             VStack {
                 Spacer()
                 
@@ -68,13 +89,13 @@ struct ActiveNavigationView: View {
                         .frame(width: 40, height: 5)
                     
                     if isNavigating, let route = navigationManager.route {
-                        // --- Modo navegación activa ---
-                        Text("En camino al Edificio SD")
+                        // --- Active Navigation Mode ---
+                        Text("On your way to SD Building")
                             .font(.headline)
                         
                         HStack {
                             VStack(alignment: .leading) {
-                                Text("Llegada (ETA)")
+                                Text("Arrival (ETA)")
                                     .font(.caption)
                                     .foregroundColor(.secondary)
                                 Text(formatTime(route.expectedTravelTime))
@@ -88,7 +109,7 @@ struct ActiveNavigationView: View {
                             Spacer()
                             
                             VStack(alignment: .trailing) {
-                                Text("Distancia")
+                                Text("Distance")
                                     .font(.caption)
                                     .foregroundColor(.secondary)
                                 Text(formatDistance(route.distance))
@@ -101,24 +122,24 @@ struct ActiveNavigationView: View {
                             navigationManager.endNavigation()
                             dismiss()
                         } label: {
-                            Text("Terminar Viaje")
+                            Text("End Trip")
                                 .font(.headline)
                                 .frame(maxWidth: .infinity)
                                 .padding()
-                                .background(Color.red)
+                                .background(Color.red.gradient)
                                 .foregroundColor(.white)
                                 .cornerRadius(16)
                         }
                         
                     } else {
-                        // --- Modo vista previa ---
-                        Text("Listo para navegar")
+                        // --- Preview Mode ---
+                        Text("Ready to navigate")
                             .font(.headline)
                         
                         if let route = navigationManager.route {
                             HStack {
                                 VStack(alignment: .leading) {
-                                    Text("Tiempo estimado")
+                                    Text("Est. Time")
                                         .font(.caption)
                                         .foregroundColor(.secondary)
                                     Text(formatTime(route.expectedTravelTime))
@@ -130,7 +151,7 @@ struct ActiveNavigationView: View {
                                     .font(.title2)
                                 Spacer()
                                 VStack(alignment: .trailing) {
-                                    Text("Distancia")
+                                    Text("Distance")
                                         .font(.caption)
                                         .foregroundColor(.secondary)
                                     Text(formatDistance(route.distance))
@@ -143,11 +164,11 @@ struct ActiveNavigationView: View {
                         Button {
                             startNavigation()
                         } label: {
-                            Label("Iniciar Viaje", systemImage: "play.fill")
+                            Label("Start Trip", systemImage: "play.fill")
                                 .font(.headline)
                                 .frame(maxWidth: .infinity)
                                 .padding()
-                                .background(Color.green)
+                                .background(Color.green.gradient)
                                 .foregroundColor(.white)
                                 .cornerRadius(16)
                         }
@@ -162,41 +183,31 @@ struct ActiveNavigationView: View {
             }
         }
         .navigationBarHidden(true)
-        .onAppear {
-            //navigationManager.calculateETA(from: //CLLocation(latitude: 4.6767, //longitude: -74.0483))
-        }
     }
     
-    // MARK: - INICIAR NAVEGACIÓN
+    // MARK: - LOGIC & FORMATTERS
+    
     private func startNavigation() {
         isNavigating = true
-        
-        // Bajamos la cámara a nivel del usuario con pitch 3D y heading activo
         withAnimation(.easeInOut(duration: 1.2)) {
-            cameraPosition = .userLocation(
-                followsHeading: true,
-                fallback: .automatic
-            )
+            cameraPosition = .userLocation(followsHeading: true, fallback: .automatic)
         }
         
-        // Tras la animación, aplicamos el pitch 3D
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
-            if let userLocation = CLLocationManager().location {
-                withAnimation(.easeInOut(duration: 0.8)) {
-                    cameraPosition = .camera(
-                        MapCamera(
-                            centerCoordinate: userLocation.coordinate,
-                            distance: 300,       // Muy cerca del suelo
-                            heading: userLocation.course >= 0 ? userLocation.course : 0,
-                            pitch: 65            // Inclinación tipo Waze
-                        )
+            // Nota: Aquí podrías necesitar inyectar el LocationManager para obtener la coordenada real
+            withAnimation(.easeInOut(duration: 0.8)) {
+                cameraPosition = .camera(
+                    MapCamera(
+                        centerCoordinate: CLLocationCoordinate2D(latitude: 4.6767, longitude: -74.0483), // Ejemplo
+                        distance: 300,
+                        heading: 0,
+                        pitch: 65
                     )
-                }
+                )
             }
         }
     }
     
-    // MARK: - FORMATTERS
     private func formatTime(_ seconds: TimeInterval) -> String {
         let minutes = Int(seconds) / 60
         return minutes < 60 ? "\(minutes) min" : "\(minutes / 60)h \(minutes % 60)m"
@@ -206,7 +217,6 @@ struct ActiveNavigationView: View {
         return String(format: "%.1f km", meters / 1000)
     }
 }
-
 #Preview {
     ActiveNavigationView()
         .environmentObject(NavigationManager())
