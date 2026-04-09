@@ -17,6 +17,7 @@ struct CreateRecordView: View {
     @State private var ownerEmail: String = ""
     @State private var ocrConfidence: Double = 1.0
     @State private var showConfirmation: Bool = false
+    @State private var showPlateScanner: Bool = false
 
     var isFormValid: Bool {
         plate.trimmingCharacters(in: .whitespaces).count >= 3
@@ -33,6 +34,11 @@ struct CreateRecordView: View {
                             .textInputAutocapitalization(.characters)
                             .autocorrectionDisabled()
                             .font(.system(size: 22, weight: .bold))
+                    }
+                    Button {
+                        showPlateScanner = true
+                    } label: {
+                        Label("Scan Plate", systemImage: "camera.viewfinder")
                     }
                 } header: {
                     Label("License Plate", systemImage: "rectangle.fill")
@@ -130,6 +136,12 @@ struct CreateRecordView: View {
                 Button("OK") { dismiss() }
             } message: {
                 Text("The record for plate \(plate.uppercased()) was created successfully.")
+            }
+            .sheet(isPresented: $showPlateScanner) {
+                PlateOCRSheet { recognizedPlate, recognizedConfidence in
+                    plate = recognizedPlate
+                    ocrConfidence = recognizedConfidence
+                }
             }
         }
     }
