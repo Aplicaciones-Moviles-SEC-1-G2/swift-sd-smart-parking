@@ -23,7 +23,7 @@ enum ParkingOperatingStatus: Equatable {
 
 // MARK: - Peak Hours Schedule
 
-// TODO(claude): Replace hardcoded schedule with Firestore-derived dynamic values
+// TODO: Replace hardcoded schedule with Firestore-derived dynamic values
 struct PeakHoursSchedule {
 
     // Weekday schedule (Mon–Fri)
