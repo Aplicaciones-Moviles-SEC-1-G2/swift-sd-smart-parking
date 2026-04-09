@@ -2,8 +2,6 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Location poara viajar</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -16,8 +14,6 @@
 	<string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
 	<key>CFBundleShortVersionString</key>
 	<string>$(MARKETING_VERSION)</string>
-	<key>CFBundleVersion</key>
-	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
@@ -31,12 +27,16 @@
 			</array>
 		</dict>
 	</array>
+	<key>CFBundleVersion</key>
+	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>GIDClientID</key>
 	<string>19078843613-p56jc0qiint7lq72gin826ffhoitvnq3.apps.googleusercontent.com</string>
 	<key>NSCameraUsageDescription</key>
-	<string>The camera is used to scan QR codes at parking spots to confirm your reservation.</string>
+	<string>The camera is used to scan QR codes at parking spots and to recognize vehicle license plates.</string>
 	<key>NSFaceIDUsageDescription</key>
 	<string>Face ID lets you sign in to SD Parking without entering your password.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Location poara viajar</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
