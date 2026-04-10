@@ -18,9 +18,9 @@ struct ParkingClosedCardView: View {
 
     private var opensLabel: String {
         if opensTomorrow {
-            return "Abre mañana a las \(opensAtHour):00"
+            return "Opens tomorrow at \(opensAtHour):00"
         }
-        return "Abre hoy a las \(opensAtHour):00"
+        return "Opens today at \(opensAtHour):00"
     }
 
     private var countdown: String {
@@ -39,9 +39,9 @@ struct ParkingClosedCardView: View {
         let mins = minutesUntilOpen % 60
 
         if hours > 0 {
-            return "Abre en \(hours)h \(mins)m"
+            return "Opens in \(hours)h \(mins)m"
         }
-        return "Abre en \(mins)m"
+        return "Opens in \(mins)m"
     }
 
     var body: some View {
@@ -50,7 +50,7 @@ struct ParkingClosedCardView: View {
                 .font(.system(size: 48))
                 .foregroundColor(.gray)
 
-            Text("Estacionamiento Cerrado")
+            Text("Parking Closed")
                 .font(.system(size: 24, weight: .bold))
 
             Text(opensLabel)
