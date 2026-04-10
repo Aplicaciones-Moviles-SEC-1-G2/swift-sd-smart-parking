@@ -12,6 +12,20 @@ import GoogleSignIn
 import GoogleSignInSwift
 import LocalAuthentication
 
+// MARK: - Protocol for testing boundary
+
+protocol MicrosoftOAuthProviding {
+    func signIn() async throws
+}
+
+struct FirebaseMicrosoftOAuth: MicrosoftOAuthProviding {
+    func signIn() async throws {
+        let provider = OAuthProvider(providerID: "microsoft.com")
+        let credential = try await provider.credential(with: nil)
+        try await Auth.auth().signIn(with: credential)
+    }
+}
+
 class AuthViewModel: ObservableObject {
     @Published var isLoggedIn: Bool = false
     @Published var isLoading: Bool = false
@@ -34,9 +48,11 @@ class AuthViewModel: ObservableObject {
     }
 
     private let db = Firestore.firestore()
+    private let microsoftOAuth: MicrosoftOAuthProviding
     private var authStateListener: AuthStateDidChangeListenerHandle?
 
-    init() {
+    init(microsoftOAuth: MicrosoftOAuthProviding = FirebaseMicrosoftOAuth()) {
+        self.microsoftOAuth = microsoftOAuth
         authStateListener = Auth.auth().addStateDidChangeListener { [weak self] _, firebaseUser in
             guard let self else { return }
             if let firebaseUser = firebaseUser {
@@ -166,6 +182,24 @@ class AuthViewModel: ObservableObject {
         } catch {
             await MainActor.run {
                 self.errorMessage = "Google Sign-In was cancelled or failed."
+                self.isLoading = false
+            }
+        }
+    }
+
+    // MARK: - Sign In with Microsoft
+
+    func signInWithMicrosoft() async {
+        await MainActor.run {
+            isLoading = true
+            errorMessage = nil
+        }
+
+        do {
+            try await microsoftOAuth.signIn()
+        } catch {
+            await MainActor.run {
+                self.errorMessage = "Microsoft Sign-In was cancelled or failed."
                 self.isLoading = false
             }
         }
