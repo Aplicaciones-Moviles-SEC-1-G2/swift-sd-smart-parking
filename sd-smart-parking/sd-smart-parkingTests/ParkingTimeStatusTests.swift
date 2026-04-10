@@ -188,35 +188,35 @@ struct TransitionCountdownTests {
         let result = PeakHoursSchedule.transitionCountdown(
             at: makeDate(hour: 7, minute: 30), openingHour: 6, closingHour: 22
         )
-        #expect(result == "1h 30m para horario normal")
+        #expect(result == "1h 30m until normal hours")
     }
 
     @Test func valleyShowsCountdownToNormal() {
         let result = PeakHoursSchedule.transitionCountdown(
             at: makeDate(hour: 13), openingHour: 6, closingHour: 22
         )
-        #expect(result == "2h 0m para horario normal")
+        #expect(result == "2h 0m until normal hours")
     }
 
     @Test func normalShowsNextValley() {
         let result = PeakHoursSchedule.transitionCountdown(
             at: makeDate(hour: 10), openingHour: 6, closingHour: 22
         )
-        #expect(result == "2h 0m para horas valle")
+        #expect(result == "2h 0m until off-peak hours")
     }
 
     @Test func normalShowsClosingWhenNoMoreTransitions() {
         let result = PeakHoursSchedule.transitionCountdown(
             at: makeDate(hour: 16), openingHour: 6, closingHour: 22
         )
-        #expect(result == "6h 0m para cierre")
+        #expect(result == "6h 0m until closing")
     }
 
     @Test func weekendValleyShowsClosingCountdown() {
         let result = PeakHoursSchedule.transitionCountdown(
             at: makeWeekendDate(hour: 10), openingHour: 6, closingHour: 22
         )
-        #expect(result == "12h 0m para cierre")
+        #expect(result == "12h 0m until closing")
     }
 
     @Test func closedReturnsNil() {
