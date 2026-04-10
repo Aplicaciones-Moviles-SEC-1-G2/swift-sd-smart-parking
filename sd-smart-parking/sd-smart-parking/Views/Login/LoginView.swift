@@ -124,6 +124,33 @@ struct LoginView: View {
                 .contentShape(Rectangle())
                 .padding(.horizontal, 24)
 
+                // MARK: - Microsoft Button
+                Button {
+                    Task { await authVM.signInWithMicrosoft() }
+                } label: {
+                    HStack(spacing: 12) {
+                        Image("Microsoft_Logo")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 20, height: 20)
+                        Text("Continue with Microsoft")
+                            .font(.body)
+                            .fontWeight(.semibold)
+                            .foregroundColor(.primary)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 14)
+                    .background(Color(.systemBackground))
+                    .cornerRadius(12)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(Color.gray.opacity(0.2), lineWidth: 1)
+                    )
+                    .shadow(color: Color.black.opacity(0.05), radius: 3, x: 0, y: 2)
+                }
+                .contentShape(Rectangle())
+                .padding(.horizontal, 24)
+
                 // MARK: - Face ID / Touch ID Button
                 Button {
                     Task { await authVM.signInWithBiometrics() }
