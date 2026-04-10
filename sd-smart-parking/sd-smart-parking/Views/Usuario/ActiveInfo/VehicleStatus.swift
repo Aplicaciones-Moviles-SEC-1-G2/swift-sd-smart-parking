@@ -5,9 +5,13 @@
 //  Created by Mateo on 7/04/26.
 //
 import SwiftUI
+import EventKit
+
 struct VehicleStatusCard: View {
     let record: VehicleRecord
     let now: Date // Para el timer
+    @StateObject private var calendarVM = CalendarExportViewModel()
+    @EnvironmentObject var config: ParkingConfig
     
     var body: some View {
         VStack(alignment: .leading, spacing: 15) {
@@ -57,6 +61,19 @@ struct VehicleStatusCard: View {
                         .foregroundColor(.blue)
                 }
                 Spacer()
+                Button {
+                    Task {
+                        await calendarVM.exportEvent(
+                            record: record,
+                            parkingName: config.parkingName,
+                            closingHour: config.closingHour
+                        )
+                    }
+                } label: {
+                    Image(systemName: "calendar.badge.plus")
+                        .font(.title2)
+                        .foregroundColor(.blue)
+                }
                 Image(systemName: "creditcard.fill")
                     .font(.title2)
                     .foregroundColor(.secondary.opacity(0.5))
@@ -69,6 +86,11 @@ struct VehicleStatusCard: View {
         .background(Color(UIColor.secondarySystemGroupedBackground))
         .cornerRadius(20)
         .shadow(color: .black.opacity(0.05), radius: 10, x: 0, y: 5)
+        .alert(calendarVM.alertTitle, isPresented: $calendarVM.showAlert) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text(calendarVM.alertMessage)
+        }
     }
     
     // Propiedades calculadas
