@@ -13,6 +13,7 @@ struct DashboardView: View {
     @Binding var selectedTab: Int
     @Binding var scrollOffset: CGFloat
     @EnvironmentObject var authVM: AuthViewModel
+    @State private var showTripPlanner = false
     
     var body: some View {
         ZStack(alignment: .top) {
@@ -71,7 +72,8 @@ struct DashboardView: View {
                                 ParkingClosedCardView(
                                     opensAtHour: opensAt,
                                     now: now,
-                                    selectedTab: $selectedTab
+                                    selectedTab: $selectedTab,
+                                    showTripPlanner: $showTripPlanner
                                 )
                             default:
                                 availabilityCard
@@ -113,7 +115,11 @@ struct DashboardView: View {
                         )
             
             // 3. CAPA DEL HEADER (Siempre arriba en el ZStack)
-            
+
+        }
+        .sheet(isPresented: $showTripPlanner) {
+            TripPlannerSheetView()
+                .environmentObject(vm.config)
         }
     }
     
@@ -173,6 +179,18 @@ struct DashboardView: View {
 
                 Button(action: { withAnimation { selectedTab = 1 } }) {
                     Label("Spot View", systemImage: "calendar")
+                        .font(.headline)
+                        .foregroundColor(.blue)
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(Color.blue, lineWidth: 2)
+                        )
+                }
+
+                Button(action: { showTripPlanner = true }) {
+                    Label("Plan Trip", systemImage: "calendar.badge.clock")
                         .font(.headline)
                         .foregroundColor(.blue)
                         .frame(maxWidth: .infinity)

@@ -9,6 +9,7 @@ struct ParkingClosedCardView: View {
     let opensAtHour: Int
     let now: Date
     @Binding var selectedTab: Int
+    @Binding var showTripPlanner: Bool
 
     private var opensTomorrow: Bool {
         let currentHour = Calendar.current.component(.hour, from: now)
@@ -86,6 +87,18 @@ struct ParkingClosedCardView: View {
                                 .stroke(Color.blue, lineWidth: 2)
                         )
                 }
+
+                Button(action: { showTripPlanner = true }) {
+                    Label("Plan Trip", systemImage: "calendar.badge.clock")
+                        .font(.headline)
+                        .foregroundColor(.orange)
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(Color.orange, lineWidth: 2)
+                        )
+                }
             }
         }
         .padding(24)
@@ -97,5 +110,5 @@ struct ParkingClosedCardView: View {
 }
 
 #Preview("Opens Tomorrow") {
-    ParkingClosedCardView(opensAtHour: 6, now: Date(), selectedTab: .constant(0))
+    ParkingClosedCardView(opensAtHour: 6, now: Date(), selectedTab: .constant(0), showTripPlanner: .constant(false))
 }
