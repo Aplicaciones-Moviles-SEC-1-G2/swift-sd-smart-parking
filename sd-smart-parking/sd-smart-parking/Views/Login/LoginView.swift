@@ -22,8 +22,8 @@ struct LoginView: View {
 
     var body: some View {
         NavigationStack {
+            ScrollView {
             VStack(spacing: 30) {
-                Spacer()
 
                 // MARK: - Logo/Header
                 VStack(spacing: 10) {
@@ -186,36 +186,38 @@ struct LoginView: View {
                     .foregroundColor(.blue)
                 }
                 .padding(.bottom, 20)
+
+                #if DEBUG
+                VStack(spacing: 12) {
+                    Text("Dev Tools")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+
+                    HStack(spacing: 12) {
+                        Button("Login as User") { authVM.loginAsUser() }
+                            .font(.caption)
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 8)
+                            .background(Color.blue.opacity(0.1))
+                            .foregroundColor(.blue)
+                            .cornerRadius(8)
+
+                        Button("Login as Manager") { authVM.loginAsGerente() }
+                            .font(.caption)
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 8)
+                            .background(Color.orange.opacity(0.1))
+                            .foregroundColor(.orange)
+                            .cornerRadius(8)
+                    }
+                }
+                .padding(.top, 20)
+                #endif
+            }
+            .padding(.top, 40)
             }
             .navigationBarHidden(true)
         }
-
-        #if DEBUG
-        VStack(spacing: 12) {
-            Text("Dev Tools")
-                .font(.caption)
-                .foregroundColor(.secondary)
-
-            HStack(spacing: 12) {
-                Button("Login as User") { authVM.loginAsUser() }
-                    .font(.caption)
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 8)
-                    .background(Color.blue.opacity(0.1))
-                    .foregroundColor(.blue)
-                    .cornerRadius(8)
-
-                Button("Login as Manager") { authVM.loginAsGerente() }
-                    .font(.caption)
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 8)
-                    .background(Color.orange.opacity(0.1))
-                    .foregroundColor(.orange)
-                    .cornerRadius(8)
-            }
-        }
-        .padding(.top, 20)
-        #endif
     }
 }
 
