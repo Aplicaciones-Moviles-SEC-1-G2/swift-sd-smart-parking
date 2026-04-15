@@ -97,7 +97,7 @@ struct RecordDetailView: View {
                                 // VEHÍCULO ADENTRO: BOTÓN ROJO DE ACCIÓN
                                 Button(action: {
                                     Task {
-                                        await registerExit()
+                                        registerExit()
                                         // Actualizamos el estado local para cambiar el color
                                         withAnimation {
                                             isInParking = false
