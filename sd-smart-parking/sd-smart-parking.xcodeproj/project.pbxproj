@@ -14,6 +14,7 @@
 		A21A2FB82F6C4E02005E5098 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = A21A2FB72F6C4E02005E5098 /* FirebaseFirestore */; };
 		A21A2FBA2F6C4E02005E5098 /* FirebaseStorage in Frameworks */ = {isa = PBXBuildFile; productRef = A21A2FB92F6C4E02005E5098 /* FirebaseStorage */; };
 		A25DD9602F86A2C80062B4FF /* GoogleGenerativeAI in Frameworks */ = {isa = PBXBuildFile; productRef = A25DD95F2F86A2C80062B4FF /* GoogleGenerativeAI */; };
+		A25DDE8B2F904AAF0062B4FF /* Secrets.swift in Sources */ = {isa = PBXBuildFile; fileRef = A25DDE8A2F904AAC0062B4FF /* Secrets.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -28,6 +29,7 @@
 
 /* Begin PBXFileReference section */
 		A21A2E762F6C3EFD005E5098 /* sd-smart-parking.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "sd-smart-parking.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		A25DDE8A2F904AAC0062B4FF /* Secrets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Secrets.swift; sourceTree = "<group>"; };
 		FD4A3D2C2F8813D30012A923 /* sd-smart-parkingTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "sd-smart-parkingTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -85,6 +87,7 @@
 		A21A2E6D2F6C3EFD005E5098 = {
 			isa = PBXGroup;
 			children = (
+				A25DDE8A2F904AAC0062B4FF /* Secrets.swift */,
 				A21A2E782F6C3EFD005E5098 /* sd-smart-parking */,
 				0A0FEDAD77504411A6D9614B /* sd-smart-parkingTests */,
 				A21A2E772F6C3EFD005E5098 /* Products */,
@@ -229,6 +232,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A25DDE8B2F904AAF0062B4FF /* Secrets.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

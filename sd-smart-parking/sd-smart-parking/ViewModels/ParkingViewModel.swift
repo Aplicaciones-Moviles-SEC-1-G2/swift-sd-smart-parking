@@ -410,8 +410,51 @@ class ParkingViewModel: ObservableObject {
     }
  
     func avgOccupancy(for period: ReportsView.ReportPeriod) -> Double { 0.65 }
-    func peakHour(for period: ReportsView.ReportPeriod) -> String { "10:00 AM" }
- 
+    func peakHour(for period: ReportsView.ReportPeriod) -> String {
+        let now = Date()
+        let calendar = Calendar.current
+        
+        // 1. Filtrar registros por fecha (Período) y tipo (Entrada)
+        let filteredEntries = vehicleRecords.filter { record in
+            // Primero, solo entradas
+            guard record.type == .entry else { return false }
+            
+            // Segundo, validar que el registro esté dentro del rango de tiempo
+            switch period {
+            case .today: // Ajusta este nombre según tu Enum (ej: .day o .daily)
+                return calendar.isDateInToday(record.timestamp)
+            case .week:
+                guard let sevenDaysAgo = calendar.date(byAdding: .day, value: -7, to: now) else { return false }
+                return record.timestamp >= sevenDaysAgo
+            case .month:
+                guard let thirtyDaysAgo = calendar.date(byAdding: .day, value: -30, to: now) else { return false }
+                return record.timestamp >= thirtyDaysAgo
+            }
+        }
+        
+        // 2. Agrupar por hora (0...23)
+        let hourGroups = Dictionary(grouping: filteredEntries) { record -> Int in
+            let components = calendar.dateComponents([.hour], from: record.timestamp)
+            return components.hour ?? 0
+        }
+        
+        // 3. Encontrar la hora con el conteo más alto
+        guard let maxHour = hourGroups.max(by: { $0.value.count < $1.value.count }) else {
+            return "N/A"
+        }
+        
+        // 4. Formatear el resultado (Ejemplo: "2:00 PM")
+        var components = DateComponents()
+        components.hour = maxHour.key
+        // Usamos el calendario para crear una fecha válida y formatearla
+        if let date = calendar.date(from: components) {
+            let formatter = DateFormatter()
+            formatter.dateFormat = "h:mm a"
+            return formatter.string(from: date)
+        }
+        
+        return "\(maxHour.key):00"
+    }
     func revenueChartData(for period: ReportsView.ReportPeriod) -> [ChartDataPoint] {
         switch period {
         case .today:
