@@ -90,9 +90,16 @@ struct DashboardView: View {
                         }
                         .buttonStyle(.plain)
                         
-                        SmallCard(icon: "clock.fill", title: "My History", subtitle: "View Stats")
+                        Button {
+                            showHistory = true
+                        } label: {
+                            SmallCard(icon: "clock.fill", title: "My History", subtitle: "View Stats")
+                        }
+                        .buttonStyle(.plain)
                     }
-                    
+                    .sheet(isPresented: $showHistory) {
+                        MyHistoryView()
+                    }
                     .padding(.horizontal, 20)
                     .padding(.top, 25)
                     // MARK: - Gerente Section

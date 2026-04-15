@@ -118,7 +118,7 @@ struct PeakHoursSchedule {
             if let next = nextEvents
                 .filter({ $0.minuteMark > currentMinutes })
                 .min(by: { $0.minuteMark < $1.minuteMark }) {
-                return formatCountdown(next.minuteMark - currentMinutes, suffix: "para \(next.label)")
+                return formatCountdown(next.minuteMark - currentMinutes, suffix: "until \(next.label)")
             }
         }
         return nil
