@@ -12,8 +12,10 @@ import SwiftUI
 
 struct AIRecommendationCard: View {
     @State private var aiResponse: String = "Press generate to have an AI preview of your trip to Uniandes"
-        @State private var isLoading: Bool = false
-        @EnvironmentObject var parkingVM: ParkingViewModel
+    @State private var isLoading: Bool = false
+    @EnvironmentObject var vm: ParkingViewModel
+        let myKey = Secrets.apiKey
+        
         
         private let model: GenerativeModel
         
@@ -27,7 +29,7 @@ struct AIRecommendationCard: View {
             
             self.model = GenerativeModel(
                 name: "gemini-2.5-flash-lite", // Cambiado a flash estable para evitar errores
-                apiKey: "AIzaSyD_te2nJttAzp07IHJOb8KFuBbzWuWVqyw",
+                apiKey: myKey,
                 safetySettings: safetySettings
             )
         }
@@ -64,8 +66,11 @@ struct AIRecommendationCard: View {
                 
                 // Botón de acción unificado
                 Button(action: {
-                    let free = parkingVM.totalAvailable
-                    let occupied = parkingVM.totalOccupied
+                    let free = vm.totalAvailable
+                    let occupied = vm.totalOccupied
+                    
+
+                    //print("La hora actual es: \(hora):\(minutos)")
                     fetchAIRecommendation(free: free, occupied: occupied)
                 }) {
                     HStack {
@@ -96,10 +101,18 @@ struct AIRecommendationCard: View {
     func fetchAIRecommendation(free: Int, occupied: Int) {
         isLoading = true
         let total = free + occupied
+        
+        let peak = vm.peakHour
+        print("DEBUG: La hora pico actual es \(String(describing: peak))");        let calendar = Calendar.current
+        let hora = calendar.component(.hour, from: Date())
+        let minutos = calendar.component(.minute, from: Date())
+        //print ("Hora pico:", \(String(describing: peak)))
         // Construimos el prompt con los datos del ParkingViewModel
         let prompt = """
         Make a short suggestion (max 2 sentences) for someone traveling to Uniandes SD building in Bogota. 
         Current parking status: \(free) spots available and \(occupied) occupied and \(total) total. 
+        Current time: \(hora):\(minutos)
+        Parking peak hour: \(String(describing: peak))
         Take into account traffic for this time of the day and assume they are driving. 
         Do not include bolds, italics, or greetings.
         """
