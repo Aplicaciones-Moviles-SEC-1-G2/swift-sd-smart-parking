@@ -12,9 +12,7 @@ struct ParkingSpot: Identifiable, Codable {
     let number: Int
     let floor: Int
     var isAvailable: Bool
-    
-    // Propiedad útil para cálculos rápidos en la interfaz
-    var isOccupied: Bool {
-        !isAvailable
-    }
+    var reservedByEmail: String?
+
+    var isOccupied: Bool { !isAvailable }
 }

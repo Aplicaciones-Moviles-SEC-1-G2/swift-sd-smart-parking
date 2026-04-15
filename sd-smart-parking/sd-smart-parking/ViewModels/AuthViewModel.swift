@@ -303,6 +303,9 @@ class AuthViewModel: ObservableObject {
             let result = try await Auth.auth().createUser(withEmail: email, password: password)
             let uid = result.user.uid
 
+            // Write the user doc before relying on the auth-state listener so
+            // fetchUserData always finds the correct name (fixes the race condition
+            // where the listener fires before setData completes).
             try await db.collection("users").document(uid).setData([
                 "name": name,
                 "email": email,
@@ -310,6 +313,10 @@ class AuthViewModel: ObservableObject {
                 "createdAt": Timestamp(),
                 "cars": []
             ])
+
+            // Explicitly fetch user data now that the doc is ready — this is
+            // what actually sets isLoggedIn = true and navigates into the app.
+            await fetchUserData(uid: uid)
         } catch {
             await MainActor.run {
                 self.errorMessage = firebaseErrorMessage(error)
@@ -326,11 +333,9 @@ class AuthViewModel: ObservableObject {
         var err: NSError?
         let hasBiometrics = ctx.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &err)
 
-        if hasBiometrics {
-            // Soft logout: keep role info so Face ID can restore the session
+        if hasBiometrics && biometricsEnabled {
+            // Soft logout: keep Firebase session alive so Face ID can restore it
             _lastGerente = isGerente
-            try? Auth.auth().signOut()
-            GIDSignIn.sharedInstance.signOut()
             isLoggedIn = false
             requiresBiometricUnlock = true
             errorMessage = nil
