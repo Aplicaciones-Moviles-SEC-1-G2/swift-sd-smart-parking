@@ -14,6 +14,7 @@ struct DashboardView: View {
     @Binding var scrollOffset: CGFloat
     @EnvironmentObject var authVM: AuthViewModel
     @State private var showTripPlanner = false
+    @State private var showHistory = false
     
     var body: some View {
         ZStack(alignment: .top) {
