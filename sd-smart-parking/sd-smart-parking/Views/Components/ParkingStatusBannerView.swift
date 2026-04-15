@@ -19,9 +19,9 @@ struct ParkingStatusBannerView: View {
 
     private var label: String {
         switch demandLevel {
-        case .peak:   return "Horas Pico"
-        case .valley: return "Horas Valle"
-        case .normal: return "Horario Normal"
+        case .peak:   return "Peak Hours"
+        case .valley: return "Off-Peak Hours"
+        case .normal: return "Normal Hours"
         }
     }
 
@@ -71,7 +71,7 @@ struct ClosingSoonBannerView: View {
         HStack(spacing: 8) {
             Image(systemName: "exclamationmark.triangle.fill")
                 .foregroundColor(.red)
-            Text("Cierra en \(minutesLeft) min — planifica tu salida")
+            Text("Closes in \(minutesLeft) min — plan your exit")
                 .font(.system(size: 14, weight: .semibold))
                 .foregroundColor(.red)
             Spacer()

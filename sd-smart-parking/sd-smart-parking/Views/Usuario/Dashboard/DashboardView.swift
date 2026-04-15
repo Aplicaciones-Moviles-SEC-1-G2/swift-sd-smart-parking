@@ -13,7 +13,8 @@ struct DashboardView: View {
     @Binding var selectedTab: Int
     @Binding var scrollOffset: CGFloat
     @EnvironmentObject var authVM: AuthViewModel
-    
+    @State private var showHistory = false
+
     var body: some View {
         ZStack(alignment: .top) {
             // Fondo gris claro para toda la pantalla
@@ -88,9 +89,16 @@ struct DashboardView: View {
                         }
                         .buttonStyle(.plain)
                         
-                        SmallCard(icon: "clock.fill", title: "My History", subtitle: "View Stats")
+                        Button {
+                            showHistory = true
+                        } label: {
+                            SmallCard(icon: "clock.fill", title: "My History", subtitle: "View Stats")
+                        }
+                        .buttonStyle(.plain)
                     }
-                    
+                    .sheet(isPresented: $showHistory) {
+                        MyHistoryView()
+                    }
                     .padding(.horizontal, 20)
                     .padding(.top, 25)
                     // MARK: - Gerente Section
@@ -156,8 +164,16 @@ struct DashboardView: View {
             .padding(.horizontal, 20)
 
             HStack(spacing: 15) {
-                miniStatusCard(icon: "car.fill", title: "Queue Length", value: "12")
-                miniStatusCard(icon: "clock.fill", title: "Est. Wait Time", value: "3 min")
+                miniStatusCard(
+                    icon: "car.2.fill",
+                    title: "Queue Outside",
+                    value: "\(vm.config.queueLength) car\(vm.config.queueLength == 1 ? "" : "s")"
+                )
+                miniStatusCard(
+                    icon: "clock.fill",
+                    title: "Est. Wait",
+                    value: estimatedWait(for: vm.config.queueLength)
+                )
             }
 
             VStack(spacing: 12) {
@@ -189,6 +205,16 @@ struct DashboardView: View {
         .cornerRadius(24)
         .shadow(color: .black.opacity(0.1), radius: 15, x: 0, y: 5)
         .padding(.horizontal, 20)
+    }
+
+    /// 5 minutes per car in queue, formatted nicely.
+    private func estimatedWait(for queue: Int) -> String {
+        guard queue > 0 else { return "No wait" }
+        let minutes = queue * 5
+        if minutes < 60 { return "\(minutes) min" }
+        let h = minutes / 60
+        let m = minutes % 60
+        return m > 0 ? "\(h)h \(m)m" : "\(h)h"
     }
 
     private func miniStatusCard(icon: String, title: String, value: String) -> some View {

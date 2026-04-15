@@ -11,7 +11,14 @@ struct SpotCardView: View {
     let spot: ParkingSpot
     var isGerente: Bool = false
     @EnvironmentObject var vm: ParkingViewModel
+    @EnvironmentObject var authVM: AuthViewModel
     @State private var showQRScanner = false
+
+    /// True when this spot's owner also holds another occupied spot (admin view).
+    private var isDuplicate: Bool {
+        guard isGerente, let email = spot.reservedByEmail, !email.isEmpty else { return false }
+        return vm.duplicateSpotGroups.contains { $0.email == email }
+    }
 
     var body: some View {
         VStack(spacing: 10) {
@@ -49,6 +56,15 @@ struct SpotCardView: View {
         .background(Color.white)
         .cornerRadius(18)
         .shadow(color: .black.opacity(0.04), radius: 5, x: 0, y: 3)
+        // Duplicate warning badge (admin only)
+        .overlay(alignment: .topTrailing) {
+            if isDuplicate {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .font(.system(size: 13))
+                    .foregroundColor(.orange)
+                    .padding(6)
+            }
+        }
         .onTapGesture {
             if isGerente {
                 withAnimation(.spring()) {
@@ -61,7 +77,9 @@ struct SpotCardView: View {
         .sheet(isPresented: $showQRScanner) {
             SpotQRSheet(spot: spot) {
                 withAnimation(.spring()) {
-                    vm.reserveSpot(spot)
+                    // Record the user's email against this spot so we can
+                    // detect duplicates and block the view if they scan again.
+                    vm.reserveSpotForUser(spot, userEmail: authVM.currentUserEmail ?? "")
                 }
             }
         }

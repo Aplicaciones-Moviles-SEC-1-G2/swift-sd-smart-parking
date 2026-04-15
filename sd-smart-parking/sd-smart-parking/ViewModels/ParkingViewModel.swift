@@ -21,7 +21,8 @@ class ParkingViewModel: ObservableObject {
     let db = Firestore.firestore()
     private var spotsListener: ListenerRegistration?
     private var recordsListener: ListenerRegistration?
- 
+    private var configCancellable: AnyCancellable?
+
     // MARK: - Computed Properties
  
     var totalAvailable: Int { spots.filter { $0.isAvailable }.count }
@@ -68,6 +69,12 @@ class ParkingViewModel: ObservableObject {
     init() {
         listenToSpots()
         listenToRecords()
+        // ParkingConfig is a nested ObservableObject. SwiftUI views that observe
+        // ParkingViewModel won't re-render when config's @Published properties change
+        // unless we forward its objectWillChange up to ours.
+        configCancellable = config.objectWillChange
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in self?.objectWillChange.send() }
     }
  
     deinit {
@@ -82,7 +89,8 @@ class ParkingViewModel: ObservableObject {
             .order(by: "floor")
             .addSnapshotListener { [weak self] snapshot, error in
                 guard let self, let docs = snapshot?.documents else { return }
-                self.spots = docs.compactMap { doc in
+
+                let allSpots: [ParkingSpot] = docs.compactMap { doc in
                     let data = doc.data()
                     guard let number = data["number"] as? Int,
                           let floor  = data["floor"]  as? Int else { return nil }
@@ -90,8 +98,29 @@ class ParkingViewModel: ObservableObject {
                         id: UUID(uuidString: doc.documentID) ?? UUID(),
                         number: number,
                         floor: floor,
-                        isAvailable: data["isAvailable"] as? Bool ?? true
+                        isAvailable: data["isAvailable"] as? Bool ?? true,
+                        reservedByEmail: data["reservedByEmail"] as? String
                     )
+                }
+
+                // Deduplicate by spot number. When two docs share the same number,
+                // keep the occupied/reserved one and delete the extra from Firestore.
+                var keeperByNumber = [Int: ParkingSpot]()
+                for spot in allSpots {
+                    if let existing = keeperByNumber[spot.number] {
+                        let keepIncoming = !spot.isAvailable && existing.isAvailable
+                        let docToDelete  = keepIncoming ? existing : spot
+                        self.db.collection("parkingSpots")
+                            .document(docToDelete.id.uuidString)
+                            .delete()
+                        if keepIncoming { keeperByNumber[spot.number] = spot }
+                    } else {
+                        keeperByNumber[spot.number] = spot
+                    }
+                }
+
+                self.spots = keeperByNumber.values.sorted {
+                    $0.floor == $1.floor ? $0.number < $1.number : $0.floor < $1.floor
                 }
             }
     }
@@ -248,11 +277,75 @@ class ParkingViewModel: ObservableObject {
         }
     }
     // MARK: - Reserve / Toggle Spot
- 
+
+    /// Admin toggle — also clears reservation email when freeing a spot.
     func reserveSpot(_ spot: ParkingSpot) {
+        var data: [String: Any] = ["isAvailable": !spot.isAvailable]
+        if !spot.isAvailable {
+            // Spot is being freed by admin — clear owner
+            data["reservedByEmail"] = FieldValue.delete()
+        }
+        db.collection("parkingSpots").document(spot.id.uuidString).updateData(data)
+    }
+
+    /// Driver QR reservation — marks spot unavailable and records the user.
+    func reserveSpotForUser(_ spot: ParkingSpot, userEmail: String) {
         db.collection("parkingSpots").document(spot.id.uuidString).updateData([
-            "isAvailable": !spot.isAvailable
+            "isAvailable": false,
+            "reservedByEmail": userEmail
         ])
+    }
+
+    /// Driver releases their own spot.
+    func releaseSpot(_ spot: ParkingSpot) {
+        db.collection("parkingSpots").document(spot.id.uuidString).updateData([
+            "isAvailable": true,
+            "reservedByEmail": FieldValue.delete()
+        ])
+    }
+
+    /// Admin — marks every spot as available and clears all reservations.
+    func freeAllSpots() {
+        let batch = db.batch()
+        for spot in spots {
+            let ref = db.collection("parkingSpots").document(spot.id.uuidString)
+            var data: [String: Any] = ["isAvailable": true]
+            if spot.reservedByEmail != nil { data["reservedByEmail"] = FieldValue.delete() }
+            batch.updateData(data, forDocument: ref)
+        }
+        Task { try? await batch.commit() }
+    }
+
+    /// Admin — marks every spot as occupied.
+    func occupyAllSpots() {
+        let batch = db.batch()
+        for spot in spots {
+            let ref = db.collection("parkingSpots").document(spot.id.uuidString)
+            batch.updateData(["isAvailable": false], forDocument: ref)
+        }
+        Task { try? await batch.commit() }
+    }
+
+    // MARK: - User active spot
+
+    /// Returns the spot currently reserved by this user, or nil if none.
+    func userActiveSpot(for email: String) -> ParkingSpot? {
+        guard !email.isEmpty else { return nil }
+        return spots.first { !$0.isAvailable && $0.reservedByEmail == email }
+    }
+
+    // MARK: - Duplicate detection (admin)
+
+    /// Groups of spots where the same user email has reserved more than one spot.
+    var duplicateSpotGroups: [(email: String, spots: [ParkingSpot])] {
+        let occupied = spots.filter {
+            !$0.isAvailable && !($0.reservedByEmail ?? "").isEmpty
+        }
+        let grouped = Dictionary(grouping: occupied, by: { $0.reservedByEmail! })
+        return grouped
+            .filter { $0.value.count > 1 }
+            .map { (email: $0.key, spots: $0.value) }
+            .sorted { $0.email < $1.email }
     }
  
     // MARK: - Generate spots (usar solo una vez para poblar Firestore)

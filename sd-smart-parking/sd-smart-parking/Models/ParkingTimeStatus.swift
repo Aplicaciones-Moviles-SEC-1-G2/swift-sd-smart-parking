@@ -97,28 +97,28 @@ struct PeakHoursSchedule {
             if let range = peaks.first(where: { hour >= $0.start && hour < $0.end }) {
                 let endMinutes = range.end * 60
                 if endMinutes >= closingMinutes {
-                    return formatCountdown(closingMinutes - currentMinutes, suffix: "para cierre")
+                    return formatCountdown(closingMinutes - currentMinutes, suffix: "until closing")
                 }
-                return formatCountdown(endMinutes - currentMinutes, suffix: "para horario normal")
+                return formatCountdown(endMinutes - currentMinutes, suffix: "until normal hours")
             }
         case .valley:
             if let range = valleys.first(where: { hour >= $0.start && hour < $0.end }) {
                 let endMinutes = range.end * 60
                 if endMinutes >= closingMinutes {
-                    return formatCountdown(closingMinutes - currentMinutes, suffix: "para cierre")
+                    return formatCountdown(closingMinutes - currentMinutes, suffix: "until closing")
                 }
-                return formatCountdown(endMinutes - currentMinutes, suffix: "para horario normal")
+                return formatCountdown(endMinutes - currentMinutes, suffix: "until normal hours")
             }
         case .normal:
             var nextEvents: [(minuteMark: Int, label: String)] = []
-            for range in peaks { nextEvents.append((range.start * 60, "horas pico")) }
-            for range in valleys { nextEvents.append((range.start * 60, "horas valle")) }
-            nextEvents.append((closingMinutes, "cierre"))
+            for range in peaks { nextEvents.append((range.start * 60, "peak hours")) }
+            for range in valleys { nextEvents.append((range.start * 60, "off-peak hours")) }
+            nextEvents.append((closingMinutes, "closing"))
 
             if let next = nextEvents
                 .filter({ $0.minuteMark > currentMinutes })
                 .min(by: { $0.minuteMark < $1.minuteMark }) {
-                return formatCountdown(next.minuteMark - currentMinutes, suffix: "para \(next.label)")
+                return formatCountdown(next.minuteMark - currentMinutes, suffix: "until \(next.label)")
             }
         }
         return nil
