@@ -3,3 +3,9 @@ DerivedData/
 build/
 *.xcuserdata
 *.xcuserstate
+
+# Firebase / Node seed script
+serviceAccountKey.json
+node_modules/
+package-lock.json
+package.json
