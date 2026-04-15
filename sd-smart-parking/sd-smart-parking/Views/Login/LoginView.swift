@@ -22,8 +22,8 @@ struct LoginView: View {
 
     var body: some View {
         NavigationStack {
+            ScrollView {
             VStack(spacing: 30) {
-                Spacer()
 
                 // MARK: - Logo/Header
                 VStack(spacing: 10) {
@@ -124,6 +124,33 @@ struct LoginView: View {
                 .contentShape(Rectangle())
                 .padding(.horizontal, 24)
 
+                // MARK: - Microsoft Button
+                Button {
+                    Task { await authVM.signInWithMicrosoft() }
+                } label: {
+                    HStack(spacing: 12) {
+                        Image("Microsoft_Logo")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 20, height: 20)
+                        Text("Continue with Microsoft")
+                            .font(.body)
+                            .fontWeight(.semibold)
+                            .foregroundColor(.primary)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 14)
+                    .background(Color(.systemBackground))
+                    .cornerRadius(12)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(Color.gray.opacity(0.2), lineWidth: 1)
+                    )
+                    .shadow(color: Color.black.opacity(0.05), radius: 3, x: 0, y: 2)
+                }
+                .contentShape(Rectangle())
+                .padding(.horizontal, 24)
+
                 // MARK: - Face ID / Touch ID Button
                 Button {
                     Task { await authVM.signInWithBiometrics() }
@@ -159,36 +186,38 @@ struct LoginView: View {
                     .foregroundColor(.blue)
                 }
                 .padding(.bottom, 20)
+
+                #if DEBUG
+                VStack(spacing: 12) {
+                    Text("Dev Tools")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+
+                    HStack(spacing: 12) {
+                        Button("Login as User") { authVM.loginAsUser() }
+                            .font(.caption)
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 8)
+                            .background(Color.blue.opacity(0.1))
+                            .foregroundColor(.blue)
+                            .cornerRadius(8)
+
+                        Button("Login as Manager") { authVM.loginAsGerente() }
+                            .font(.caption)
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 8)
+                            .background(Color.orange.opacity(0.1))
+                            .foregroundColor(.orange)
+                            .cornerRadius(8)
+                    }
+                }
+                .padding(.top, 20)
+                #endif
+            }
+            .padding(.top, 40)
             }
             .navigationBarHidden(true)
         }
-
-        #if DEBUG
-        VStack(spacing: 12) {
-            Text("Dev Tools")
-                .font(.caption)
-                .foregroundColor(.secondary)
-
-            HStack(spacing: 12) {
-                Button("Login as User") { authVM.loginAsUser() }
-                    .font(.caption)
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 8)
-                    .background(Color.blue.opacity(0.1))
-                    .foregroundColor(.blue)
-                    .cornerRadius(8)
-
-                Button("Login as Manager") { authVM.loginAsGerente() }
-                    .font(.caption)
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 8)
-                    .background(Color.orange.opacity(0.1))
-                    .foregroundColor(.orange)
-                    .cornerRadius(8)
-            }
-        }
-        .padding(.top, 20)
-        #endif
     }
 }
 

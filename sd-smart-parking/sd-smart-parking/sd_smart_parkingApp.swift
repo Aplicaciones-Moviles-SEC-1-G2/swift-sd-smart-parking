@@ -27,6 +27,7 @@ struct sd_smart_parkingApp: App {
         WindowGroup {
             ContentView()
                 .environmentObject(navigationManager)
+                .preferredColorScheme(.light)
         }
     }
 }

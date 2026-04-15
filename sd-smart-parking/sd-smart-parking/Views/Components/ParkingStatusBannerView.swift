@@ -84,17 +84,17 @@ struct ClosingSoonBannerView: View {
 }
 
 #Preview("Peak") {
-    ParkingStatusBannerView(demandLevel: .peak, countdown: "1h 30m para horario normal")
+    ParkingStatusBannerView(demandLevel: .peak, countdown: "1h 30m until normal hours")
         .padding()
 }
 
 #Preview("Valley") {
-    ParkingStatusBannerView(demandLevel: .valley, countdown: "2h 0m para cierre")
+    ParkingStatusBannerView(demandLevel: .valley, countdown: "2h 0m until closing")
         .padding()
 }
 
 #Preview("Normal") {
-    ParkingStatusBannerView(demandLevel: .normal, countdown: "45 min para horas pico")
+    ParkingStatusBannerView(demandLevel: .normal, countdown: "45 min until peak hours")
         .padding()
 }
 

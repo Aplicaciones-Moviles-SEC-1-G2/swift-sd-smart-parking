@@ -9,6 +9,7 @@ struct ParkingClosedCardView: View {
     let opensAtHour: Int
     let now: Date
     @Binding var selectedTab: Int
+    @Binding var showTripPlanner: Bool
 
     private var opensTomorrow: Bool {
         let currentHour = Calendar.current.component(.hour, from: now)
@@ -17,9 +18,9 @@ struct ParkingClosedCardView: View {
 
     private var opensLabel: String {
         if opensTomorrow {
-            return "Abre mañana a las \(opensAtHour):00"
+            return "Opens tomorrow at \(opensAtHour):00"
         }
-        return "Abre hoy a las \(opensAtHour):00"
+        return "Opens today at \(opensAtHour):00"
     }
 
     private var countdown: String {
@@ -38,9 +39,9 @@ struct ParkingClosedCardView: View {
         let mins = minutesUntilOpen % 60
 
         if hours > 0 {
-            return "Abre en \(hours)h \(mins)m"
+            return "Opens in \(hours)h \(mins)m"
         }
-        return "Abre en \(mins)m"
+        return "Opens in \(mins)m"
     }
 
     var body: some View {
@@ -49,7 +50,7 @@ struct ParkingClosedCardView: View {
                 .font(.system(size: 48))
                 .foregroundColor(.gray)
 
-            Text("Estacionamiento Cerrado")
+            Text("Parking Closed")
                 .font(.system(size: 24, weight: .bold))
 
             Text(opensLabel)
@@ -86,6 +87,18 @@ struct ParkingClosedCardView: View {
                                 .stroke(Color.blue, lineWidth: 2)
                         )
                 }
+
+                Button(action: { showTripPlanner = true }) {
+                    Label("Plan Trip", systemImage: "calendar.badge.clock")
+                        .font(.headline)
+                        .foregroundColor(.orange)
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(Color.orange, lineWidth: 2)
+                        )
+                }
             }
         }
         .padding(24)
@@ -97,5 +110,5 @@ struct ParkingClosedCardView: View {
 }
 
 #Preview("Opens Tomorrow") {
-    ParkingClosedCardView(opensAtHour: 6, now: Date(), selectedTab: .constant(0))
+    ParkingClosedCardView(opensAtHour: 6, now: Date(), selectedTab: .constant(0), showTripPlanner: .constant(false))
 }
