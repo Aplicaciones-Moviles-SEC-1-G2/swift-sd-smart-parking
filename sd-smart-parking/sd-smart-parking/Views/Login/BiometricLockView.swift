@@ -8,7 +8,7 @@ import LocalAuthentication
 
 struct BiometricLockView: View {
     @EnvironmentObject var authVM: AuthViewModel
-
+    @EnvironmentObject var userRepo: UserRepository
     private var biometricIcon: String {
         switch authVM.biometricType {
         case .faceID: return "faceid"
@@ -69,7 +69,7 @@ struct BiometricLockView: View {
                 Button("Use Password Instead") {
                     authVM.biometricsEnabled = false
                     authVM.requiresBiometricUnlock = false
-                    authVM.signOut()
+                    authVM.signOut(userRepo: userRepo  )
                 }
                 .font(.subheadline)
                 .foregroundColor(.secondary)
