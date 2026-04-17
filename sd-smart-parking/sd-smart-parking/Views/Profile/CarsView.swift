@@ -8,6 +8,7 @@ import SwiftUI
 
 struct CarsView: View {
     @EnvironmentObject var authVM: AuthViewModel
+    @EnvironmentObject var userRepo: UserRepository
     @State private var showingAddCar = false
     @State private var newName = ""
     @State private var newPlate = ""
@@ -15,7 +16,7 @@ struct CarsView: View {
     var body: some View {
         ScrollView {
             // Check if user exists and has cars
-            if let user = authVM.currentUser, !user.cars.isEmpty {
+            if let user = userRepo.currentUser, !user.cars.isEmpty {
                 VStack(spacing: 16) {
                     ForEach(user.cars) { car in
                         CarCard(car: car)
@@ -59,10 +60,12 @@ struct CarsView: View {
                     ToolbarItem(placement: .confirmationAction) {
                         Button("Add") {
                             Task {
-                                await authVM.addCar(name: newName, plate: newPlate)
-                                        newName = ""
-                                        newPlate = ""
-                                        showingAddCar = false
+                                userRepo.addCar(name: newName, plate: newPlate)
+                                    
+                                    // 2. Limpiamos la UI inmediatamente
+                                    newName = ""
+                                    newPlate = ""
+                                    showingAddCar = false
                             }
                             
                         }

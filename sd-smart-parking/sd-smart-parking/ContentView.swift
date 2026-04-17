@@ -10,28 +10,64 @@ import SwiftUI
 struct ContentView: View {
     @StateObject private var authVM = AuthViewModel()
     @StateObject private var parkingVM = ParkingViewModel()
+    @StateObject var userRepo = UserRepository()
+    
     @State private var selectedTab: Int = 0
     @State private var scrollOffset: CGFloat = 0
     
     var body: some View {
-        Group {
-            if authVM.requiresBiometricUnlock {
-                BiometricLockView()
-            } else if authVM.isLoggedIn {
-                if authVM.isGerente {
-                    GerenteTabView()
+        ZStack(alignment: .top) { // ZStack para permitir el banner flotante
+            Group {
+                if authVM.requiresBiometricUnlock {
+                    BiometricLockView()
+                } else if authVM.isLoggedIn {
+                    if authVM.isGerente {
+                        GerenteTabView()
+                    } else {
+                        UsuarioTabView(selectedTab: $selectedTab, scrollOffset: $scrollOffset)
+                    }
                 } else {
-                    UsuarioTabView(selectedTab: $selectedTab, scrollOffset: $scrollOffset)
+                    LoginView()
                 }
-            } else {
-                LoginView()
+            }
+            
+            // EL BANNER GLOBAL: Solo se muestra si isLoggedIn Y userRepo detecta offline
+            if authVM.isLoggedIn && userRepo.isOffline {
+                ConnectionBannerView()
+                    .transition(.move(edge: .top).combined(with: .opacity))
+                    .zIndex(1) // Asegura que esté por encima de todo
             }
         }
+        .animation(.spring(), value: userRepo.isOffline) // Animación suave al aparecer/desaparecer
         .environmentObject(authVM)
         .environmentObject(parkingVM)
+        .environmentObject(userRepo) // Inyectamos el repo para que cualquier vista acceda a los carros
         .task {
-            await parkingVM.generateSpotsIfEmpty()
+                    await parkingVM.generateSpotsIfEmpty()
+                    userRepo.loadUser()
+                }
+                // ESTA ES LA PIEZA QUE FALTABA
+        .onChange(of: authVM.currentUser?.id) { oldValue, newValue in
+            // Si newValue no es nil, significa que hay un ID válido
+            if let user = authVM.currentUser {
+                print("🔗 Conectando UserRepository con el ID: \(user.id)")
+                userRepo.currentUser = user
+                
+                // Opcional: Cargar los carros específicos de este usuario
+                userRepo.loadUser()
+            }
         }
+    }
+}
+
+struct ConnectionBannerView: View {
+    var body: some View {
+        Text("Offline Mode")
+            .font(.caption)
+            .padding(8)
+            .frame(maxWidth: .infinity)
+            .background(Color.orange)
+            .foregroundColor(.white)
     }
 }
 #Preview {

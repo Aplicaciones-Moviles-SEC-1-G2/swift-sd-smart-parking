@@ -13,6 +13,7 @@ struct ProfileView: View {
     @EnvironmentObject var authVM: AuthViewModel
     @State private var isEditing = false
     @EnvironmentObject var parkingVM: ParkingViewModel
+    @EnvironmentObject var userRepo: UserRepository
     //let user: User
     @State private var now = Date()
         
@@ -87,7 +88,7 @@ struct ProfileView: View {
 
                 // 3. Logout
                 Button(role: .destructive) {
-                    authVM.signOut()
+                    authVM.signOut(userRepo: userRepo  )
                 } label: {
                     HStack {
                         Image(systemName: "rectangle.portrait.and.arrow.right")

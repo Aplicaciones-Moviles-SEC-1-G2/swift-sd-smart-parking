@@ -7,7 +7,8 @@
 import SwiftUI
 
 struct EditProfileView: View {
-    @EnvironmentObject var authVM: AuthViewModel
+    // 1. Inyectamos el Repositorio
+    @EnvironmentObject var userRepo: UserRepository
     @Environment(\.dismiss) var dismiss
     
     @State private var name: String = ""
@@ -25,8 +26,8 @@ struct EditProfileView: View {
             }
             .navigationTitle("Edit Profile")
             .onAppear {
-                // Populate fields with current data
-                if let user = authVM.currentUser {
+                // 2. Cargamos los datos desde el repositorio
+                if let user = userRepo.currentUser {
                     name = user.name
                     email = user.email
                 }
@@ -37,9 +38,8 @@ struct EditProfileView: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
-                        Task {
-                            await authVM.updateProfile(newName: name, newEmail: email)
-                        }
+                        // 3. Llamada al Repositorio (maneja lógica offline/online)
+                        userRepo.updateProfile(newName: name, newEmail: email)
                         dismiss()
                     }
                     .bold()

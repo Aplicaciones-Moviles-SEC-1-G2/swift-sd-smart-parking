@@ -328,20 +328,29 @@ class AuthViewModel: ObservableObject {
     // MARK: - Sign Out
 
     @MainActor
-    func signOut() {
+    func signOut(userRepo: UserRepository) { // Pasamos el repo como parámetro
         let ctx = LAContext()
         var err: NSError?
         let hasBiometrics = ctx.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &err)
 
         if hasBiometrics && biometricsEnabled {
-            // Soft logout: keep Firebase session alive so Face ID can restore it
+            // --- SOFT LOGOUT ---
+            // Mantenemos la sesión de Firebase y el JSON local
+            // para que la entrada con Face ID sea instantánea.
             _lastGerente = isGerente
             isLoggedIn = false
             requiresBiometricUnlock = true
             errorMessage = nil
         } else {
+            // --- HARD LOGOUT ---
+            // 1. Limpiamos Firebase y Google
             try? Auth.auth().signOut()
             GIDSignIn.sharedInstance.signOut()
+            
+            // 2. Limpiamos el caché físico y la memoria del Repo
+            userRepo.clearUserData()
+            
+            // 3. Limpiamos el estado del AuthViewModel
             isLoggedIn = false
             isGerente = false
             currentUser = nil
@@ -350,46 +359,12 @@ class AuthViewModel: ObservableObject {
             errorMessage = nil
         }
     }
-
     // Stores the last role so biometric re-login can restore it in dev mode
     private var _lastGerente: Bool = false
 
-    // MARK: - Add Car
+    
 
-    func addCar(name: String, plate: String) async {
-        guard let uid = Auth.auth().currentUser?.uid,
-              var user = currentUser else { return }
-
-        let newCar = Car(id: UUID(), plate: plate, UserID: user.id, name: name)
-        user = User(id: user.id, name: user.name, email: user.email, password: "", cars: user.cars + [newCar])
-
-        let carsData = user.cars.map { ["plate": $0.plate, "name": $0.name] }
-
-        do {
-            try await db.collection("users").document(uid).updateData(["cars": carsData])
-            await MainActor.run { self.currentUser = user }
-        } catch {
-            await MainActor.run { self.errorMessage = "Error saving car." }
-        }
-    }
-
-    // MARK: - Update Profile
-
-    func updateProfile(newName: String, newEmail: String) async {
-        guard let uid = Auth.auth().currentUser?.uid,
-              let current = currentUser else { return }
-
-        do {
-            try await db.collection("users").document(uid).updateData([
-                "name": newName,
-                "email": newEmail
-            ])
-            let updatedUser = User(id: current.id, name: newName, email: newEmail, password: "", cars: current.cars)
-            await MainActor.run { self.currentUser = updatedUser }
-        } catch {
-            await MainActor.run { self.errorMessage = "Error updating profile." }
-        }
-    }
+    
 
     // MARK: - Error messages
 
