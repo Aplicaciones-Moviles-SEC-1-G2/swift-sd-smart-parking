@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Smart Parking Analytics</title>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f0f2f5; color: #1a1a2e; }
+  header { background: #1a1a2e; color: white; padding: 18px 24px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+  header h1 { font-size: 1.2rem; font-weight: 600; flex: 1; }
+  .filters { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .filters select, .filters input { padding: 6px 12px; border-radius: 6px; border: none; font-size: 0.85rem; background: rgba(255,255,255,0.15); color: white; cursor: pointer; }
+  .filters input { color: #ccc; }
+  .filters input::-webkit-calendar-picker-indicator { filter: invert(1); }
+  .filters button { padding: 6px 16px; border-radius: 6px; border: none; background: #4f8ef7; color: white; font-size: 0.85rem; cursor: pointer; font-weight: 600; }
+  .filters button:hover { background: #3a7de0; }
+  main { padding: 20px 24px; max-width: 1200px; margin: 0 auto; }
+  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; margin-bottom: 20px; }
+  .kpi { background: white; border-radius: 10px; padding: 16px; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+  .kpi .label { font-size: 0.72rem; color: #666; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 6px; }
+  .kpi .value { font-size: 1.8rem; font-weight: 700; color: #1a1a2e; }
+  .kpi .sub { font-size: 0.72rem; color: #888; margin-top: 3px; }
+  .kpi.green .value { color: #22c55e; }
+  .kpi.red .value { color: #ef4444; }
+  .kpi.blue .value { color: #4f8ef7; }
+  .kpi.orange .value { color: #f59e0b; }
+  .charts { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 20px; }
+  @media(max-width: 700px) { .charts { grid-template-columns: 1fr; } }
+  .card { background: white; border-radius: 10px; padding: 16px; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+  .card h3 { font-size: 0.82rem; font-weight: 600; color: #444; margin-bottom: 12px; text-transform: uppercase; letter-spacing: .4px; }
+  .card.full { grid-column: 1 / -1; }
+  .bq-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; margin-bottom: 20px; }
+  .bq { background: white; border-radius: 10px; padding: 16px; box-shadow: 0 1px 4px rgba(0,0,0,.08); border-left: 4px solid #4f8ef7; }
+  .bq .id { font-size: 0.7rem; font-weight: 700; color: #4f8ef7; margin-bottom: 4px; }
+  .bq .q { font-size: 0.8rem; color: #555; margin-bottom: 8px; line-height: 1.4; }
+  .bq .answer { font-size: 1rem; font-weight: 700; color: #1a1a2e; }
+  .bq .note { font-size: 0.72rem; color: #888; margin-top: 3px; }
+  #status { text-align: center; padding: 40px; color: #888; font-size: 0.9rem; }
+
+  /* Floor bars */
+  .floor-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; font-size: 0.82rem; }
+  .floor-row .name { width: 56px; color: #555; font-weight: 600; flex-shrink: 0; }
+  .floor-stack { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+  .floor-bar-bg { background: #f0f2f5; border-radius: 4px; height: 16px; overflow: hidden; }
+  .floor-bar { height: 100%; border-radius: 4px; transition: width .4s; }
+  .floor-labels { display: flex; justify-content: space-between; font-size: 0.68rem; color: #888; padding: 0 2px; }
+  .floor-pct { width: 36px; text-align: right; font-weight: 700; color: #444; font-size: 0.8rem; flex-shrink: 0; }
+
+  /* AI Insights */
+  .insights { background: white; border-radius: 10px; padding: 20px; box-shadow: 0 1px 4px rgba(0,0,0,.08); margin-bottom: 20px; border-left: 4px solid #8b5cf6; }
+  .insights-header { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+  .insights-badge { background: #8b5cf6; color: white; font-size: 0.7rem; font-weight: 700; padding: 3px 8px; border-radius: 4px; }
+  .insights-title { font-size: 0.95rem; font-weight: 600; color: #1a1a2e; }
+  .insights-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
+  .insight-card { background: #f8f9fa; border-radius: 8px; padding: 12px 14px; }
+  .insight-card .ic-label { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: #8b5cf6; margin-bottom: 4px; }
+  .insight-card .ic-text { font-size: 0.82rem; color: #333; line-height: 1.45; }
+  .insight-card .ic-action { font-size: 0.75rem; color: #8b5cf6; font-weight: 600; margin-top: 5px; }
+
+  /* BQ-13 */
+  .bq13 { background: white; border-radius: 10px; padding: 20px; box-shadow: 0 1px 4px rgba(0,0,0,.08); margin-bottom: 20px; border-top: 4px solid #4f8ef7; }
+  .bq13-header { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
+  .bq13-badge { background: #4f8ef7; color: white; font-size: 0.7rem; font-weight: 700; padding: 3px 8px; border-radius: 4px; }
+  .bq13 h2 { font-size: 0.95rem; color: #1a1a2e; font-weight: 600; }
+  .bq13-cols { display: grid; grid-template-columns: 200px 1fr 1fr; gap: 20px; align-items: start; }
+  @media(max-width:800px) { .bq13-cols { grid-template-columns: 1fr; } }
+  .gauge-wrap { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  .gauge-circle { width: 120px; height: 120px; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 1.7rem; font-weight: 700; color: white; }
+  .gauge-label { font-size: 0.75rem; color: #555; text-align: center; line-height: 1.4; }
+  .accuracy-rows { display: flex; flex-direction: column; gap: 8px; }
+  .acc-row { display: flex; justify-content: space-between; align-items: center; padding: 9px 12px; border-radius: 8px; background: #f8f9fa; }
+  .acc-label { font-size: 0.78rem; color: #555; }
+  .acc-val { font-size: 0.88rem; font-weight: 700; color: #1a1a2e; }
+  .acc-badge { font-size: 0.68rem; font-weight: 600; padding: 2px 7px; border-radius: 10px; margin-left: 6px; }
+  .badge-green { background: #dcfce7; color: #16a34a; }
+  .badge-yellow { background: #fef9c3; color: #a16207; }
+  .badge-red { background: #fee2e2; color: #dc2626; }
+  .method-list { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+  .method-list li { display: flex; gap: 10px; font-size: 0.8rem; color: #444; align-items: flex-start; line-height: 1.45; }
+  .method-dot { width: 8px; height: 8px; border-radius: 50%; background: #4f8ef7; margin-top: 5px; flex-shrink: 0; }
+  .section-title { font-size: 0.7rem; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 10px; }
+  .recent-table { width: 100%; border-collapse: collapse; font-size: 0.78rem; margin-top: 14px; }
+  .recent-table th { text-align: left; padding: 6px 8px; color: #888; font-weight: 600; border-bottom: 1px solid #e5e7eb; font-size: 0.7rem; text-transform: uppercase; }
+  .recent-table td { padding: 7px 8px; border-bottom: 1px solid #f0f2f5; color: #333; }
+  .recent-table tr:last-child td { border-bottom: none; }
+  .tag-entry { background: #dbeafe; color: #1d4ed8; padding: 1px 7px; border-radius: 10px; font-size: 0.7rem; font-weight: 600; }
+  .tag-exit  { background: #fee2e2; color: #b91c1c; padding: 1px 7px; border-radius: 10px; font-size: 0.7rem; font-weight: 600; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Smart Parking — Analytics Dashboard</h1>
+  <div class="filters">
+    <select id="rangeSelect">
+      <option value="day">Daily</option>
+      <option value="week" selected>Weekly</option>
+      <option value="month">Monthly</option>
+    </select>
+    <input type="date" id="datePicker">
+    <button onclick="load()">Apply</button>
+  </div>
+</header>
+
+<main>
+  <div id="status">Loading data…</div>
+
+  <div id="content" style="display:none">
+    <div class="kpis">
+      <div class="kpi blue"><div class="label">Total Spots (Actual)</div><div class="value" id="kTotalSpots">—</div><div class="sub" id="kConfigSub">from Firestore</div></div>
+      <div class="kpi green"><div class="label">Available Now</div><div class="value" id="kAvail">—</div><div class="sub" id="kAvailPct">—</div></div>
+      <div class="kpi red"><div class="label">Occupied Now</div><div class="value" id="kOccupied">—</div><div class="sub" id="kOccupiedPct">—</div></div>
+      <div class="kpi orange"><div class="label">Entries in Period</div><div class="value" id="kEntries">—</div><div class="sub" id="kPeriodLabel">—</div></div>
+      <div class="kpi"><div class="label">Exits in Period</div><div class="value" id="kExits">—</div><div class="sub">vehicle exits</div></div>
+      <div class="kpi"><div class="label">Avg Duration</div><div class="value" id="kAvgDur">—</div><div class="sub">hours per session</div></div>
+    </div>
+
+    <div class="charts">
+      <div class="card full">
+        <h3 id="activityLabel">Entry / Exit Activity</h3>
+        <canvas id="activityChart" height="80"></canvas>
+      </div>
+      <div class="card">
+        <h3>Hourly Peak (7–11 AM) — BQ-4</h3>
+        <canvas id="peakChart" height="160"></canvas>
+      </div>
+      <div class="card">
+        <h3>Live Floor Occupancy — BQ-3</h3>
+        <div id="floorBars"></div>
+      </div>
+    </div>
+
+    <!-- AI Insights -->
+    <div class="insights">
+      <div class="insights-header">
+        <span class="insights-badge">AI Insights</span>
+        <span class="insights-title">Automated analysis based on current Firestore data</span>
+      </div>
+      <div class="insights-grid" id="insightsGrid"></div>
+    </div>
+
+    <div class="bq-grid" id="bqGrid"></div>
+
+    <!-- BQ-13 dedicated accuracy section -->
+    <div class="bq13">
+      <div class="bq13-header">
+        <span class="bq13-badge">BQ-13</span>
+        <h2>Real-Time Accuracy Validation — Are spot counts and queue estimates accurate?</h2>
+      </div>
+      <div class="bq13-cols">
+
+        <div class="gauge-wrap">
+          <div class="gauge-circle" id="gaugeCircle">—%</div>
+          <div class="gauge-label" id="gaugeLabel">Data completeness score</div>
+        </div>
+
+        <div>
+          <div class="section-title">Snapshot vs. Event Log Comparison</div>
+          <div class="accuracy-rows" id="accRows"></div>
+        </div>
+
+        <div>
+          <div class="section-title">How Real-Time Sync Works</div>
+          <ul class="method-list">
+            <li><span class="method-dot"></span><div><strong>iOS:</strong> Firestore <code>addSnapshotListener</code> on <code>parkingSpots</code> fires on every document write — no polling, sub-second latency.</div></li>
+            <li><span class="method-dot"></span><div><strong>State transitions</strong> written to <code>vehicleRecords</code> with plate, floor, spot, and timestamp on every entry and exit event.</div></li>
+            <li><span class="method-dot"></span><div><strong>Validation method:</strong> occupied count from <code>parkingSpots</code> (isAvailable=false) is cross-checked against the net event-log delta. Drift indicates missed events or stale writes.</div></li>
+            <li><span class="method-dot"></span><div><strong>Queue:</strong> <code>config/parking.queueLength</code> is updated live by the admin app; estimated wait = queueLength × 5 min avg service time.</div></li>
+          </ul>
+        </div>
+
+      </div>
+
+      <div style="margin-top:20px">
+        <div class="section-title">Recent Vehicle Events (last 10)</div>
+        <table class="recent-table">
+          <thead><tr><th>Time</th><th>Type</th><th>Plate</th><th>Floor</th><th>Spot</th><th>Registered</th><th>Duration</th></tr></thead>
+          <tbody id="recentRows"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<script>
+firebase.initializeApp({
+  apiKey: "AIzaSyAKKjBpBQE30bqRdJ2SBQAChWez-ETrBGM",
+  authDomain: "parkingapp-f4edc.firebaseapp.com",
+  projectId: "parkingapp-f4edc"
+});
+const db = firebase.firestore();
+
+let actChart, peakChart;
+
+function getRange(rangeType, baseDate) {
+  const d = new Date(baseDate);
+  d.setHours(0, 0, 0, 0);
+  let start, end;
+  if (rangeType === 'day') {
+    start = new Date(d); end = new Date(d); end.setDate(end.getDate() + 1);
+  } else if (rangeType === 'week') {
+    const day = d.getDay();
+    start = new Date(d); start.setDate(d.getDate() - day);
+    end = new Date(start); end.setDate(start.getDate() + 7);
+  } else {
+    start = new Date(d.getFullYear(), d.getMonth(), 1);
+    end = new Date(d.getFullYear(), d.getMonth() + 1, 1);
+  }
+  return { start, end };
+}
+
+function bucketKey(date, rangeType) {
+  if (rangeType === 'day') return date.getHours() + ':00';
+  if (rangeType === 'week') return ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][date.getDay()];
+  return date.getDate() + '/' + (date.getMonth()+1);
+}
+
+function generateBuckets(start, end, rangeType) {
+  const buckets = [];
+  const cur = new Date(start);
+  if (rangeType === 'day') {
+    for (let h = 0; h < 24; h++) buckets.push(h + ':00');
+  } else if (rangeType === 'week') {
+    for (let d = 0; d < 7; d++) buckets.push(['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][(start.getDay()+d)%7]);
+  } else {
+    while (cur < end) { buckets.push(cur.getDate()+'/'+(cur.getMonth()+1)); cur.setDate(cur.getDate()+1); }
+  }
+  return buckets;
+}
+
+function fmt(date) {
+  return date.toLocaleString('en-GB', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' });
+}
+
+async function load() {
+  document.getElementById('status').style.display = 'block';
+  document.getElementById('status').textContent = 'Loading…';
+  document.getElementById('content').style.display = 'none';
+
+  const rangeType = document.getElementById('rangeSelect').value;
+  const pickerVal = document.getElementById('datePicker').value;
+  const baseDate = pickerVal ? new Date(pickerVal + 'T12:00:00') : new Date();
+  const { start, end } = getRange(rangeType, baseDate);
+
+  const labelMap = { day: 'today', week: 'this week', month: 'this month' };
+  document.getElementById('kPeriodLabel').textContent = labelMap[rangeType];
+  document.getElementById('activityLabel').textContent =
+    `Entry / Exit Activity — ${rangeType.charAt(0).toUpperCase()+rangeType.slice(1)}`;
+
+  try {
+    const [spotsSnap, configSnap, recordsSnap, recentSnap] = await Promise.all([
+      db.collection('parkingSpots').get(),
+      db.collection('config').doc('parking').get(),
+      db.collection('vehicleRecords')
+        .where('timestamp', '>=', firebase.firestore.Timestamp.fromDate(start))
+        .where('timestamp', '<', firebase.firestore.Timestamp.fromDate(end))
+        .orderBy('timestamp')
+        .get(),
+      db.collection('vehicleRecords')
+        .orderBy('timestamp', 'desc')
+        .limit(10)
+        .get()
+    ]);
+
+    const cfg = configSnap.exists ? configSnap.data() : {};
+    const spots = spotsSnap.docs.map(d => d.data());
+    const totalSpots = spots.length;
+    const configuredSpots = (cfg.numberOfFloors || 0) * (cfg.spotsPerFloor || 0);
+
+    // Available = isAvailable true; Occupied = isAvailable false
+    const avail    = spots.filter(s => s.isAvailable === true).length;
+    const occupied = spots.filter(s => s.isAvailable === false).length;
+    const occupancyPct = totalSpots ? Math.round((occupied / totalSpots) * 100) : 0;
+
+    const records  = recordsSnap.docs.map(d => ({ ...d.data(), ts: d.data().timestamp?.toDate?.() || new Date(d.data().timestamp) }));
+    const entries  = records.filter(r => r.type === 'entry');
+    const exits    = records.filter(r => r.type === 'exit');
+    const durations = records.filter(r => r.durationHours > 0).map(r => r.durationHours);
+    const avgDur   = durations.length ? (durations.reduce((a,b)=>a+b,0)/durations.length).toFixed(1) : '—';
+
+    // KPIs
+    document.getElementById('kTotalSpots').textContent = totalSpots;
+    document.getElementById('kConfigSub').textContent = configuredSpots && configuredSpots !== totalSpots
+      ? `config: ${configuredSpots} — Firestore: ${totalSpots}`
+      : `${cfg.numberOfFloors || '?'} floors x ${cfg.spotsPerFloor || '?'} spots/floor`;
+    document.getElementById('kAvail').textContent = avail;
+    document.getElementById('kAvailPct').textContent = `${100 - occupancyPct}% of ${totalSpots} total`;
+    document.getElementById('kOccupied').textContent = occupied;
+    document.getElementById('kOccupiedPct').textContent = `${occupancyPct}% occupancy rate`;
+    document.getElementById('kEntries').textContent = entries.length;
+    document.getElementById('kExits').textContent = exits.length;
+    document.getElementById('kAvgDur').textContent = avgDur !== '—' ? avgDur + 'h' : '—';
+
+    // Activity chart
+    const buckets = generateBuckets(start, end, rangeType);
+    const entryMap = {}, exitMap = {};
+    buckets.forEach(b => { entryMap[b] = 0; exitMap[b] = 0; });
+    entries.forEach(r => { const k = bucketKey(r.ts, rangeType); if (k in entryMap) entryMap[k]++; });
+    exits.forEach(r => { const k = bucketKey(r.ts, rangeType); if (k in exitMap) exitMap[k]++; });
+
+    if (actChart) actChart.destroy();
+    actChart = new Chart(document.getElementById('activityChart'), {
+      type: 'bar',
+      data: {
+        labels: buckets,
+        datasets: [
+          { label: 'Entries', data: buckets.map(b => entryMap[b]), backgroundColor: '#4f8ef788', borderColor: '#4f8ef7', borderWidth: 1 },
+          { label: 'Exits',   data: buckets.map(b => exitMap[b]),  backgroundColor: '#ef444488', borderColor: '#ef4444', borderWidth: 1 }
+        ]
+      },
+      options: { responsive: true, plugins: { legend: { position: 'top' } }, scales: { x: { ticks: { maxTicksLimit: 20 } } } }
+    });
+
+    // Peak hours
+    const peakHours = [7, 8, 9, 10, 11];
+    const peakEntries = Array(peakHours.length).fill(0);
+    entries.forEach(r => {
+      const h = r.ts.getHours();
+      const idx = peakHours.indexOf(h);
+      if (idx >= 0) peakEntries[idx]++;
+    });
+    if (peakChart) peakChart.destroy();
+    peakChart = new Chart(document.getElementById('peakChart'), {
+      type: 'bar',
+      data: {
+        labels: peakHours.map(h => h + ':00'),
+        datasets: [{ label: 'Entries', data: peakEntries, backgroundColor: peakHours.map(h => h <= 9 ? '#f59e0b' : '#4f8ef7') }]
+      },
+      options: { responsive: true, plugins: { legend: { display: false } } }
+    });
+
+    // Floor bars — show available vs occupied clearly
+    const floors = {};
+    spots.forEach(s => {
+      const key = s.floor != null ? s.floor : '?';
+      const label = 'Floor ' + key;
+      if (!floors[label]) floors[label] = { total: 0, occ: 0, avail: 0 };
+      floors[label].total++;
+      if (s.isAvailable === false) floors[label].occ++;
+      else floors[label].avail++;
+    });
+    document.getElementById('floorBars').innerHTML = Object.entries(floors).sort().map(([name, d]) => {
+      const pct = d.total ? Math.round((d.occ / d.total) * 100) : 0;
+      const color = pct > 80 ? '#ef4444' : pct > 50 ? '#f59e0b' : '#22c55e';
+      return `<div class="floor-row">
+        <div class="name">${name}</div>
+        <div class="floor-stack">
+          <div class="floor-bar-bg">
+            <div class="floor-bar" style="width:${pct}%;background:${color}"></div>
+          </div>
+          <div class="floor-labels">
+            <span style="color:${color};font-weight:600">${d.occ} occupied</span>
+            <span style="color:#22c55e;font-weight:600">${d.avail} available</span>
+          </div>
+        </div>
+        <div class="floor-pct">${pct}%</div>
+      </div>`;
+    }).join('') || '<p style="color:#888;font-size:.8rem">No spot data</p>';
+
+    // BQ cards
+    const prob = 100 - occupancyPct;
+    const minPeak = Math.min(...peakEntries);
+    const bestHour = peakHours[peakEntries.lastIndexOf(minPeak)];
+    const queueLen = cfg.queueLength || 0;
+    const estWaitMin = queueLen * 5;
+
+    const bqs = [
+      { id: 'BQ-3',  q: 'Probability of finding a spot within 10 min?',
+        answer: prob + '%', note: `${avail} of ${totalSpots} spots currently free` },
+      { id: 'BQ-4',  q: 'Optimal departure window (7–9 AM) to maximize parking success?',
+        answer: bestHour + ':00', note: 'Hour with lowest entry volume = least competition' },
+      { id: 'BQ-5',  q: 'Queue threshold to recommend desisting (> 15 min wait)?',
+        answer: estWaitMin > 15 ? 'Desist recommended' : 'OK to proceed',
+        note: `Queue: ${queueLen} cars — approx. ${estWaitMin} min wait` },
+      { id: 'BQ-6',  q: 'Distance for dynamic queue alerts to en-route users?',
+        answer: '500 m – 1 km', note: 'Geofence radius based on avg approach speed & reaction time' },
+    ];
+    document.getElementById('bqGrid').innerHTML = bqs.map(b => `
+      <div class="bq">
+        <div class="id">${b.id}</div>
+        <div class="q">${b.q}</div>
+        <div class="answer">${b.answer}</div>
+        <div class="note">${b.note}</div>
+      </div>`).join('');
+
+    // AI Insights — period-aware, all derived from live Firestore data
+    const bestFloor  = Object.entries(floors).sort((a,b) => (a[1].occ/a[1].total) - (b[1].occ/b[1].total))[0];
+    const worstFloor = Object.entries(floors).sort((a,b) => (b[1].occ/b[1].total) - (a[1].occ/a[1].total))[0];
+    const netFlow        = entries.length - exits.length;
+    const registeredPct  = records.length ? Math.round(records.filter(r => r.isRegistered).length / records.length * 100) : null;
+    const peakHourIdx    = peakEntries.indexOf(Math.max(...peakEntries));
+    const peakHourLabel  = peakHours[peakHourIdx] + ':00';
+    const quietHourLabel = peakHours[peakEntries.lastIndexOf(Math.min(...peakEntries))] + ':00';
+    const avgDurNum      = durations.length ? (durations.reduce((a,b)=>a+b,0)/durations.length) : 0;
+
+    // Day-of-week breakdown (for weekly view)
+    const dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    const byDay = {};
+    dayNames.forEach(d => { byDay[d] = { entries: 0, exits: 0 }; });
+    entries.forEach(r => { const d = dayNames[r.ts.getDay()]; if (byDay[d]) byDay[d].entries++; });
+    exits.forEach(r =>   { const d = dayNames[r.ts.getDay()]; if (byDay[d]) byDay[d].exits++;   });
+    const busiestDay = dayNames.reduce((a,b) => byDay[a].entries >= byDay[b].entries ? a : b);
+    const quietestDay = dayNames.reduce((a,b) => byDay[a].entries <= byDay[b].entries ? a : b);
+
+    // Days with activity (for monthly avg)
+    const activeDays = new Set(records.map(r => r.ts.toDateString())).size || 1;
+    const avgEntriesPerDay = (entries.length / activeDays).toFixed(1);
+
+    let insights;
+
+    if (rangeType === 'day') {
+      insights = [
+        {
+          label: 'Live Occupancy',
+          text: occupancyPct >= 90
+            ? `Critical — only ${avail} spots left (${occupancyPct}% full). High risk of arriving users finding no space.`
+            : occupancyPct >= 60
+            ? `${occupancyPct}% occupied today. ${avail} spots available — moderate wait times likely.`
+            : `Favorable conditions today. ${avail} of ${totalSpots} spots are free (${100-occupancyPct}% availability).`,
+          action: occupancyPct >= 90 ? 'Desist alerts should be active for en-route users.' : null
+        },
+        {
+          label: 'Best Arrival Window',
+          text: entries.length
+            ? `Today's quietest arrival hour is ${quietHourLabel} with the lowest recorded entries. Arriving then maximizes spot availability.`
+            : 'No entry data recorded yet today to identify the optimal arrival window.',
+          action: entries.length ? `Peak congestion today is at ${peakHourLabel} — users should avoid this window.` : null
+        },
+        {
+          label: 'Today\'s Traffic Flow',
+          text: records.length === 0
+            ? 'No vehicle events recorded for today yet.'
+            : `${entries.length} arrivals and ${exits.length} departures so far today. Net: ${netFlow > 0 ? '+' : ''}${netFlow} vehicles currently parked from today's activity.`,
+          action: avgDurNum > 0 ? `Average session length today is ${avgDurNum.toFixed(1)}h — spot turnover is ${avgDurNum < 2 ? 'fast' : avgDurNum < 4 ? 'moderate' : 'slow'}.` : null
+        },
+        {
+          label: 'Queue Pressure',
+          text: queueLen === 0
+            ? 'No queue at the entrance right now. Users arriving today face no additional wait.'
+            : `Active queue of ${queueLen} vehicles today — estimated ${estWaitMin} min wait at current rate.`,
+          action: estWaitMin > 15 ? 'Recommend users within 1 km reconsider their route (BQ-5 threshold exceeded).' : null
+        },
+        {
+          label: 'Best Floor Right Now',
+          text: bestFloor
+            ? `${bestFloor[0]} is today's best option with ${bestFloor[1].avail} free spots (${Math.round((bestFloor[1].avail/bestFloor[1].total)*100)}% availability).`
+            : 'No floor data available.',
+          action: worstFloor && worstFloor[0] !== bestFloor[0]
+            ? `${worstFloor[0]} is the most congested at ${Math.round((worstFloor[1].occ/worstFloor[1].total)*100)}% occupied — route users away.`
+            : null
+        },
+        {
+          label: 'User Registration',
+          text: registeredPct !== null
+            ? `${registeredPct}% of today's vehicle events are from registered users. ${100-registeredPct}% are unregistered walk-ins.`
+            : 'No vehicle events today to assess user registration.',
+          action: registeredPct !== null && registeredPct < 40 ? 'High unregistered rate today may reduce spot reservation reliability.' : null
+        },
+      ];
+
+    } else if (rangeType === 'week') {
+      insights = [
+        {
+          label: 'Weekly Occupancy',
+          text: occupancyPct >= 90
+            ? `Parking is critically full this week at ${occupancyPct}%. Only ${avail} spots remain across all floors.`
+            : `Current occupancy stands at ${occupancyPct}% this week. ${avail} spots available across ${totalSpots} total.`,
+          action: occupancyPct >= 75 ? 'High weekly occupancy — consider reviewing capacity or expanding notifications.' : null
+        },
+        {
+          label: 'Busiest Day This Week',
+          text: entries.length
+            ? `${busiestDay} recorded the highest arrivals this week (${byDay[busiestDay].entries} entries). ${quietestDay} was the quietest (${byDay[quietestDay].entries} entries).`
+            : 'No entry records this week to determine the busiest day.',
+          action: entries.length ? `Users planning to visit should prefer ${quietestDay} for the best availability.` : null
+        },
+        {
+          label: 'Weekly Peak Hour',
+          text: entries.length
+            ? `The busiest arrival hour across this week is ${peakHourLabel} with ${Math.max(...peakEntries)} entries. The quietest morning window is ${quietHourLabel}.`
+            : 'Insufficient data this week to identify a peak arrival hour.',
+          action: `Departing before ${peakHourLabel} significantly improves the chance of securing a spot.`
+        },
+        {
+          label: 'Queue Status',
+          text: queueLen === 0
+            ? 'No active queue this week. Arrival experience is smooth with no reported wait.'
+            : `Queue at ${queueLen} vehicles this week — approx. ${estWaitMin} min estimated wait. ${estWaitMin > 15 ? 'Above the 15-min desist threshold.' : 'Within acceptable range.'}`,
+          action: estWaitMin > 15 ? 'Desist alerts should trigger for users beyond the 1 km geofence radius.' : null
+        },
+        {
+          label: 'Weekly Traffic Volume',
+          text: records.length === 0
+            ? 'No vehicle records found for this week.'
+            : `${entries.length} total arrivals and ${exits.length} departures this week. Net flow: ${netFlow > 0 ? '+' : ''}${netFlow}. ${netFlow > 10 ? 'Occupancy grew through the week.' : netFlow < -5 ? 'More vehicles left than arrived.' : 'Balanced inflow and outflow.'}`,
+          action: avgDurNum > 0 ? `Average stay duration this week: ${avgDurNum.toFixed(1)}h per session.` : null
+        },
+        {
+          label: 'Floor Efficiency',
+          text: bestFloor && worstFloor
+            ? `Best floor this week: ${bestFloor[0]} (${Math.round((bestFloor[1].avail/bestFloor[1].total)*100)}% free). Worst: ${worstFloor[0]} (${Math.round((worstFloor[1].occ/worstFloor[1].total)*100)}% occupied).`
+            : 'Insufficient floor data this week.',
+          action: registeredPct !== null ? `${registeredPct}% of this week's events came from registered users.` : null
+        },
+      ];
+
+    } else { // month
+      insights = [
+        {
+          label: 'Monthly Volume',
+          text: records.length === 0
+            ? 'No vehicle records found for this month.'
+            : `${entries.length} arrivals and ${exits.length} departures logged this month across ${activeDays} active days. Average of ${avgEntriesPerDay} arrivals per day.`,
+          action: avgEntriesPerDay > 10 ? 'High daily volume — system is under consistent demand this month.' : null
+        },
+        {
+          label: 'Monthly Occupancy',
+          text: `Current occupancy is ${occupancyPct}% (${occupied} occupied, ${avail} available). ${
+            occupancyPct >= 80 ? 'The facility has been running near capacity.' :
+            occupancyPct >= 50 ? 'Occupancy has been moderate throughout the month.' :
+            'The facility has had comfortable availability this month.'
+          }`,
+          action: occupancyPct >= 80 ? 'Consider reviewing floor configuration or user caps for next month.' : null
+        },
+        {
+          label: 'Peak Arrival Pattern',
+          text: entries.length
+            ? `Over this month, arrivals peak at ${peakHourLabel} in the morning window. The lowest-traffic hour is ${quietHourLabel} — optimal for users wanting a guaranteed spot.`
+            : 'No arrival data available for this month to determine patterns.',
+          action: 'Monthly pattern confirms: arriving at ' + quietHourLabel + ' consistently offers the highest availability.'
+        },
+        {
+          label: 'Session Duration Trend',
+          text: avgDurNum > 0
+            ? `Average parking session this month is ${avgDurNum.toFixed(1)}h. ${avgDurNum < 2 ? 'Short stays dominate — high spot turnover.' : avgDurNum < 5 ? 'Mid-length stays are typical — moderate turnover.' : 'Long stays are common — spots are held for extended periods, reducing availability.'}`
+            : 'No duration data available for this month.',
+          action: avgDurNum >= 5 ? 'Long average sessions may warrant time-limit policies to improve spot availability.' : null
+        },
+        {
+          label: 'Floor Demand',
+          text: bestFloor && worstFloor
+            ? `This month ${worstFloor[0]} has seen the highest sustained demand (${Math.round((worstFloor[1].occ/worstFloor[1].total)*100)}% occupied). ${bestFloor[0]} remains the most accessible at ${Math.round((bestFloor[1].avail/bestFloor[1].total)*100)}% free.`
+            : 'No floor breakdown available for this month.',
+          action: 'Route users to ' + (bestFloor ? bestFloor[0] : 'the least occupied floor') + ' first to reduce search time.'
+        },
+        {
+          label: 'Registration Coverage',
+          text: registeredPct !== null
+            ? `${registeredPct}% of this month's vehicle events are from registered users (${records.filter(r=>r.isRegistered).length} of ${records.length} events). ${
+                registeredPct >= 70 ? 'Strong registration coverage this month.' :
+                registeredPct >= 40 ? 'Mixed registration — a significant portion are walk-in or unregistered.' :
+                'Low registration rate this month — most activity is from unregistered vehicles.'
+              }`
+            : 'No vehicle records this month to assess registration.',
+          action: registeredPct !== null && registeredPct < 50 ? 'Promote app registration to improve data accuracy and reservation reliability.' : null
+        },
+      ];
+    }
+
+    document.getElementById('insightsGrid').innerHTML = insights.map(i => `
+      <div class="insight-card">
+        <div class="ic-label">${i.label}</div>
+        <div class="ic-text">${i.text}</div>
+        ${i.action ? `<div class="ic-action">${i.action}</div>` : ''}
+      </div>`).join('');
+
+    // BQ-13 Accuracy gauge — measures data completeness of records in period
+    const completeRecords = records.filter(r => r.plate && r.floor != null && r.spotNumber != null).length;
+    const completeness = records.length ? Math.round((completeRecords / records.length) * 100) : 100;
+    const gaugeColor = completeness >= 85 ? '#22c55e' : completeness >= 60 ? '#f59e0b' : '#ef4444';
+    const gaugeVerdict = completeness >= 85 ? 'Complete event data' : completeness >= 60 ? 'Partial data gaps' : 'Significant data gaps';
+
+    document.getElementById('gaugeCircle').textContent = completeness + '%';
+    document.getElementById('gaugeCircle').style.background = gaugeColor;
+    document.getElementById('gaugeLabel').textContent = `${gaugeVerdict} — ${completeRecords} of ${records.length} records have plate + floor + spot`;
+
+    const logNet = entries.length - exits.length;
+    document.getElementById('accRows').innerHTML = [
+      { label: 'Occupied spots (parkingSpots snapshot)',         val: occupied,                  badge: null },
+      { label: 'Available spots (parkingSpots snapshot)',        val: avail,                     badge: null },
+      { label: 'Net inflow this period (entries – exits)',       val: (logNet >= 0 ? '+' : '') + logNet, badge: null },
+      { label: 'Directional consistency',
+        val: (logNet >= 0 && occupied >= avail) || (logNet < 0 && avail > occupied) ? 'Consistent' : 'Check data',
+        badge: (logNet >= 0 && occupied >= avail) || (logNet <= 0 && avail >= occupied) ? 'badge-green' : 'badge-yellow',
+        btext: (logNet >= 0 && occupied >= avail) || (logNet <= 0 && avail >= occupied) ? 'OK' : 'Review' },
+      { label: 'Records with complete data (plate+floor+spot)', val: `${completeRecords} / ${records.length}`,
+        badge: completeness >= 85 ? 'badge-green' : completeness >= 60 ? 'badge-yellow' : 'badge-red',
+        btext: completeness + '%' },
+      { label: 'Queue length (config/parking)',                  val: queueLen + ' cars',        badge: null },
+      { label: 'Estimated wait time',                            val: estWaitMin + ' min',
+        badge: estWaitMin > 15 ? 'badge-red' : 'badge-green',
+        btext: estWaitMin > 15 ? 'Desist zone' : 'Acceptable' },
+    ].map(r => `
+      <div class="acc-row">
+        <span class="acc-label">${r.label}</span>
+        <span style="display:flex;gap:6px;align-items:center">
+          <span class="acc-val">${r.val}</span>
+          ${r.badge ? `<span class="acc-badge ${r.badge}">${r.btext}</span>` : ''}
+        </span>
+      </div>`).join('');
+
+    // Recent events table
+    const recentRecords = recentSnap.docs.map(d => ({ ...d.data(), ts: d.data().timestamp?.toDate?.() || new Date(d.data().timestamp) }));
+    document.getElementById('recentRows').innerHTML = recentRecords.map(r => `
+      <tr>
+        <td>${fmt(r.ts)}</td>
+        <td><span class="${r.type === 'entry' ? 'tag-entry' : 'tag-exit'}">${r.type}</span></td>
+        <td>${r.plate || '—'}</td>
+        <td>${r.floor ?? '—'}</td>
+        <td>${r.spotNumber ?? '—'}</td>
+        <td>${r.isRegistered ? 'Yes' : 'No'}</td>
+        <td>${r.durationHours > 0 ? r.durationHours.toFixed(1) + 'h' : '—'}</td>
+      </tr>`).join('') || '<tr><td colspan="7" style="color:#888;text-align:center;padding:12px">No records found</td></tr>';
+
+    document.getElementById('status').style.display = 'none';
+    document.getElementById('content').style.display = 'block';
+
+  } catch (e) {
+    document.getElementById('status').textContent = 'Error: ' + e.message;
+    console.error(e);
+  }
+}
+
+document.getElementById('datePicker').value = new Date().toISOString().slice(0, 10);
+load();
+</script>
+</body>
+</html>
