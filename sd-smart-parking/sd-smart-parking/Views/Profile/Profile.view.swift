@@ -75,7 +75,7 @@ struct ProfileView: View {
                                 Label("My Cars", systemImage: "car.fill")
                                 Spacer()
                                 // Dynamic badge showing number of cars
-                                Text("\(user.cars.count)")
+                                Text("\(user.cars.count())")
                                     .font(.caption)
                                     .padding(.horizontal, 8)
                                     .padding(.vertical, 2)
