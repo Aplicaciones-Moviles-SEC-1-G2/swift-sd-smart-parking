@@ -24,6 +24,7 @@ class UserRepository: ObservableObject {
     private var cancellables = Set<AnyCancellable>()
 
     init() {
+
             loadUser()
             setupNetworkObserver()
         }
@@ -65,6 +66,7 @@ class UserRepository: ObservableObject {
                 await self.uploadCarToFirestore(newCar)
             }
         }
+
 
     // MÉTODO: ACTUALIZAR PERFIL (Llamado desde el ViewModel)
     func updateProfile(newName: String, newEmail: String) {
@@ -194,3 +196,4 @@ class UserRepository: ObservableObject {
     
     
 }
+

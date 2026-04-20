@@ -11,8 +11,12 @@ struct User: Identifiable, Codable{
     let name: String
     let email: String
     let password: String
+
     //var cars: [Car]
     var cars: ArrayMap<String, Car>
+
+    //var cars: [Car]
+
     
     // Extrae todas las placas del usuario para la consulta
         var allPlates: [String] {

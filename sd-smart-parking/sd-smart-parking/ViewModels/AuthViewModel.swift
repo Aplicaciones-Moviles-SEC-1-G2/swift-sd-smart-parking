@@ -358,11 +358,7 @@ class AuthViewModel: ObservableObject {
     }
     // Stores the last role so biometric re-login can restore it in dev mode
     private var _lastGerente: Bool = false
-    
-    
-    
-    
-    
+
     // MARK: - Error messages
     
     private func firebaseErrorMessage(_ error: Error) -> String {

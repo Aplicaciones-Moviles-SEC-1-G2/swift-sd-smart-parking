@@ -16,7 +16,9 @@ struct CarsView: View {
     var body: some View {
         ScrollView {
             // Check if user exists and has cars
+
             if let user = userRepo.currentUser, !user.cars.allValues().isEmpty {
+
                 VStack(spacing: 16) {
                     ForEach(user.cars.allValues()) { car in
                         CarCard(car: car)
