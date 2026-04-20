@@ -11,7 +11,10 @@ struct MyHistoryView: View {
     @Environment(\.dismiss) private var dismiss
 
     private var userPlates: Set<String> {
-        Set((authVM.currentUser?.cars ?? []).map { $0.plate.uppercased() })
+        // Si el usuario es nil, devolvemos un Set vacío.
+        // Si existe, usamos allValues() para obtener el array de Car.
+        guard let cars = authVM.currentUser?.cars.allValues() else { return [] }
+        return Set(cars.map { $0.plate.uppercased() })
     }
 
     private var userRecords: [VehicleRecord] {

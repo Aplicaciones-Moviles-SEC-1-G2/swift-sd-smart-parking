@@ -24,49 +24,49 @@ class UserRepository: ObservableObject {
     private var cancellables = Set<AnyCancellable>()
 
     init() {
-        loadUser()
-        // Escuchamos al monitor de forma reactiva
-        NetworkMonitor.shared.$isConnected
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] connected in
-                self?.isOffline = !connected
-                
-                if connected {
-                    print("UserRepository: Detecté conexión. Iniciando vaciado de cola...")
-                    self?.syncPendingActions()
-                }
-            }
-            .store(in: &cancellables)
-    }
-    // CARGA INICIAL: Lee del disco y actualiza currentUser para que la app arranque rápido
-    func loadUser() {
-        if let cachedUser = diskManager.load(filename: profileFileName, type: User.self) {
-            self.currentUser = cachedUser
+
+            loadUser()
+            setupNetworkObserver()
         }
-    }
+        
+        private func setupNetworkObserver() {
+            networkMonitor.$isConnected
+                .receive(on: DispatchQueue.main)
+                .sink { [weak self] connected in
+                    self?.isOffline = !connected
+                    if connected {
+                        self?.syncPendingActions()
+                    }
+                }
+                .store(in: &cancellables)
+        }
+
+        func loadUser() {
+            if let cachedUser = diskManager.load(filename: profileFileName, type: User.self) {
+                self.currentUser = cachedUser
+            }
+        }
 
     // MÉTODO: AGREGAR CARRO (Llamado desde el ViewModel)
     func addCar(name: String, plate: String) {
-        guard var user = currentUser else { return }
-        
-        // 1. Creamos el objeto Car local
-        let newCar = Car(id: UUID(), plate: plate, UserID: user.id, name: name)
-        
-        // 2. IMPORTANTE: Actualizamos la UI en el hilo principal
-        DispatchQueue.main.async {
-            // Añadimos el carro al arreglo local
-            user.cars.append(newCar)
-            // Reasignamos el usuario para disparar el @Published
-            self.currentUser = user
-            // Guardamos en el JSON local para persistencia offline
-            self.saveUserLocally()
+            guard var user = currentUser else { return }
+            
+            let newCar = Car(id: UUID(), plate: plate, UserID: user.id, name: name)
+            let key = newCar.normalizedPlate // Nuestra clave para la búsqueda binaria
+            
+            DispatchQueue.main.async {
+                // Usamos 'put' de ArrayMap en lugar de 'append' de Array
+                user.cars.put(newCar, for: key)
+                
+                self.currentUser = user
+                self.saveUserLocally()
+            }
+            
+            Task {
+                await self.uploadCarToFirestore(newCar)
+            }
         }
-        
-        // 3. Subimos a Firebase (esto ocurre en segundo plano)
-        Task {
-            await self.uploadCarToFirestore(newCar)
-        }
-    }
+
 
     // MÉTODO: ACTUALIZAR PERFIL (Llamado desde el ViewModel)
     func updateProfile(newName: String, newEmail: String) {
@@ -196,3 +196,4 @@ class UserRepository: ObservableObject {
     
     
 }
+

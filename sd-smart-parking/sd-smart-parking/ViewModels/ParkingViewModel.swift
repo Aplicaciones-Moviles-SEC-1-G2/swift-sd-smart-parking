@@ -499,33 +499,39 @@ extension ParkingViewModel {
     
     // Esta función filtra los registros de los carros del usuario
     func listenToUserCars(for user: User) {
-        let plates = user.cars.map { $0.plate.uppercased() }
-        print("DEBUG: Buscando estas placas: \(plates)") // <--- Check 1
+        // 1. Extraemos las placas usando allValues() del ArrayMap
+        let plates = user.cars.allValues().map { $0.plate.uppercased() }
+        
+        print("DEBUG: Buscando estas placas: \(plates)")
         
         guard !plates.isEmpty else {
             print("DEBUG: El usuario no tiene placas registradas.")
+            // Limpiamos los registros si el usuario ya no tiene carros
+            DispatchQueue.main.async { self.activeUserRecords = [] }
             return
         }
         
         db.collection("vehicleRecords")
-            .whereField("plate", in: plates)
+            .whereField("plate", in: plates) // Firestore permite hasta 30 elementos en 'in'
             .order(by: "timestamp", descending: true)
             .addSnapshotListener { [weak self] snapshot, error in
                 
-                // --- AQUÍ VA EL PRINT CLAVE ---
                 if let error = error {
                     print("❌ ERROR DE FIREBASE: \(error.localizedDescription)")
+                    return
                 }
                 
                 let count = snapshot?.documents.count ?? 0
-                print("DEBUG: Documentos recibidos de Firestore: \(count)") // <--- Check 2
-                // ------------------------------
+                print("DEBUG: Documentos recibidos de Firestore: \(count)")
                 
                 guard let self = self, let docs = snapshot?.documents else { return }
                 
+                // Mapeamos los documentos a objetos de dominio
                 let records = docs.compactMap { self.mapDocumentToRecord($0) }
-                print("DEBUG: Registros mapeados con éxito: \(records.count)") // <--- Check 3
+                print("DEBUG: Registros mapeados con éxito: \(records.count)")
                 
+                // 2. Lógica para obtener solo el último estado por placa
+                // (Como vienen ordenados por timestamp desc, el primero que encontremos es el actual)
                 var latestStatus: [String: VehicleRecord] = [:]
                 for record in records {
                     if latestStatus[record.plate] == nil {
@@ -534,8 +540,9 @@ extension ParkingViewModel {
                 }
                 
                 DispatchQueue.main.async {
+                    // Filtramos solo aquellos cuyo último movimiento fue una 'entrada' (están en el parking)
                     self.activeUserRecords = Array(latestStatus.values).filter { $0.type == .entry }
-                    print("DEBUG: Registros finales en pantalla: \(self.activeUserRecords.count)") // <--- Check 4
+                    print("DEBUG: Registros finales en pantalla: \(self.activeUserRecords.count)")
                 }
             }
     }
