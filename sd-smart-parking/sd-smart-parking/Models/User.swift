@@ -17,12 +17,14 @@ struct User: Identifiable, Codable{
 
     //var cars: [Car]
 
-    
+    var preferences: UserPreferences?
+
+
     // Extrae todas las placas del usuario para la consulta
         var allPlates: [String] {
             //cars.map { $0.normalizedPlate }
             cars.allValues().map { $0.normalizedPlate }
         }
-    
-    
+
+
 }

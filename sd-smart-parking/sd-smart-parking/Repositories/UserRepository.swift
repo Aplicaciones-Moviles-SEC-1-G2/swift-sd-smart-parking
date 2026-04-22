@@ -71,8 +71,8 @@ class UserRepository: ObservableObject {
     // MÉTODO: ACTUALIZAR PERFIL (Llamado desde el ViewModel)
     func updateProfile(newName: String, newEmail: String) {
         guard var user = currentUser else { return }
-        user = User(id: user.id, name: newName, email: newEmail, password: "", cars: user.cars)
-        
+        user = User(id: user.id, name: newName, email: newEmail, password: "", cars: user.cars, preferences: user.preferences)
+
         // 1. Local
         self.currentUser = user
         diskManager.save(user, to: profileFileName)
@@ -83,6 +83,23 @@ class UserRepository: ObservableObject {
         } else {
             // Aquí podrías crear un struct "ProfileUpdate" para el payload
             saveActionToQueue(action: .updateProfile, data: ["name": newName, "email": newEmail])
+        }
+    }
+
+    // MÉTODO: ACTUALIZAR PREFERENCIAS (mobility / preferred floor)
+    func updatePreferences(_ preferences: UserPreferences) {
+        guard var user = currentUser else { return }
+        user.preferences = preferences
+
+        // 1. Local
+        self.currentUser = user
+        diskManager.save(user, to: profileFileName)
+
+        // 2. Sincronización
+        if !isOffline {
+            Task { await uploadPreferencesToFirebase(preferences) }
+        } else {
+            saveActionToQueue(action: .updatePreferences, data: preferences)
         }
     }
 
@@ -123,6 +140,18 @@ class UserRepository: ObservableObject {
         ])
     }
 
+    private func uploadPreferencesToFirebase(_ preferences: UserPreferences) async {
+        guard let uid = Auth.auth().currentUser?.uid else { return }
+        do {
+            try await db.collection("users").document(uid).setData(
+                ["preferences": preferences.toFirestore()],
+                merge: true
+            )
+        } catch {
+            self.saveActionToQueue(action: .updatePreferences, data: preferences)
+        }
+    }
+
     // --- MOTOR DE SINCRONIZACIÓN ---
 
     func syncPendingActions() {
@@ -150,6 +179,11 @@ class UserRepository: ObservableObject {
         case .updateProfile:
             if let data = try? JSONDecoder().decode([String: String].self, from: action.payload) {
                 await uploadProfileToFirebase(newName: data["name"] ?? "", newEmail: data["email"] ?? "")
+                return true
+            }
+        case .updatePreferences:
+            if let prefs = try? JSONDecoder().decode(UserPreferences.self, from: action.payload) {
+                await uploadPreferencesToFirebase(prefs)
                 return true
             }
         default: return true

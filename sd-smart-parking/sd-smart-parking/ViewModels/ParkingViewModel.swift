@@ -63,7 +63,78 @@ class ParkingViewModel: ObservableObject {
 
         return best.key
     }
- 
+
+    // MARK: - Personalized recommendation
+
+    /// Lowest-numbered available spot on a given floor (closest to elevator/stairs).
+    private func lowestAvailableSpot(onFloor floor: Int) -> ParkingSpot? {
+        spots
+            .filter { $0.floor == floor && $0.isAvailable }
+            .min { $0.number < $1.number }
+    }
+
+    /// Floor with availability that is closest to the building entrance —
+    /// modeled here as the lowest floor number that has any free spot.
+    /// Used for the mobility-aware path.
+    private var lowestFloorWithAvailability: Int? {
+        floorAvailability
+            .filter { $0.value.available > 0 }
+            .keys
+            .min()
+    }
+
+    /// Personalized floor + spot recommendation that respects user-declared
+    /// mobility limitations and a preferred floor.
+    ///
+    /// Priority order (preferred floor wins over mobility — rationale: this is
+    /// a university building where the preferred floor is usually the floor of
+    /// the user's class, so parking elsewhere defeats the point even for a
+    /// driver with a mobility limitation. The closest-to-elevator spot on the
+    /// preferred floor is still picked):
+    ///   1. Preferred floor with availability → that floor + closest-to-elevator spot
+    ///   2. Mobility limitation → lowest floor with availability + closest-to-elevator spot
+    ///      (used when no preferred floor is set, or when preferred floor is full)
+    ///   3. Generic `recommendedFloor` as final fallback
+    ///   4. `nil` when no recommendation is possible (all full / suppressed tie)
+    ///
+    /// Spot selection inside the chosen floor is always the lowest-numbered
+    /// available spot, which corresponds to the spot closest to the
+    /// elevator/stairs core in the production numbering scheme.
+    func personalizedRecommendation(for prefs: UserPreferences?) -> PersonalizedRecommendation? {
+        // 1. Preferred floor wins when it has availability.
+        if let preferred = prefs?.preferredFloor,
+           let avail = floorAvailability[preferred],
+           avail.available > 0 {
+            return PersonalizedRecommendation(
+                floor: preferred,
+                spot: lowestAvailableSpot(onFloor: preferred),
+                reason: .preferredFloor
+            )
+        }
+
+        // Preferred floor was set but has no availability — flag it for the UI
+        // copy so the fallback can be explained.
+        let preferredIsFull = prefs?.preferredFloor.flatMap { floorAvailability[$0]?.available } == 0
+
+        // 2. Mobility path (no preferred match): lowest floor with availability.
+        if prefs?.hasMobilityLimitation == true {
+            guard let floor = lowestFloorWithAvailability else { return nil }
+            return PersonalizedRecommendation(
+                floor: floor,
+                spot: lowestAvailableSpot(onFloor: floor),
+                reason: preferredIsFull ? .preferredFloorFull(fallback: floor) : .mobility
+            )
+        }
+
+        // 3. Generic recommendation (with optional "preferred floor full" hint).
+        guard let generic = recommendedFloor else { return nil }
+        return PersonalizedRecommendation(
+            floor: generic,
+            spot: lowestAvailableSpot(onFloor: generic),
+            reason: preferredIsFull ? .preferredFloorFull(fallback: generic) : .generic
+        )
+    }
+
     // MARK: - Init
  
     init() {
