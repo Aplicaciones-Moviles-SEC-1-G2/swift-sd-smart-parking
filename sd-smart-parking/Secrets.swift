@@ -8,5 +8,5 @@ import Foundation
 
 struct Secrets {
     // Aquí pones tu clave real
-    static let apiKey = "AIzaSyA92Dw2IYEVeOYbla8hm-iabsVG0LXMy9Q"
+    static let apiKey = "AIzaSyC9znm27PGzNFIWBIy3gm9AKdQt8FeRHQw"
 }
