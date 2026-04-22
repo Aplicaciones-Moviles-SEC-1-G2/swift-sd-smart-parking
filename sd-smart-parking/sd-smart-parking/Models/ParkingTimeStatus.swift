@@ -23,14 +23,18 @@ enum ParkingOperatingStatus: Equatable {
 
 // MARK: - Peak Hours Schedule
 
-// TODO: Replace hardcoded schedule with Firestore-derived dynamic values
+/// Temporal classification of the current hour. When a
+/// `HistoricDemandSchedule` is supplied (computed from Firestore entries) it
+/// takes priority for the matching weekday/weekend bucket. The hardcoded
+/// weekday/weekend ranges remain as a cold-start fallback for when there are
+/// not enough historic records yet.
 struct PeakHoursSchedule {
 
-    // Weekday schedule (Mon–Fri)
+    // Fallback weekday schedule (Mon–Fri)
     static let weekdayPeakRanges: [(start: Int, end: Int)] = [(6, 9)]
     static let weekdayValleyRanges: [(start: Int, end: Int)] = [(12, 15)]
 
-    // Weekend schedule (Sat–Sun): no peaks, valley all operating hours
+    // Fallback weekend schedule (Sat–Sun)
     static let weekendPeakRanges: [(start: Int, end: Int)] = []
     static let weekendValleyRanges: [(start: Int, end: Int)] = [(6, 22)]
 
@@ -39,13 +43,13 @@ struct PeakHoursSchedule {
         return weekday == 1 || weekday == 7
     }
 
-    static func demandLevel(at date: Date) -> DemandLevel {
-        let calendar = Calendar.current
-        let hour = calendar.component(.hour, from: date)
+    static func demandLevel(
+        at date: Date,
+        using schedule: HistoricDemandSchedule? = nil
+    ) -> DemandLevel {
+        let hour = Calendar.current.component(.hour, from: date)
         let weekend = isWeekend(at: date)
-
-        let peaks = weekend ? weekendPeakRanges : weekdayPeakRanges
-        let valleys = weekend ? weekendValleyRanges : weekdayValleyRanges
+        let (peaks, valleys) = effectiveRanges(weekend: weekend, schedule: schedule)
 
         for range in peaks {
             if hour >= range.start && hour < range.end { return .peak }
@@ -76,7 +80,12 @@ struct PeakHoursSchedule {
         return .open
     }
 
-    static func transitionCountdown(at date: Date, openingHour: Int, closingHour: Int) -> String? {
+    static func transitionCountdown(
+        at date: Date,
+        openingHour: Int,
+        closingHour: Int,
+        using schedule: HistoricDemandSchedule? = nil
+    ) -> String? {
         let status = operatingStatus(at: date, openingHour: openingHour, closingHour: closingHour)
         guard case .open = status else { return nil }
 
@@ -88,9 +97,8 @@ struct PeakHoursSchedule {
         let closingMinutes = closingHour * 60
         let weekend = isWeekend(at: date)
 
-        let peaks = weekend ? weekendPeakRanges : weekdayPeakRanges
-        let valleys = weekend ? weekendValleyRanges : weekdayValleyRanges
-        let level = demandLevel(at: date)
+        let (peaks, valleys) = effectiveRanges(weekend: weekend, schedule: schedule)
+        let level = demandLevel(at: date, using: schedule)
 
         switch level {
         case .peak:
@@ -122,6 +130,29 @@ struct PeakHoursSchedule {
             }
         }
         return nil
+    }
+
+    /// Prefer the historic schedule's ranges for the current bucket
+    /// (weekday/weekend) when it classified anything there; otherwise use the
+    /// hardcoded fallback so drivers still get meaningful banners on days with
+    /// no history yet.
+    private static func effectiveRanges(
+        weekend: Bool,
+        schedule: HistoricDemandSchedule?
+    ) -> (peaks: [(start: Int, end: Int)], valleys: [(start: Int, end: Int)]) {
+        if let schedule {
+            let historicPeaks = weekend ? schedule.weekendPeakRanges : schedule.weekdayPeakRanges
+            let historicValleys = weekend ? schedule.weekendValleyRanges : schedule.weekdayValleyRanges
+            if !historicPeaks.isEmpty || !historicValleys.isEmpty {
+                return (
+                    historicPeaks.map { (start: $0.start, end: $0.end) },
+                    historicValleys.map { (start: $0.start, end: $0.end) }
+                )
+            }
+        }
+        let peaks = weekend ? weekendPeakRanges : weekdayPeakRanges
+        let valleys = weekend ? weekendValleyRanges : weekdayValleyRanges
+        return (peaks, valleys)
     }
 
     private static func formatCountdown(_ totalMinutes: Int, suffix: String) -> String {

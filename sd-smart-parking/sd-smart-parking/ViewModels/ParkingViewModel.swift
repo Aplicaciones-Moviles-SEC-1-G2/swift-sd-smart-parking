@@ -17,6 +17,10 @@ class ParkingViewModel: ObservableObject {
     @Published var isLoading: Bool = false
     @Published var errorMessage: String? = nil
     @Published var activeUserRecords: [VehicleRecord] = []
+    /// Peak/valley ranges derived from the latest `vehicleRecords` snapshot.
+    /// Nil when there aren't enough historic entries yet — callers fall back
+    /// to `PeakHoursSchedule`'s hardcoded ranges.
+    @Published var historicSchedule: HistoricDemandSchedule?
      
     let db = Firestore.firestore()
     private var spotsListener: ListenerRegistration?
@@ -209,7 +213,7 @@ class ParkingViewModel: ObservableObject {
                           let type      = RecordType(rawValue: typeRaw),
                           let timestamp = (data["timestamp"] as? Timestamp)?.dateValue()
                     else { return nil }
- 
+
                     return VehicleRecord(
                         id: doc.documentID,
                         plate: plate,
@@ -225,6 +229,7 @@ class ParkingViewModel: ObservableObject {
                         hitDailyCap: data["hitDailyCap"] as? Bool ?? false
                     )
                 }
+                self.historicSchedule = HistoricDemandSchedule.build(from: self.vehicleRecords)
             }
     }
  

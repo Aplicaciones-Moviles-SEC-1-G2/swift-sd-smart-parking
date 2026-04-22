@@ -8,6 +8,8 @@ import SwiftUI
 struct ParkingStatusBannerView: View {
     let demandLevel: DemandLevel
     var countdown: String? = nil
+    /// Renders a trailing chevron when the banner is interactive (tappable).
+    var showsDisclosure: Bool = false
 
     private var icon: String {
         switch demandLevel {
@@ -56,6 +58,14 @@ struct ParkingStatusBannerView: View {
                 }
             }
             Spacer()
+            if showsDisclosure {
+                Image(systemName: "chart.bar.fill")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundColor(foregroundColor.opacity(0.7))
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundColor(foregroundColor.opacity(0.5))
+            }
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 10)
