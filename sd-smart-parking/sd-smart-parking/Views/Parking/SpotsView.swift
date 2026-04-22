@@ -10,10 +10,12 @@ import SwiftUI
 struct SpotsView: View {
     @EnvironmentObject var vm: ParkingViewModel
     @EnvironmentObject var authVM: AuthViewModel
+    @EnvironmentObject var userRepo: UserRepository
 
     @State private var expandedFloors: Set<Int> = []
     @State private var pendingBulkFree          = false
     @State private var pendingBulkOccupy        = false
+    @State private var showPreferencesSheet    = false
 
     let columns = [
         GridItem(.flexible(), spacing: 15),
@@ -25,61 +27,47 @@ struct SpotsView: View {
         Dictionary(grouping: vm.spots, by: { $0.floor }).keys.sorted()
     }
 
+    /// Personalized recommendation for the current driver. `nil` for managers
+    /// or when no recommendation is possible (e.g. all spots full / suppressed tie).
+    private var personalized: PersonalizedRecommendation? {
+        guard !authVM.isGerente else { return nil }
+        return vm.personalizedRecommendation(for: userRepo.currentUser?.preferences)
+    }
+
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 25) {
-                    // Recommendation banner (driver only)
+                    // Hero invitation (driver only, no preferences yet).
+                    // Renders ABOVE the recommendation so it's the first thing
+                    // a fresh driver sees, regardless of whether a generic
+                    // recommendation can be computed.
                     if !authVM.isGerente,
-                       let recommended = vm.recommendedFloor {
-                        let avail = vm.floorAvailability[recommended]?.available ?? 0
-                        let floorSpots = vm.spots
-                            .filter { $0.floor == recommended && $0.isAvailable }
-                            .sorted { $0.number < $1.number }
-                            .prefix(3)
-
-                        VStack(alignment: .leading, spacing: 12) {
-                            HStack(spacing: 8) {
-                                Image(systemName: "sparkles")
-                                    .foregroundColor(.green)
-                                Text("Best floor: Floor \(recommended)")
-                                    .font(.headline)
-                                FloorBadge(isUrgent: avail <= 4)
-                                Spacer()
-                            }
-
-                            Text("\(avail) spots available")
-                                .font(.subheadline)
-                                .foregroundColor(.secondary)
-
-                            LazyVGrid(columns: columns, spacing: 15) {
-                                ForEach(Array(floorSpots)) { spot in
-                                    SpotCardView(spot: spot, isGerente: false)
-                                }
-                            }
-                        }
-                        .padding()
-                        .background(Color.green.opacity(0.05))
-                        .cornerRadius(16)
-                        .padding(.horizontal)
+                       userRepo.currentUser?.preferences == nil {
+                        preferencesHeroBanner()
                     }
 
-                    ForEach(sortedFloors, id: \.self) { floor in // <- usar aquí
+                    // Personalized recommendation banner (driver only).
+                    // Includes a low-key "Edit preferences" pill at the bottom
+                    // so a driver who already has preferences can tweak them.
+                    if let rec = personalized {
+                        recommendationBanner(rec)
+                    }
+
+                    ForEach(sortedFloors, id: \.self) { floor in
                         VStack(alignment: .leading, spacing: 15) {
                             HStack {
                                 Text("Floor \(floor)")
                                     .font(.headline)
                                     .foregroundColor(.secondary)
 
-                                if !authVM.isGerente,
-                                   let recommended = vm.recommendedFloor,
-                                   recommended == floor {
+                                if let rec = personalized, rec.floor == floor {
                                     let avail = vm.floorAvailability[floor]?.available ?? 0
                                     FloorBadge(isUrgent: avail <= 4)
                                 }
                             }
                             .padding(.horizontal)
-                            
+
                             LazyVGrid(columns: columns, spacing: 15) {
                                 ForEach(vm.spots.filter { $0.floor == floor }.sorted(by: { $0.number < $1.number })) { spot in
                                     SpotCardView(spot: spot, isGerente: authVM.isGerente)
@@ -111,6 +99,168 @@ struct SpotsView: View {
                 Button("Occupy All", role: .destructive) { vm.occupyAllSpots() }
                 Button("Cancel", role: .cancel) { }
             } message: { Text("All spots will be marked as occupied.") }
+            .sheet(isPresented: $showPreferencesSheet) {
+                EditProfileView()
+            }
+        }
+    }
+
+    // MARK: - Personalized banner
+
+    @ViewBuilder
+    private func recommendationBanner(_ rec: PersonalizedRecommendation) -> some View {
+        let avail = vm.floorAvailability[rec.floor]?.available ?? 0
+        let preview = vm.spots
+            .filter { $0.floor == rec.floor && $0.isAvailable }
+            .sorted { $0.number < $1.number }
+            .prefix(3)
+        let mobility = userRepo.currentUser?.preferences?.hasMobilityLimitation ?? false
+
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 8) {
+                Image(systemName: bannerIcon(rec.reason, mobility: mobility))
+                    .foregroundColor(bannerTint(rec.reason))
+                Text(bannerTitle(rec))
+                    .font(.headline)
+                FloorBadge(isUrgent: avail <= 4)
+                Spacer()
+            }
+
+            Text(bannerSubtitle(rec, available: avail, mobility: mobility))
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+
+            LazyVGrid(columns: columns, spacing: 15) {
+                ForEach(Array(preview)) { spot in
+                    SpotCardView(spot: spot, isGerente: false)
+                }
+            }
+
+            // Low-key "Edit preferences" pill — always visible inside the
+            // recommendation banner so the driver can tweak prefs in-context.
+            // Hidden only when the driver has no prefs yet (the prominent
+            // standalone hero above is doing that job).
+            if userRepo.currentUser?.preferences != nil {
+                Button {
+                    showPreferencesSheet = true
+                } label: {
+                    Label("Edit preferences", systemImage: "slider.horizontal.3")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 8)
+                        .frame(maxWidth: .infinity)
+                        .background(Color.blue)
+                        .clipShape(Capsule())
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding()
+        .background(bannerTint(rec.reason).opacity(0.06))
+        .cornerRadius(16)
+        .padding(.horizontal)
+    }
+
+    /// Standalone hero shown to drivers with no preferences set. Always renders
+    /// when `currentUser?.preferences == nil`, regardless of whether a generic
+    /// recommendation exists below it — the goal is to make personalization
+    /// the first thing a fresh driver notices on the Spots tab.
+    @ViewBuilder
+    private func preferencesHeroBanner() -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(alignment: .top, spacing: 12) {
+                Image(systemName: "person.crop.circle.badge.questionmark")
+                    .font(.system(size: 28))
+                    .foregroundColor(.blue)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Personalize your spot")
+                        .font(.title3.bold())
+                    Text("Tell us your preferred floor or if you need a mobility-friendly spot — we'll tailor every recommendation to you.")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+
+            Button {
+                showPreferencesSheet = true
+            } label: {
+                Label("Set my parking preferences", systemImage: "slider.horizontal.3")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 12)
+                    .frame(maxWidth: .infinity)
+                    .background(Color.blue)
+                    .clipShape(Capsule())
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(18)
+        .background(
+            LinearGradient(
+                colors: [Color.blue.opacity(0.14), Color.blue.opacity(0.06)],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 18)
+                .strokeBorder(Color.blue.opacity(0.25), lineWidth: 1)
+        )
+        .cornerRadius(18)
+        .padding(.horizontal)
+    }
+
+    private func bannerTitle(_ rec: PersonalizedRecommendation) -> String {
+        switch rec.reason {
+        case .mobility:
+            return "Mobility-friendly: Floor \(rec.floor)"
+        case .preferredFloor:
+            return "Your preferred floor: Floor \(rec.floor)"
+        case .preferredFloorFull:
+            return "Best available: Floor \(rec.floor)"
+        case .generic:
+            return "Best floor: Floor \(rec.floor)"
+        }
+    }
+
+    /// Subtitle text. When the driver has a mobility limitation we always
+    /// surface the elevator-proximity note (the spot pick is always the
+    /// lowest-numbered free spot, which is the closest to the elevator), so
+    /// the message stays accurate whether we landed on the preferred floor,
+    /// the lowest available floor, or the generic recommendation.
+    private func bannerSubtitle(_ rec: PersonalizedRecommendation, available: Int, mobility: Bool) -> String {
+        var parts = ["\(available) spot\(available == 1 ? "" : "s") available"]
+        if mobility, let spot = rec.spot {
+            parts.append("Spot \(spot.number) is closest to the elevator")
+        }
+        if case .preferredFloorFull(let fallback) = rec.reason {
+            parts.append("Your preferred floor is full, recommending Floor \(fallback) instead")
+        }
+        return parts.joined(separator: " · ")
+    }
+
+    private func bannerIcon(_ reason: PersonalizedRecommendation.Reason, mobility: Bool) -> String {
+        // When mobility is on but the chosen reason is preferred-floor, surface
+        // a wheelchair glyph so the visual still signals accessibility.
+        if mobility, case .preferredFloor = reason { return "figure.roll" }
+        switch reason {
+        case .mobility:           return "figure.roll"
+        case .preferredFloor:     return "star.fill"
+        case .preferredFloorFull: return "arrow.triangle.swap"
+        case .generic:            return "sparkles"
+        }
+    }
+
+    private func bannerTint(_ reason: PersonalizedRecommendation.Reason) -> Color {
+        switch reason {
+        case .mobility:           return .blue
+        case .preferredFloor:     return .purple
+        case .preferredFloorFull: return .orange
+        case .generic:            return .green
         }
     }
 

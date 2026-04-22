@@ -10,6 +10,7 @@ enum ActionType: String, Codable {
     case addCar
     case occupySpace
     case updateProfile
+    case updatePreferences
 }
 
 struct PendingAction: Identifiable, Codable {

@@ -106,8 +106,11 @@ class AuthViewModel: ObservableObject {
                 carsMap.put(car, for: car.normalizedPlate)
             }
             
+            // Preferencias personalizadas (puede no existir en el doc)
+            let preferences = UserPreferences(firestore: data["preferences"] as? [String: Any])
+
             // Creamos al User pasando el ArrayMap
-            let user = User(id: UUID(uuidString: uid) ?? UUID(), name: name, email: email, password: "", cars: carsMap)
+            let user = User(id: UUID(uuidString: uid) ?? UUID(), name: name, email: email, password: "", cars: carsMap, preferences: preferences)
             
             await MainActor.run {
                 self.currentUser = user
@@ -392,7 +395,7 @@ class AuthViewModel: ObservableObject {
         mockCarsMap.put(car1, for: car1.normalizedPlate)
         mockCarsMap.put(car2, for: car2.normalizedPlate)
         
-        currentUser = User(id: UUID(), name: "Usuario Andes", email: "usuario@uniandes.edu.co", password: "", cars: mockCarsMap)
+        currentUser = User(id: UUID(), name: "Usuario Andes", email: "usuario@uniandes.edu.co", password: "", cars: mockCarsMap, preferences: nil)
         isLoggedIn = true
         isGerente = false
         currentUserEmail = "usuario@uniandes.edu.co"
@@ -400,7 +403,7 @@ class AuthViewModel: ObservableObject {
     
     func loginAsGerente() {
         // Para el gerente pasamos un ArrayMap vacío
-        currentUser = User(id: UUID(), name: "Gerente Andes", email: "gerente@uniandes.edu.co", password: "", cars: ArrayMap<String, Car>())
+        currentUser = User(id: UUID(), name: "Gerente Andes", email: "gerente@uniandes.edu.co", password: "", cars: ArrayMap<String, Car>(), preferences: nil)
         isLoggedIn = true
         isGerente = true
         currentUserEmail = "gerente@uniandes.edu.co"
