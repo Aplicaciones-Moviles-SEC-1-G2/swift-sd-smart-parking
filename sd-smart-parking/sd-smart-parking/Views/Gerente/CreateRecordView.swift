@@ -18,6 +18,8 @@ struct CreateRecordView: View {
     @State private var ocrConfidence: Double = 1.0
     @State private var showConfirmation: Bool = false
     @State private var showPlateScanner: Bool = false
+    @State private var showAIVehicleScanner: Bool = false
+    @State private var lastAIIdentification: VehicleIdentification? = nil
 
     var isFormValid: Bool {
         plate.trimmingCharacters(in: .whitespaces).count >= 3
@@ -39,6 +41,30 @@ struct CreateRecordView: View {
                         showPlateScanner = true
                     } label: {
                         Label("Scan Plate", systemImage: "camera.viewfinder")
+                    }
+                    Button {
+                        showAIVehicleScanner = true
+                    } label: {
+                        Label("AI Scan Vehicle", systemImage: "sparkles")
+                    }
+                    if let identification = lastAIIdentification {
+                        VStack(alignment: .leading, spacing: 6) {
+                            HStack(spacing: 6) {
+                                Image(systemName: "sparkles")
+                                    .foregroundColor(.blue)
+                                Text("AI details")
+                                    .font(.caption).bold()
+                                    .foregroundColor(.secondary)
+                            }
+                            Text("\(identification.brand.capitalized) \(identification.model.capitalized) · \(identification.color.capitalized)")
+                                .font(.subheadline)
+                            if !identification.hasPlate {
+                                Text("Plate was not visible in the photo.")
+                                    .font(.caption)
+                                    .foregroundColor(.orange)
+                            }
+                        }
+                        .padding(.vertical, 4)
                     }
                 } header: {
                     Label("License Plate", systemImage: "rectangle.fill")
@@ -141,6 +167,15 @@ struct CreateRecordView: View {
                 PlateOCRSheet { recognizedPlate, recognizedConfidence in
                     plate = recognizedPlate
                     ocrConfidence = recognizedConfidence
+                }
+            }
+            .sheet(isPresented: $showAIVehicleScanner) {
+                VehicleAIScannerSheet { identification in
+                    lastAIIdentification = identification
+                    if identification.hasPlate, let detected = identification.plate {
+                        plate = detected
+                        ocrConfidence = 1.0
+                    }
                 }
             }
         }
