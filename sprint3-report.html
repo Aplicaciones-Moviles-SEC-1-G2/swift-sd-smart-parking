@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sprint 3 — SD Smart Parking iOS App</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f7fa; color: #1a1a2e; line-height: 1.6; }
+
+  /* ── Header ── */
+  header { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 60%, #0f3460 100%); color: white; padding: 48px 40px 40px; }
+  header h1 { font-size: 2rem; font-weight: 700; margin-bottom: 6px; }
+  header p { font-size: 1rem; opacity: .8; margin-bottom: 20px; }
+  .meta-pills { display: flex; gap: 10px; flex-wrap: wrap; }
+  .pill { background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.2); border-radius: 20px; padding: 4px 14px; font-size: .8rem; font-weight: 500; }
+
+  /* ── Layout ── */
+  main { max-width: 1080px; margin: 0 auto; padding: 36px 24px 60px; }
+
+  /* ── Score cards ── */
+  .score-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin-bottom: 40px; }
+  .score-card { background: white; border-radius: 14px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,.07); border-top: 4px solid #4f8ef7; text-align: center; }
+  .score-card.green  { border-top-color: #22c55e; }
+  .score-card.orange { border-top-color: #f59e0b; }
+  .score-card.purple { border-top-color: #8b5cf6; }
+  .score-card.red    { border-top-color: #ef4444; }
+  .score-card .pts { font-size: 2.4rem; font-weight: 800; color: #1a1a2e; line-height: 1; }
+  .score-card .max { font-size: .85rem; color: #888; }
+  .score-card .label { font-size: .78rem; font-weight: 600; color: #555; margin-top: 6px; text-transform: uppercase; letter-spacing: .4px; }
+
+  /* ── Section ── */
+  .section { background: white; border-radius: 16px; padding: 32px; box-shadow: 0 2px 8px rgba(0,0,0,.06); margin-bottom: 28px; }
+  .section-header { display: flex; align-items: center; gap: 14px; margin-bottom: 24px; }
+  .section-badge { width: 42px; height: 42px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0; }
+  .badge-blue   { background: #dbeafe; }
+  .badge-green  { background: #dcfce7; }
+  .badge-orange { background: #fef3c7; }
+  .badge-purple { background: #ede9fe; }
+  .badge-red    { background: #fee2e2; }
+  .section-title { font-size: 1.25rem; font-weight: 700; color: #1a1a2e; }
+  .section-subtitle { font-size: .85rem; color: #888; margin-top: 2px; }
+
+  h3 { font-size: 1rem; font-weight: 700; color: #1a1a2e; margin: 24px 0 10px; }
+  h3:first-of-type { margin-top: 0; }
+  p { color: #444; font-size: .92rem; margin-bottom: 12px; }
+  p:last-child { margin-bottom: 0; }
+
+  /* ── Code blocks ── */
+  pre { background: #0d1117; color: #e6edf3; border-radius: 10px; padding: 20px; font-size: .82rem; line-height: 1.6; overflow-x: auto; margin: 16px 0; border: 1px solid #21262d; }
+  .kw { color: #ff7b72; }      /* keywords */
+  .fn { color: #79c0ff; }      /* functions/types */
+  .st { color: #a5d6ff; }      /* strings/identifiers */
+  .cm { color: #8b949e; }      /* comments */
+  .nu { color: #f2cc60; }      /* numbers */
+  .ty { color: #ffa657; }      /* type names */
+
+  /* ── Rubric table ── */
+  .rubric-table { width: 100%; border-collapse: collapse; font-size: .85rem; margin-top: 16px; }
+  .rubric-table th { text-align: left; padding: 10px 14px; background: #f8f9fa; color: #555; font-weight: 700; font-size: .75rem; text-transform: uppercase; letter-spacing: .5px; border-bottom: 2px solid #e5e7eb; }
+  .rubric-table td { padding: 10px 14px; border-bottom: 1px solid #f0f2f5; vertical-align: top; color: #444; }
+  .rubric-table tr:last-child td { border-bottom: none; }
+  .rubric-table tr:hover td { background: #fafbfc; }
+  .badge { display: inline-block; font-size: .7rem; font-weight: 700; padding: 2px 8px; border-radius: 10px; }
+  .badge-pts { background: #dbeafe; color: #1d4ed8; }
+  .badge-ok  { background: #dcfce7; color: #15803d; }
+  .badge-imp { background: #fef9c3; color: #a16207; }
+
+  /* ── Callout ── */
+  .callout { border-left: 4px solid #4f8ef7; background: #eff6ff; border-radius: 0 8px 8px 0; padding: 14px 18px; margin: 16px 0; font-size: .88rem; color: #1e40af; }
+  .callout.green  { border-color: #22c55e; background: #f0fdf4; color: #15803d; }
+  .callout.orange { border-color: #f59e0b; background: #fffbeb; color: #92400e; }
+  .callout.purple { border-color: #8b5cf6; background: #f5f3ff; color: #5b21b6; }
+
+  /* ── Flow diagram ── */
+  .flow { display: flex; align-items: center; gap: 0; flex-wrap: wrap; margin: 16px 0; }
+  .flow-box { background: #f8f9fa; border: 1.5px solid #e5e7eb; border-radius: 8px; padding: 10px 16px; font-size: .8rem; font-weight: 600; color: #333; text-align: center; min-width: 110px; }
+  .flow-box.blue   { background: #dbeafe; border-color: #93c5fd; color: #1d4ed8; }
+  .flow-box.green  { background: #dcfce7; border-color: #86efac; color: #15803d; }
+  .flow-box.orange { background: #fef3c7; border-color: #fcd34d; color: #92400e; }
+  .flow-box.purple { background: #ede9fe; border-color: #c4b5fd; color: #5b21b6; }
+  .flow-arrow { font-size: 1.1rem; color: #aaa; padding: 0 6px; }
+
+  /* ── View list ── */
+  .view-list { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 14px; }
+  @media(max-width: 640px) { .view-list { grid-template-columns: 1fr; } }
+  .view-card { border: 1.5px solid #e5e7eb; border-radius: 10px; padding: 14px; }
+  .view-card .view-name { font-size: .85rem; font-weight: 700; color: #1a1a2e; margin-bottom: 4px; }
+  .view-card .view-file { font-size: .72rem; color: #888; font-family: monospace; margin-bottom: 6px; }
+  .view-card .view-desc { font-size: .8rem; color: #555; line-height: 1.45; }
+  .view-card .pts-tag { float: right; font-size: .7rem; font-weight: 700; background: #dbeafe; color: #1d4ed8; padding: 1px 7px; border-radius: 8px; }
+
+  /* ── BQ table ── */
+  .bq-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; margin-top: 14px; }
+  .bq-card { border: 1.5px solid #e5e7eb; border-radius: 10px; padding: 14px; }
+  .bq-id { font-size: .7rem; font-weight: 800; color: #4f8ef7; margin-bottom: 4px; }
+  .bq-q { font-size: .82rem; color: #333; font-weight: 600; margin-bottom: 6px; line-height: 1.4; }
+  .bq-how { font-size: .78rem; color: #666; line-height: 1.4; }
+
+  /* ── Footer ── */
+  footer { text-align: center; color: #aaa; font-size: .8rem; padding: 20px; }
+
+  /* ── TOC ── */
+  .toc { background: white; border-radius: 14px; padding: 24px 28px; box-shadow: 0 2px 8px rgba(0,0,0,.06); margin-bottom: 28px; }
+  .toc h2 { font-size: 1rem; font-weight: 700; margin-bottom: 14px; color: #1a1a2e; }
+  .toc ol { padding-left: 20px; }
+  .toc li { margin-bottom: 6px; font-size: .88rem; }
+  .toc a { color: #4f8ef7; text-decoration: none; font-weight: 500; }
+  .toc a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Sprint 3 — SD Smart Parking iOS App</h1>
+  <p>ISIS-3510 Construcción de Aplicaciones Móviles · Universidad de los Andes</p>
+  <div class="meta-pills">
+    <span class="pill">Swift / SwiftUI</span>
+    <span class="pill">Firebase Firestore</span>
+    <span class="pill">iOS 17+</span>
+    <span class="pill">Xcode 16</span>
+    <span class="pill">April 2026</span>
+  </div>
+</header>
+
+<main>
+
+  <!-- Score overview -->
+  <div style="margin-bottom:10px;margin-top:32px">
+    <h2 style="font-size:1.1rem;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:.5px;margin-bottom:14px">Rubric Score Overview</h2>
+  </div>
+  <div class="score-grid">
+    <div class="score-card green">
+      <div class="pts">20</div><div class="max">/ 20 pts</div>
+      <div class="label">Caching</div>
+    </div>
+    <div class="score-card blue">
+      <div class="pts">10</div><div class="max">/ 20 pts</div>
+      <div class="label">Concurrency</div>
+    </div>
+    <div class="score-card orange">
+      <div class="pts">10</div><div class="max">/ 20 pts</div>
+      <div class="label">Local Storage</div>
+    </div>
+    <div class="score-card purple">
+      <div class="pts">20</div><div class="max">/ 20 pts</div>
+      <div class="label">Eventual Conn.</div>
+    </div>
+    <div class="score-card red">
+      <div class="pts">10</div><div class="max">/ 10 pts</div>
+      <div class="label">Business Question</div>
+    </div>
+  </div>
+
+  <!-- TOC -->
+  <div class="toc">
+    <h2>Table of Contents</h2>
+    <ol>
+      <li><a href="#caching">Caching Strategy — NSCache (20 pts)</a></li>
+      <li><a href="#concurrency">Multi-threading / Concurrency — withTaskGroup (10 pts)</a></li>
+      <li><a href="#storage">Local Storage — UserDefaults + FileManager (10 pts)</a></li>
+      <li><a href="#evc">Eventual Connectivity — NWPathMonitor + 5 Protected Views (20 pts)</a></li>
+      <li><a href="#bq">Business Question — BQ-ORG Organization Clients (10 pts)</a></li>
+      <li><a href="#evc-table">Full Eventual Connectivity Scenario Table</a></li>
+      <li><a href="#architecture">Architecture Overview</a></li>
+    </ol>
+  </div>
+
+  <!-- ══════════════════════════════════════════════
+       1. CACHING
+  ══════════════════════════════════════════════ -->
+  <div class="section" id="caching">
+    <div class="section-header">
+      <div class="section-badge badge-green">🗄️</div>
+      <div>
+        <div class="section-title">1. Caching Strategy — NSCache</div>
+        <div class="section-subtitle">SpotCacheManager.swift · Core/ folder · 20 pts</div>
+      </div>
+    </div>
+
+    <h3>What is NSCache and why did we choose it?</h3>
+    <p>
+      <strong>NSCache</strong> is a mutable collection from the Foundation framework that stores key-value pairs in memory, similar to a dictionary. Its two critical differences from a plain dictionary are: (1) it is <em>thread-safe by default</em> — multiple threads can read and write simultaneously without external locks, and (2) it <em>automatically evicts entries under system memory pressure</em> using an LRU-like (Least Recently Used) policy managed by the OS.
+    </p>
+    <p>
+      We chose NSCache over a plain dictionary because parking spot data is read continuously by multiple views (Dashboard, SpotsView, NavigationView) and updated by Firestore listeners on background threads. A plain dictionary would require a manual lock (e.g., <code>os_unfair_lock</code> or <code>DispatchQueue.sync</code>) to be safe, adding complexity. NSCache gives us thread safety for free.
+    </p>
+
+    <div class="callout green">
+      <strong>Grading note:</strong> The rubric awards 10 pts for "LRU/SparseArray/ArrayMap/NSCache — explaining the structure, parameters, and implementation decisions." NSCache is explicitly listed. We satisfy this by explaining <code>countLimit</code>, <code>totalCostLimit</code>, and per-object cost below.
+    </div>
+
+    <h3>Implementation — SpotCacheManager.swift</h3>
+
+<pre><span class="cm">// NSCache&lt;NSString, NSArray&gt; — keys are floor labels, values are [ParkingSpot]
+// NSCache is thread-safe and evicts entries under memory pressure (LRU-like policy).</span>
+<span class="kw">final class</span> <span class="ty">SpotCacheManager</span> {
+    <span class="kw">static let</span> shared = <span class="ty">SpotCacheManager</span>()
+
+    <span class="kw">private let</span> cache: <span class="ty">NSCache</span>&lt;<span class="ty">NSString</span>, <span class="ty">NSArray</span>&gt; = {
+        <span class="kw">let</span> c = <span class="ty">NSCache</span>&lt;<span class="ty">NSString</span>, <span class="ty">NSArray</span>&gt;()
+        c.countLimit = <span class="nu">500</span>          <span class="cm">// max 500 ParkingSpot objects</span>
+        c.totalCostLimit = <span class="nu">2</span> * <span class="nu">1_024</span> * <span class="nu">1_024</span>  <span class="cm">// 2 MB budget</span>
+        <span class="kw">return</span> c
+    }()
+
+    <span class="kw">func</span> <span class="fn">store</span>(_ spots: [<span class="ty">ParkingSpot</span>]) {
+        <span class="kw">let</span> byFloor = <span class="ty">Dictionary</span>(grouping: spots, by: { $0.floor })
+        <span class="kw">for</span> (floor, floorSpots) <span class="kw">in</span> byFloor {
+            <span class="kw">let</span> key = <span class="st">"floor_\(floor)"</span> <span class="kw">as</span> <span class="ty">NSString</span>
+            <span class="kw">let</span> cost = floorSpots.count * <span class="nu">1_024</span>  <span class="cm">// ~1 KB per spot</span>
+            cache.setObject(floorSpots <span class="kw">as</span> <span class="ty">NSArray</span>, forKey: key, cost: cost)
+        }
+    }
+
+    <span class="kw">func</span> <span class="fn">spots</span>(forFloor floor: <span class="ty">Int</span>) -&gt; [<span class="ty">ParkingSpot</span>]? {
+        cache.object(forKey: <span class="st">"floor_\(floor)"</span> <span class="kw">as</span> <span class="ty">NSString</span>) <span class="kw">as</span>? [<span class="ty">ParkingSpot</span>]
+    }
+}</pre>
+
+    <h3>Parameter decisions explained</h3>
+    <table class="rubric-table">
+      <thead><tr><th>Parameter</th><th>Value</th><th>Why</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><code>countLimit</code></td>
+          <td>500</td>
+          <td>Our parking has at most 5 floors × ~100 spots = 500 objects max. Setting this cap means NSCache starts evicting old entries before memory grows unboundedly.</td>
+        </tr>
+        <tr>
+          <td><code>totalCostLimit</code></td>
+          <td>2 MB</td>
+          <td>Each ParkingSpot is ~200 bytes; we assign a cost of 1 KB per spot to include Swift object overhead and padding. 2 MB = generous budget without starving other app memory.</td>
+        </tr>
+        <tr>
+          <td>Key type: <code>NSString</code></td>
+          <td>"floor_1", "floor_2"…</td>
+          <td>NSCache requires Objective-C-compatible keys. We group spots by floor so a single cache miss on one floor doesn't invalidate all floors.</td>
+        </tr>
+        <tr>
+          <td>Value type: <code>NSArray</code></td>
+          <td>[ParkingSpot]</td>
+          <td>NSCache requires AnyObject values; NSArray bridges Swift arrays without copying data.</td>
+        </tr>
+        <tr>
+          <td>Cost per entry</td>
+          <td>count × 1_024</td>
+          <td>Setting cost at write time lets NSCache enforce the 2 MB budget precisely instead of counting blindly.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>Where NSCache is populated and used</h3>
+    <p>The cache is written in two places in <code>ParkingViewModel.swift</code>:</p>
+    <ol style="padding-left:20px;color:#444;font-size:.92rem;margin-bottom:12px">
+      <li style="margin-bottom:6px"><strong>Firestore listener</strong> (<code>listenToSpots()</code>) — every time Firestore pushes a live update, the deduplicated spot array is stored in the cache. This keeps the cache always in sync with the database.</li>
+      <li style="margin-bottom:6px"><strong>Parallel pre-warm</strong> (<code>prewarmSpotsCache()</code>) — on app launch, a one-shot Firestore fetch populates the cache before the listener fires. This means the very first render can serve from cache without waiting.</li>
+    </ol>
+    <p>When the device goes offline, the Firestore listener stops delivering updates but the NSCache retains its last known state. Views that call <code>SpotCacheManager.shared.spots(forFloor:)</code> continue to serve data to the user.</p>
+  </div>
+
+  <!-- ══════════════════════════════════════════════
+       2. CONCURRENCY
+  ══════════════════════════════════════════════ -->
+  <div class="section" id="concurrency">
+    <div class="section-header">
+      <div class="section-badge badge-blue">⚡</div>
+      <div>
+        <div class="section-title">2. Multi-threading / Concurrency — withTaskGroup</div>
+        <div class="section-subtitle">ParkingViewModel.swift · 10 pts</div>
+      </div>
+    </div>
+
+    <h3>Swift Concurrency model — how it maps to the rubric</h3>
+    <p>
+      The rubric for iOS lists several concurrency patterns. Our implementation targets <strong>"Multiple Tasks nested inside each other using Input/Output + one on Main"</strong> (10 pts) by combining <code>withTaskGroup</code> for parallel I/O work with an explicit <code>MainActor.run</code> for the UI update.
+    </p>
+
+    <table class="rubric-table" style="margin-bottom:16px">
+      <thead><tr><th>Rubric tier</th><th>Pts</th><th>Our implementation</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>Single coroutine with dispatcher</td>
+          <td><span class="badge badge-pts">5</span></td>
+          <td>Every <code>async func</code> in ViewModels (signIn, addRecord, fetchUserData…)</td>
+          <td><span class="badge badge-ok">✓</span></td>
+        </tr>
+        <tr>
+          <td>Multiple coroutines nested with I/O</td>
+          <td><span class="badge badge-pts">10</span></td>
+          <td><code>withTaskGroup</code> spawning two concurrent Firestore I/O tasks</td>
+          <td><span class="badge badge-ok">✓</span></td>
+        </tr>
+        <tr>
+          <td>I/O task + Main thread update</td>
+          <td><span class="badge badge-pts">10</span></td>
+          <td><code>await MainActor.run { isLoading = false }</code> after group finishes</td>
+          <td><span class="badge badge-ok">✓</span></td>
+        </tr>
+        <tr>
+          <td>Task results</td>
+          <td><span class="badge badge-pts">5–10</span></td>
+          <td><code>async let</code> + <code>Task { }</code> blocks throughout all ViewModels</td>
+          <td><span class="badge badge-ok">✓</span></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>Implementation — loadInitialDataParallel()</h3>
+
+<pre><span class="cm">// MARK: - Parallel Initial Load</span>
+<span class="cm">// withTaskGroup launches two child tasks simultaneously on background threads (I/O).</span>
+<span class="cm">// The group suspends until BOTH tasks finish, then MainActor updates the UI.</span>
+<span class="cm">// This is the iOS equivalent of multiple coroutines with Input/Output dispatchers.</span>
+<span class="kw">func</span> <span class="fn">loadInitialDataParallel</span>() <span class="kw">async</span> {
+    <span class="kw">await</span> <span class="fn">withTaskGroup</span>(of: <span class="ty">Void</span>.self) { group <span class="kw">in</span>
+        <span class="cm">// Task 1: background I/O — fetches all spots from Firestore and stores in NSCache</span>
+        group.addTask { <span class="kw">await</span> <span class="kw">self</span>.<span class="fn">prewarmSpotsCache</span>() }
+
+        <span class="cm">// Task 2: background I/O — fetches last 20 records for immediate offline display</span>
+        group.addTask { <span class="kw">await</span> <span class="kw">self</span>.<span class="fn">prewarmRecordsCache</span>() }
+    }
+    <span class="cm">// Back on calling context (after BOTH tasks complete)</span>
+    <span class="cm">// MainActor.run explicitly dispatches the UI update to the main thread</span>
+    <span class="kw">await</span> <span class="ty">MainActor</span>.<span class="fn">run</span> { isLoading = <span class="kw">false</span> }
+}
+
+<span class="cm">// Background I/O task — runs on a thread pool, never blocks the main thread</span>
+<span class="kw">private func</span> <span class="fn">prewarmSpotsCache</span>() <span class="kw">async</span> {
+    <span class="kw">do</span> {
+        <span class="kw">let</span> snapshot = <span class="kw">try await</span> db.collection(<span class="st">"parkingSpots"</span>)
+            .order(by: <span class="st">"floor"</span>).getDocuments()          <span class="cm">// I/O: network call</span>
+        <span class="kw">let</span> parsed = snapshot.documents.compactMap { <span class="cm">/* decode ParkingSpot */</span> }
+        <span class="ty">SpotCacheManager</span>.shared.<span class="fn">store</span>(parsed)             <span class="cm">// write to NSCache</span>
+    } <span class="kw">catch</span> { <span class="fn">print</span>(<span class="st">"Cache pre-warm failed"</span>) }
+}</pre>
+
+    <div class="callout">
+      <strong>Why withTaskGroup instead of async let?</strong> Both work, but <code>withTaskGroup</code> is more demonstrable: you can add tasks dynamically (e.g., one per floor), cancel the group if any task throws, and collect typed results. For the viva, it makes the structured concurrency model visually explicit.
+    </div>
+
+    <h3>Thread flow diagram</h3>
+    <div class="flow">
+      <div class="flow-box blue">ContentView<br><small>.task {}</small></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box">loadInitial<br>DataParallel()</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box orange">withTaskGroup<br><small>suspends here</small></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box blue">Task 1 (I/O)<br>prewarmSpots</div>
+      <br style="flex-basis:100%">
+      <div style="width:100%;height:8px"></div>
+      <div class="flow-box" style="visibility:hidden">x</div>
+      <div class="flow-arrow" style="visibility:hidden">→</div>
+      <div class="flow-box" style="visibility:hidden">x</div>
+      <div class="flow-arrow" style="visibility:hidden">→</div>
+      <div class="flow-box" style="visibility:hidden">x</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box blue">Task 2 (I/O)<br>prewarmRecords</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box orange">Both done</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box green">MainActor.run<br>isLoading=false</div>
+    </div>
+
+    <h3>Existing concurrency throughout the app</h3>
+    <p>Beyond <code>withTaskGroup</code>, the app uses structured concurrency in every ViewModel:</p>
+    <ul style="padding-left:20px;color:#444;font-size:.92rem">
+      <li style="margin-bottom:4px"><code>@MainActor class WeatherViewModel</code> — guarantees all @Published updates happen on the main thread automatically</li>
+      <li style="margin-bottom:4px"><code>await MainActor.run { }</code> — explicit main-thread dispatch in AuthViewModel and ParkingViewModel after Firestore reads</li>
+      <li style="margin-bottom:4px"><code>Task { await calculateAndSaveExit() }</code> — fire-and-forget Tasks for background Firestore writes from sync call sites</li>
+      <li style="margin-bottom:4px">Combine's <code>.receive(on: DispatchQueue.main)</code> — forwards ParkingConfig objectWillChange to the main queue</li>
+    </ul>
+  </div>
+
+  <!-- ══════════════════════════════════════════════
+       3. LOCAL STORAGE
+  ══════════════════════════════════════════════ -->
+  <div class="section" id="storage">
+    <div class="section-header">
+      <div class="section-badge badge-orange">💾</div>
+      <div>
+        <div class="section-title">3. Local Storage — UserDefaults + FileManager</div>
+        <div class="section-subtitle">AuthViewModel.swift + PendingActionsQueue.swift · 10 pts</div>
+      </div>
+    </div>
+
+    <div class="callout orange">
+      <strong>Rubric breakdown:</strong> Preferences/UserDefaults = 5 pts · Local Files (FileManager JSON) = 5 pts · Total = 10 pts.
+    </div>
+
+    <h3>Strategy A — UserDefaults / @AppStorage (5 pts)</h3>
+    <p>
+      <strong>UserDefaults</strong> is a key-value store backed by a plist file in the app's Library/Preferences directory. It is designed for small, primitive values that must persist across app launches. We use it via SwiftUI's <code>@AppStorage</code> property wrapper, which automatically syncs between the property and UserDefaults.
+    </p>
+
+<pre><span class="cm">// In AuthViewModel.swift</span>
+<span class="cm">// @AppStorage wraps UserDefaults.standard under the hood.</span>
+<span class="cm">// The value persists across app kills and restarts automatically.</span>
+<span class="kw">@AppStorage</span>(<span class="st">"biometricsEnabled"</span>) <span class="kw">var</span> biometricsEnabled: <span class="ty">Bool</span> = <span class="kw">false</span>
+
+<span class="cm">// Used in signOut() to decide soft vs hard logout:</span>
+<span class="kw">if</span> hasBiometrics &amp;&amp; biometricsEnabled {
+    <span class="cm">// Soft logout: keep Firebase session, show Face ID screen</span>
+    isLoggedIn = <span class="kw">false</span>
+    requiresBiometricUnlock = <span class="kw">true</span>
+}</pre>
+
+    <p>
+      <strong>Why UserDefaults here?</strong> The biometric preference is a single boolean — exactly the type of primitive, user-preference data UserDefaults is designed for. Core Data would be massive overkill, and a file would add serialization boilerplate unnecessarily.
+    </p>
+
+    <h3>Strategy B — FileManager JSON (5 pts) — PendingActionsQueue</h3>
+    <p>
+      For the offline action queue we need to persist structured data (parking records with plate, floor, spot, timestamp) across app restarts. We use <strong>FileManager</strong> to write a JSON file to the app's Documents directory. This is "Local Files" per the rubric.
+    </p>
+
+<pre><span class="cm">// PendingActionsQueue.swift</span>
+<span class="cm">// Stores offline actions as a JSON array in the Documents directory.</span>
+<span class="cm">// .atomic write prevents data corruption if the app is killed mid-write.</span>
+<span class="kw">final class</span> <span class="ty">PendingActionsQueue</span> {
+    <span class="kw">static let</span> shared = <span class="ty">PendingActionsQueue</span>()
+
+    <span class="kw">private let</span> fileURL: <span class="ty">URL</span> = {
+        <span class="kw">let</span> docs = <span class="ty">FileManager</span>.default
+            .urls(for: .documentDirectory, in: .userDomainMask)[<span class="nu">0</span>]
+        <span class="kw">return</span> docs.appendingPathComponent(<span class="st">"pending_actions.json"</span>)
+    }()
+
+    <span class="kw">func</span> <span class="fn">enqueue</span>(_ action: <span class="ty">PendingAction</span>) {
+        <span class="kw">var</span> current = all         <span class="cm">// decode existing file</span>
+        current.append(action)
+        persist(current)          <span class="cm">// re-encode and write atomically</span>
+    }
+
+    <span class="kw">private func</span> <span class="fn">persist</span>(_ actions: [<span class="ty">PendingAction</span>]) {
+        <span class="kw">guard let</span> data = <span class="kw">try</span>? encoder.encode(actions) <span class="kw">else</span> { <span class="kw">return</span> }
+        <span class="kw">try</span>? data.write(to: fileURL, options: .atomic)
+        <span class="cm">// .atomic writes to a temp file first, then renames — crash-safe</span>
+    }
+}</pre>
+
+    <p>
+      <strong>Why FileManager JSON instead of Core Data?</strong> The pending queue holds at most a few dozen actions. Core Data's schema migrations and managed object context would add complexity disproportionate to the data volume. FileManager JSON is simple, auditable (you can open the file and read it), and Codable handles all serialization automatically.
+    </p>
+    <p>
+      <strong>Why <code>.atomic</code> write option?</strong> Without it, if the app is killed while writing, the file ends up partially written and becomes undecodable. The atomic option writes to a temporary file first, then renames it to the target path — a single syscall that is either fully committed or not committed at all.
+    </p>
+
+    <h3>Storage comparison</h3>
+    <table class="rubric-table">
+      <thead><tr><th>Mechanism</th><th>Data</th><th>Persistence</th><th>Rubric pts</th></tr></thead>
+      <tbody>
+        <tr><td>@AppStorage / UserDefaults</td><td>biometricsEnabled (Bool)</td><td>Survives app restarts, device reboots</td><td><span class="badge badge-pts">5 pts</span></td></tr>
+        <tr><td>FileManager JSON</td><td>PendingAction queue (array of Codable structs)</td><td>Survives app restarts, syncs to Firestore on reconnect</td><td><span class="badge badge-pts">5 pts</span></td></tr>
+        <tr><td>NSCache (in-memory)</td><td>ParkingSpot arrays by floor</td><td>RAM only — evicted on memory pressure, lost on app kill</td><td><span class="badge badge-pts">Caching 10 pts</span></td></tr>
+        <tr><td>Firestore offline cache (implicit)</td><td>All Firestore collections</td><td>Handled by Firebase SDK automatically</td><td>Bonus coverage</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ══════════════════════════════════════════════
+       4. EVENTUAL CONNECTIVITY
+  ══════════════════════════════════════════════ -->
+  <div class="section" id="evc">
+    <div class="section-header">
+      <div class="section-badge badge-purple">📡</div>
+      <div>
+        <div class="section-title">4. Eventual Connectivity — NWPathMonitor + 5 Protected Views</div>
+        <div class="section-subtitle">NetworkMonitor.swift + 5 view files · 20 pts</div>
+      </div>
+    </div>
+
+    <div class="callout purple">
+      <strong>Rubric requirement:</strong> "5 pts per protected view. No default message for the whole app — must have navigation and features offline." We protect 5 different views each with specific, feature-appropriate offline behavior (not a single global splash screen).
+    </div>
+
+    <h3>Network detection — NetworkMonitor.swift</h3>
+    <p>
+      We use <strong>NWPathMonitor</strong> from Apple's Network framework. It monitors the actual network path (Wi-Fi, cellular, VPN) and calls a handler whenever connectivity changes. This is more reliable than Reachability because it tracks the actual usable path, not just interface availability.
+    </p>
+
+<pre><span class="cm">// NetworkMonitor.swift — shared via @EnvironmentObject to all views</span>
+<span class="kw">@MainActor</span>
+<span class="kw">final class</span> <span class="ty">NetworkMonitor</span>: <span class="ty">ObservableObject</span> {
+    <span class="kw">@Published private(set) var</span> isConnected: <span class="ty">Bool</span> = <span class="kw">true</span>
+
+    <span class="kw">private let</span> monitor = <span class="ty">NWPathMonitor</span>()
+    <span class="kw">private let</span> monitorQueue = <span class="ty">DispatchQueue</span>(
+        label: <span class="st">"com.sdparking.network"</span>, qos: .background
+    )
+
+    <span class="kw">init</span>() {
+        monitor.pathUpdateHandler = { [<span class="kw">weak self</span>] path <span class="kw">in</span>
+            <span class="cm">// Handler fires on background queue — dispatch update to main</span>
+            <span class="ty">Task</span> { <span class="kw">@MainActor</span> [<span class="kw">weak self</span>] <span class="kw">in</span>
+                <span class="kw">self</span>?.isConnected = path.status == .satisfied
+            }
+        }
+        monitor.start(queue: monitorQueue)
+    }
+}</pre>
+
+    <p>
+      The monitor is created once in <code>sd_smart_parkingApp.swift</code> as a <code>@StateObject</code> and injected into the entire app via <code>.environmentObject(networkMonitor)</code>. Every child view that declares <code>@EnvironmentObject var networkMonitor: NetworkMonitor</code> automatically receives the shared instance.
+    </p>
+    <p>
+      When connectivity is restored, <code>ContentView</code> calls <code>vm.syncPendingActions()</code> via <code>.onChange(of: networkMonitor.isConnected)</code>, which drains the FileManager queue and replays all offline actions to Firestore.
+    </p>
+
+    <h3>Protected views (5 × 5 pts = 25 pts, capped at 20)</h3>
+    <div class="view-list">
+      <div class="view-card">
+        <div class="view-name">1. LoginView <span class="pts-tag">5 pts</span></div>
+        <div class="view-file">Views/Login/LoginView.swift + BiometricLockView.swift</div>
+        <div class="view-desc">When offline, biometric login still works using the cached Firebase session. Face ID / Touch ID is evaluated locally by <code>LAContext</code> — no network needed. The app shows "Offline Mode: Using last saved session." Fully navigable without internet.</div>
+      </div>
+      <div class="view-card">
+        <div class="view-name">2. DashboardView <span class="pts-tag">5 pts</span></div>
+        <div class="view-file">Views/Usuario/Dashboard/DashboardView.swift</div>
+        <div class="view-desc">Shows an orange "Offline Mode — Showing cached data" banner with a pending-sync badge counting queued actions. Spot availability is served from NSCache. The floor details, history, and navigation tabs remain accessible — users are never stuck.</div>
+      </div>
+      <div class="view-card">
+        <div class="view-name">3. SpotsView <span class="pts-tag">5 pts</span></div>
+        <div class="view-file">Views/Parking/SpotsView.swift</div>
+        <div class="view-desc">Shows "Offline — Cached Spot Data / Changes are queued and will sync when reconnected." The spot grid is still rendered from NSCache. Any tap-to-reserve action calls <code>addRecord(isOffline: true)</code> which enqueues to FileManager instead of Firestore.</div>
+      </div>
+      <div class="view-card">
+        <div class="view-name">4. GerenteSummaryView <span class="pts-tag">5 pts</span></div>
+        <div class="view-file">Views/Gerente/GerenteSummaryView.swift</div>
+        <div class="view-desc">The AI briefing section detects offline state before calling the Gemini API. When offline: shows an "OFFLINE" badge, skips the network call entirely, and displays "[Offline] " + computedSummary() — a locally computed briefing from cached Firestore data. Queue management buttons remain functional.</div>
+      </div>
+      <div class="view-card">
+        <div class="view-name">5. MyHistoryView <span class="pts-tag">5 pts</span></div>
+        <div class="view-file">Views/Usuario/ActiveInfo/MyHistoryView.swift</div>
+        <div class="view-desc">Shows "Showing cached history — live updates paused" banner. History records are served from the in-memory Firestore listener cache (last 100 records). The summary cards (total sessions, hours, cost) continue to compute correctly from cached data.</div>
+      </div>
+    </div>
+
+    <h3>Offline action flow</h3>
+    <div class="flow" style="margin-top:16px">
+      <div class="flow-box orange">User action<br><small>(offline)</small></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box orange">addRecord<br>(isOffline:true)</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box orange">PendingActionsQueue<br>.enqueue()</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box">FileManager<br>JSON file</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box green">Network<br>restored</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box green">syncPending<br>Actions()</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box green">Firestore<br>writes</div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════
+       5. BQ
+  ══════════════════════════════════════════════ -->
+  <div class="section" id="bq">
+    <div class="section-header">
+      <div class="section-badge badge-blue">📊</div>
+      <div>
+        <div class="section-title">5. Business Question — BQ-ORG Organization Clients</div>
+        <div class="section-subtitle">analytics-dashboard.html · 10 pts</div>
+      </div>
+    </div>
+
+    <h3>The question</h3>
+    <p><strong>"Which organizations generate the most parking demand at SD Building?"</strong></p>
+    <p>
+      For a university parking facility, understanding the organizational breakdown of users has real operational value: it identifies whether peak demand comes from students, faculty, or external visitors, and informs decisions about reserved-spot allocation by organization.
+    </p>
+
+    <h3>How it works</h3>
+    <p>
+      The analytics dashboard reads <code>vehicleRecords</code> from Firestore (already filtered by the selected date range). Each record that belongs to a registered user has an <code>ownerEmail</code> field. We extract the domain from the email address and map known domains to human-readable organization names:
+    </p>
+
+<pre><span class="cm">// analytics-dashboard.html — JavaScript</span>
+<span class="kw">const</span> domainLabels = {
+    <span class="st">'uniandes.edu.co'</span>: <span class="st">'Uniandes'</span>,
+    <span class="st">'gmail.com'</span>:       <span class="st">'Gmail (External)'</span>,
+    <span class="st">'hotmail.com'</span>:     <span class="st">'Hotmail (External)'</span>,
+    <span class="st">'outlook.com'</span>:     <span class="st">'Outlook (External)'</span>,
+};
+allPeriodRecords.forEach(r =&gt; {
+    <span class="kw">let</span> org = <span class="st">'Unregistered'</span>;
+    <span class="kw">if</span> (r.ownerEmail?.includes(<span class="st">'@'</span>)) {
+        <span class="kw">const</span> domain = r.ownerEmail.split(<span class="st">'@'</span>)[<span class="nu">1</span>].toLowerCase();
+        org = domainLabels[domain] || domain;  <span class="cm">// unknown domains shown raw</span>
+    }
+    <span class="kw">if</span> (!orgCounts[org]) orgCounts[org] = { total: <span class="nu">0</span>, registered: <span class="nu">0</span> };
+    orgCounts[org].total++;
+    <span class="kw">if</span> (r.isRegistered) orgCounts[org].registered++;
+});</pre>
+
+    <h3>What the dashboard shows</h3>
+    <ul style="padding-left:20px;color:#444;font-size:.92rem;margin-bottom:16px">
+      <li style="margin-bottom:6px">KPI cards: unique organization count, top organization by volume, number of orgs with registered users</li>
+      <li style="margin-bottom:6px">Horizontal bar chart: top 8 organizations ranked by event count, with percentage share</li>
+      <li style="margin-bottom:6px">Doughnut chart: top 5 organizations by total events (registered vs total breakdown in tooltip)</li>
+    </ul>
+
+    <h3>All BQs implemented (Sprint 3)</h3>
+    <div class="bq-grid">
+      <div class="bq-card">
+        <div class="bq-id">BQ-3</div>
+        <div class="bq-q">Probability of finding a spot within 10 min?</div>
+        <div class="bq-how">Live calc: (availableSpots / totalSpots) × 100 from Firestore snapshot</div>
+      </div>
+      <div class="bq-card">
+        <div class="bq-id">BQ-4</div>
+        <div class="bq-q">Optimal departure window to maximize parking success (7–9 AM)?</div>
+        <div class="bq-how">Hourly entry bucketing from vehicleRecords; find quietest hour in 7–11 window</div>
+      </div>
+      <div class="bq-card">
+        <div class="bq-id">BQ-5</div>
+        <div class="bq-q">Queue threshold to recommend desisting (>15 min wait)?</div>
+        <div class="bq-how">queueLength × 5 min avg service time from config/parking Firestore doc</div>
+      </div>
+      <div class="bq-card">
+        <div class="bq-id">BQ-6</div>
+        <div class="bq-q">Distance for dynamic queue alerts to en-route users?</div>
+        <div class="bq-how">500m–1km geofence radius based on approach speed × reaction time analysis</div>
+      </div>
+      <div class="bq-card">
+        <div class="bq-id">BQ-13</div>
+        <div class="bq-q">Are spot counts and queue estimates accurate in real time?</div>
+        <div class="bq-how">Cross-validates parkingSpots snapshot vs vehicleRecords net inflow delta. Shows data completeness gauge.</div>
+      </div>
+      <div class="bq-card" style="border-color:#22c55e">
+        <div class="bq-id" style="color:#22c55e">BQ-ORG ★ NEW</div>
+        <div class="bq-q">Which organizations generate the most parking demand?</div>
+        <div class="bq-how">Extracts email domain from ownerEmail, groups by org, shows ranked bar + doughnut chart</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════
+       6. EVENTUAL CONNECTIVITY TABLE
+  ══════════════════════════════════════════════ -->
+  <div class="section" id="evc-table">
+    <div class="section-header">
+      <div class="section-badge badge-purple">📋</div>
+      <div>
+        <div class="section-title">6. Full Eventual Connectivity Scenario Table</div>
+        <div class="section-subtitle">Wiki documentation reference</div>
+      </div>
+    </div>
+
+    <table class="rubric-table">
+      <thead>
+        <tr>
+          <th>Feature</th>
+          <th>Offline Scenario</th>
+          <th>Expected Response (UX / System)</th>
+          <th>Implementation</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Authentication</strong></td>
+          <td>Login attempt while offline</td>
+          <td>Display "Offline Mode: Using last saved session." Allow entry via Biometrics (Face ID/Touch ID) if a local profile cache exists.</td>
+          <td>LAContext.evaluatePolicy() is local. Firebase session token persists in Keychain.</td>
+        </tr>
+        <tr>
+          <td><strong>Vehicle Management</strong></td>
+          <td>User adds a new car while offline</td>
+          <td>Update local @Published state immediately. Queue Firestore sync in PendingActionsQueue. Show "Syncing/Offline" icon.</td>
+          <td>addRecord(isOffline: true) → FileManager JSON queue</td>
+        </tr>
+        <tr>
+          <td><strong>Map &amp; Navigation</strong></td>
+          <td>Signal loss during transit</td>
+          <td>Retain last calculated route. If map tiles fail, show compass-based UI with last known coordinates.</td>
+          <td>NavigationManager caches lastRouteCalculationLocation. MapKit tiles cached by OS.</td>
+        </tr>
+        <tr>
+          <td><strong>Spot Occupancy</strong></td>
+          <td>User marks a spot as "Occupied" but network fails</td>
+          <td>Mark spot as "Pending Confirmation" locally. Notify user: "Your reservation will sync once connection is restored."</td>
+          <td>addRecord(isOffline: true) + pendingActionsCount badge on Dashboard</td>
+        </tr>
+        <tr>
+          <td><strong>Real-Time Monitor</strong></td>
+          <td>Parking availability data cannot be fetched</td>
+          <td>Display "Data from [Timestamp]." Disable "Live" badge. Show cached occupancy from NSCache.</td>
+          <td>SpotCacheManager serves last known spots. Orange offline banner shows.</td>
+        </tr>
+        <tr>
+          <td><strong>AI Recommendations</strong></td>
+          <td>User requests a Gemini tip while offline</td>
+          <td>Skip live SDK call. Show "OFFLINE" badge. Serve locally computed briefing from cached Firestore data.</td>
+          <td>GerenteSummaryView checks networkMonitor.isConnected before Task { model.generateContent() }</td>
+        </tr>
+        <tr>
+          <td><strong>Manager: Traffic Flow</strong></td>
+          <td>Manager registers entry/exit in basement with no signal</td>
+          <td>Record event with local timestamp. Add to PendingActionsQueue (FileManager). Syncs automatically when connection is restored.</td>
+          <td>PendingActionsQueue.enqueue() → syncPendingActions() on reconnect</td>
+        </tr>
+        <tr>
+          <td><strong>Profile Cache</strong></td>
+          <td>First-time app open with no internet</td>
+          <td>Show ContentUnavailableView: "Initial connection required to set up your profile."</td>
+          <td>fetchUserData() fails gracefully; isLoggedIn stays false; LoginView shown.</td>
+        </tr>
+        <tr>
+          <td><strong>Parking History</strong></td>
+          <td>User opens My History while offline</td>
+          <td>Show "Showing cached history — live updates paused" banner. Records served from Firestore listener in-memory cache.</td>
+          <td>Firestore listener retains last 100 records in memory. MyHistoryView reads from vm.vehicleRecords.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ══════════════════════════════════════════════
+       7. ARCHITECTURE
+  ══════════════════════════════════════════════ -->
+  <div class="section" id="architecture">
+    <div class="section-header">
+      <div class="section-badge badge-green">🏗️</div>
+      <div>
+        <div class="section-title">7. Architecture Overview</div>
+        <div class="section-subtitle">New files + modified files in Sprint 3</div>
+      </div>
+    </div>
+
+    <h3>New files created in Sprint 3</h3>
+    <table class="rubric-table">
+      <thead><tr><th>File</th><th>Location</th><th>Purpose</th><th>Rubric</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><code>NetworkMonitor.swift</code></td>
+          <td>Core/</td>
+          <td>NWPathMonitor wrapper. Publishes isConnected Bool via @MainActor @Published. Shared as @EnvironmentObject.</td>
+          <td><span class="badge badge-pts">Eventual Conn.</span></td>
+        </tr>
+        <tr>
+          <td><code>SpotCacheManager.swift</code></td>
+          <td>Core/</td>
+          <td>NSCache&lt;NSString, NSArray&gt; singleton. Stores [ParkingSpot] by floor with countLimit=500 and totalCostLimit=2MB.</td>
+          <td><span class="badge badge-pts">Caching</span></td>
+        </tr>
+        <tr>
+          <td><code>PendingActionsQueue.swift</code></td>
+          <td>Core/</td>
+          <td>FileManager JSON queue for offline parking actions. Atomic writes. Drained by syncPendingActions() on reconnect.</td>
+          <td><span class="badge badge-pts">Local Storage</span></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>Modified files in Sprint 3</h3>
+    <table class="rubric-table">
+      <thead><tr><th>File</th><th>Change</th></tr></thead>
+      <tbody>
+        <tr><td><code>sd_smart_parkingApp.swift</code></td><td>Added @StateObject NetworkMonitor, passed as .environmentObject to ContentView</td></tr>
+        <tr><td><code>ContentView.swift</code></td><td>Added @EnvironmentObject NetworkMonitor, .onChange triggers syncPendingActions() on reconnect, loadInitialDataParallel() in .task</td></tr>
+        <tr><td><code>ParkingViewModel.swift</code></td><td>Added: pendingActionsCount @Published, loadInitialDataParallel() with withTaskGroup, prewarmSpotsCache() + prewarmRecordsCache(), syncPendingActions(), addRecord(isOffline:) with FileManager queuing, NSCache write in listenToSpots()</td></tr>
+        <tr><td><code>DashboardView.swift</code></td><td>Added @EnvironmentObject NetworkMonitor, offline orange banner with pending count badge</td></tr>
+        <tr><td><code>SpotsView.swift</code></td><td>Added @EnvironmentObject NetworkMonitor, offline banner with "changes queued" message</td></tr>
+        <tr><td><code>GerenteSummaryView.swift</code></td><td>Added @EnvironmentObject NetworkMonitor, offline AI badge, generateBriefing() checks isConnected before Gemini call</td></tr>
+        <tr><td><code>MyHistoryView.swift</code></td><td>Added @EnvironmentObject NetworkMonitor, "cached history" banner when offline</td></tr>
+        <tr><td><code>analytics-dashboard.html</code></td><td>Added BQ-ORG section: CSS styles, HTML placeholder, JS computation of org clients by email domain, bar chart + doughnut chart</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Summary for the viva voce — what to show and say</h3>
+    <table class="rubric-table">
+      <thead><tr><th>Examiner asks about…</th><th>Show…</th><th>Say…</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>Caching</td>
+          <td><code>SpotCacheManager.swift</code></td>
+          <td>"We use NSCache which is thread-safe and implements LRU-like eviction. countLimit caps object count at 500; totalCostLimit enforces a 2 MB budget by assigning a per-object cost at write time via setObject(_:forKey:cost:)."</td>
+        </tr>
+        <tr>
+          <td>Concurrency</td>
+          <td><code>loadInitialDataParallel()</code> in ParkingViewModel</td>
+          <td>"withTaskGroup spawns two concurrent background I/O tasks simultaneously. The group suspends until both finish, then MainActor.run dispatches the UI update to the main thread — this is the iOS equivalent of multiple coroutines with I/O and main dispatchers."</td>
+        </tr>
+        <tr>
+          <td>Local Storage</td>
+          <td><code>@AppStorage</code> + <code>PendingActionsQueue.swift</code></td>
+          <td>"We use two strategies: UserDefaults via @AppStorage for the biometric preference boolean, and FileManager JSON for the offline action queue. Atomic writes prevent corruption on crash. JSONEncoder with ISO8601 dates ensures the file is human-readable and portable."</td>
+        </tr>
+        <tr>
+          <td>Eventual Connectivity</td>
+          <td>Toggle airplane mode → all 5 views show banners</td>
+          <td>"NWPathMonitor detects connectivity on a background queue and dispatches updates to @MainActor. Each view has its own specific offline behavior — no global splash screen. On reconnect, syncPendingActions() replays the FileManager queue to Firestore automatically."</td>
+        </tr>
+        <tr>
+          <td>BQ</td>
+          <td>analytics-dashboard.html BQ-ORG section</td>
+          <td>"We query vehicleRecords filtered by date range from Firestore, extract the email domain from ownerEmail, and group by organization. This answers which institution generates the most parking demand — informing reserved-spot allocation decisions."</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+</main>
+
+<footer>
+  SD Smart Parking · ISIS-3510 Sprint 3 · Universidad de los Andes · 2026
+</footer>
+
+</body>
+</html>

@@ -61,6 +61,23 @@
   .insight-card .ic-text { font-size: 0.82rem; color: #333; line-height: 1.45; }
   .insight-card .ic-action { font-size: 0.75rem; color: #8b5cf6; font-weight: 600; margin-top: 5px; }
 
+  /* BQ-ORG — Organization Clients */
+  .org-section { background: white; border-radius: 10px; padding: 20px; box-shadow: 0 1px 4px rgba(0,0,0,.08); margin-bottom: 20px; border-top: 4px solid #22c55e; }
+  .org-header { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
+  .org-badge { background: #22c55e; color: white; font-size: 0.7rem; font-weight: 700; padding: 3px 8px; border-radius: 4px; }
+  .org-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; font-size: 0.82rem; }
+  .org-name { width: 180px; color: #333; font-weight: 600; flex-shrink: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .org-bar-bg { flex: 1; background: #f0f2f5; border-radius: 4px; height: 14px; overflow: hidden; }
+  .org-bar { height: 100%; border-radius: 4px; background: #22c55e; transition: width .4s; }
+  .org-count { width: 50px; text-align: right; font-weight: 700; color: #444; font-size: 0.8rem; flex-shrink: 0; }
+  .org-pct { width: 40px; text-align: right; font-size: 0.72rem; color: #888; flex-shrink: 0; }
+  .org-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  @media(max-width:700px) { .org-cols { grid-template-columns: 1fr; } }
+  .org-kpi-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-bottom: 16px; }
+  .org-kpi { background: #f8f9fa; border-radius: 8px; padding: 10px 12px; }
+  .org-kpi .label { font-size: 0.68rem; text-transform: uppercase; color: #888; letter-spacing:.4px; margin-bottom: 4px; }
+  .org-kpi .value { font-size: 1.1rem; font-weight: 700; color: #1a1a2e; }
+
   /* BQ-13 */
   .bq13 { background: white; border-radius: 10px; padding: 20px; box-shadow: 0 1px 4px rgba(0,0,0,.08); margin-bottom: 20px; border-top: 4px solid #4f8ef7; }
   .bq13-header { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
@@ -144,6 +161,25 @@
     </div>
 
     <div class="bq-grid" id="bqGrid"></div>
+
+    <!-- BQ-ORG: Organization Clients -->
+    <div class="org-section">
+      <div class="org-header">
+        <span class="org-badge">BQ-ORG</span>
+        <h2 style="font-size:.95rem;color:#1a1a2e;font-weight:600">Organization Clients — Which organizations generate the most parking demand?</h2>
+      </div>
+      <div class="org-kpi-grid" id="orgKpis"></div>
+      <div class="org-cols">
+        <div>
+          <div class="section-title">Events by Organization (top 8)</div>
+          <div id="orgBars"></div>
+        </div>
+        <div>
+          <div class="section-title">Registered vs Unregistered by Org</div>
+          <canvas id="orgChart" height="200"></canvas>
+        </div>
+      </div>
+    </div>
 
     <!-- BQ-13 dedicated accuracy section -->
     <div class="bq13">
@@ -603,6 +639,86 @@ async function load() {
           ${r.badge ? `<span class="acc-badge ${r.badge}">${r.btext}</span>` : ''}
         </span>
       </div>`).join('');
+
+    // BQ-ORG: Organization Clients
+    // Extracts the email domain from ownerEmail to derive the organization.
+    // Unregistered vehicles (no ownerEmail) are grouped as "Unregistered".
+    const domainLabels = {
+      'uniandes.edu.co': 'Uniandes',
+      'gmail.com': 'Gmail (External)',
+      'hotmail.com': 'Hotmail (External)',
+      'outlook.com': 'Outlook (External)',
+      'yahoo.com': 'Yahoo (External)',
+    };
+    const orgCounts = {};   // { orgName: { total, registered } }
+    const allPeriodRecords = records; // already filtered by period
+    allPeriodRecords.forEach(r => {
+      let org = 'Unregistered';
+      if (r.ownerEmail && r.ownerEmail.includes('@')) {
+        const domain = r.ownerEmail.split('@')[1].toLowerCase();
+        org = domainLabels[domain] || domain;
+      }
+      if (!orgCounts[org]) orgCounts[org] = { total: 0, registered: 0 };
+      orgCounts[org].total++;
+      if (r.isRegistered) orgCounts[org].registered++;
+    });
+
+    const orgEntries = Object.entries(orgCounts).sort((a,b) => b[1].total - a[1].total);
+    const topOrgs = orgEntries.slice(0, 8);
+    const maxOrgCount = topOrgs[0]?.[1].total || 1;
+    const totalOrgEvents = allPeriodRecords.length || 1;
+    const uniqueOrgs = orgEntries.length;
+    const topOrg = topOrgs[0]?.[0] || '—';
+    const regOrgs = orgEntries.filter(([,v]) => v.registered > 0).length;
+
+    // KPI cards
+    document.getElementById('orgKpis').innerHTML = [
+      { label: 'Unique Organizations', value: uniqueOrgs },
+      { label: 'Top Organization', value: topOrg },
+      { label: 'Orgs with Registered Users', value: regOrgs },
+    ].map(k => `<div class="org-kpi"><div class="label">${k.label}</div><div class="value">${k.value}</div></div>`).join('');
+
+    // Bar chart
+    const orgColors = ['#22c55e','#4f8ef7','#f59e0b','#8b5cf6','#ef4444','#14b8a6','#f97316','#64748b'];
+    document.getElementById('orgBars').innerHTML = topOrgs.map(([name, d], i) => {
+      const pct = Math.round((d.total / maxOrgCount) * 100);
+      const sharePct = Math.round((d.total / totalOrgEvents) * 100);
+      return `<div class="org-row">
+        <div class="org-name" title="${name}">${name}</div>
+        <div class="org-bar-bg"><div class="org-bar" style="width:${pct}%;background:${orgColors[i % orgColors.length]}"></div></div>
+        <div class="org-count">${d.total}</div>
+        <div class="org-pct">${sharePct}%</div>
+      </div>`;
+    }).join('') || '<p style="color:#888;font-size:.8rem">No organization data in this period</p>';
+
+    // Doughnut: registered vs unregistered split per top 5 orgs
+    let orgChartInst = Chart.getChart('orgChart');
+    if (orgChartInst) orgChartInst.destroy();
+    new Chart(document.getElementById('orgChart'), {
+      type: 'doughnut',
+      data: {
+        labels: topOrgs.slice(0,5).map(([name]) => name),
+        datasets: [{
+          data: topOrgs.slice(0,5).map(([,v]) => v.total),
+          backgroundColor: orgColors.slice(0,5),
+          borderWidth: 2
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { position: 'bottom', labels: { font: { size: 11 } } },
+          tooltip: {
+            callbacks: {
+              label: ctx => {
+                const [,v] = topOrgs[ctx.dataIndex];
+                return ` ${ctx.label}: ${v.total} events (${v.registered} registered)`;
+              }
+            }
+          }
+        }
+      }
+    });
 
     // Recent events table
     const recentRecords = recentSnap.docs.map(d => ({ ...d.data(), ts: d.data().timestamp?.toDate?.() || new Date(d.data().timestamp) }));

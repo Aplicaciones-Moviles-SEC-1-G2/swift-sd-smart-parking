@@ -6,8 +6,6 @@
 //
 
 import SwiftUI
-
-import SwiftUI
 import FirebaseCore
 
 class AppDelegate: NSObject, UIApplicationDelegate {
@@ -20,13 +18,15 @@ class AppDelegate: NSObject, UIApplicationDelegate {
 
 @main
 struct sd_smart_parkingApp: App {
-    
     @StateObject private var navigationManager = NavigationManager()
+    @StateObject private var networkMonitor = NetworkMonitor()
     @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
+
     var body: some Scene {
         WindowGroup {
             ContentView()
                 .environmentObject(navigationManager)
+                .environmentObject(networkMonitor)
                 .preferredColorScheme(.light)
         }
     }

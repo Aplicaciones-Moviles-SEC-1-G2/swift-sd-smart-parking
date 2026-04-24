@@ -10,9 +10,10 @@ import SwiftUI
 struct ContentView: View {
     @StateObject private var authVM = AuthViewModel()
     @StateObject private var parkingVM = ParkingViewModel()
+    @EnvironmentObject var networkMonitor: NetworkMonitor
     @State private var selectedTab: Int = 0
     @State private var scrollOffset: CGFloat = 0
-    
+
     var body: some View {
         Group {
             if authVM.requiresBiometricUnlock {
@@ -31,6 +32,10 @@ struct ContentView: View {
         .environmentObject(parkingVM)
         .task {
             await parkingVM.generateSpotsIfEmpty()
+            await parkingVM.loadInitialDataParallel()
+        }
+        .onChange(of: networkMonitor.isConnected) { _, isConnected in
+            if isConnected { parkingVM.syncPendingActions() }
         }
     }
 }

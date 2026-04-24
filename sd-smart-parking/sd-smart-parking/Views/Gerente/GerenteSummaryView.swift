@@ -9,6 +9,7 @@ import GoogleGenerativeAI
 
 struct GerenteSummaryView: View {
     @EnvironmentObject var vm: ParkingViewModel
+    @EnvironmentObject var networkMonitor: NetworkMonitor
 
     @State private var briefing: String = ""
     @State private var isLoadingBrief = false
@@ -55,15 +56,24 @@ struct GerenteSummaryView: View {
             // MARK: - AI Briefing
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
-                    Image(systemName: "sparkles")
+                    Image(systemName: networkMonitor.isConnected ? "sparkles" : "sparkles.slash")
                         .font(.caption.bold())
-                        .foregroundColor(.blue)
+                        .foregroundColor(networkMonitor.isConnected ? .blue : .orange)
                     Text("AI Briefing")
                         .font(.subheadline.weight(.semibold))
+                    if !networkMonitor.isConnected {
+                        Text("OFFLINE")
+                            .font(.caption2.weight(.bold))
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(Color.orange.opacity(0.15))
+                            .foregroundColor(.orange)
+                            .clipShape(Capsule())
+                    }
                     Spacer()
                     if isLoadingBrief {
                         ProgressView().scaleEffect(0.75)
-                    } else {
+                    } else if networkMonitor.isConnected {
                         Button { generateBriefing() } label: {
                             Image(systemName: "arrow.clockwise")
                                 .font(.caption)
@@ -169,6 +179,12 @@ struct GerenteSummaryView: View {
     private func generateBriefing() {
         guard !isLoadingBrief else { return }
 
+        // When offline: skip the Gemini API call and serve the local computed summary
+        guard networkMonitor.isConnected else {
+            briefing = "[Offline] " + computedSummary()
+            return
+        }
+
         let entries   = vm.totalEntries(for: .today)
         let exits     = vm.totalExits(for: .today)
         let revenue   = Int(vm.totalRevenue(for: .today))
@@ -176,7 +192,6 @@ struct GerenteSummaryView: View {
         let total     = vm.spots.count
         let queue     = vm.config.queueLength
 
-        // Data not loaded yet — show computed summary and let onChange retry
         guard total > 0 else {
             briefing = computedSummary()
             return

@@ -10,6 +10,7 @@ import SwiftUI
 struct SpotsView: View {
     @EnvironmentObject var vm: ParkingViewModel
     @EnvironmentObject var authVM: AuthViewModel
+    @EnvironmentObject var networkMonitor: NetworkMonitor
 
     @State private var expandedFloors: Set<Int> = []
     @State private var pendingBulkFree          = false
@@ -29,6 +30,27 @@ struct SpotsView: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 25) {
+
+                    // MARK: - Offline Banner
+                    if !networkMonitor.isConnected {
+                        HStack(spacing: 8) {
+                            Image(systemName: "wifi.slash")
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Offline — Cached Spot Data")
+                                    .font(.caption.weight(.semibold))
+                                Text("Changes are queued and will sync when reconnected.")
+                                    .font(.caption2)
+                                    .foregroundColor(.white.opacity(0.85))
+                            }
+                            Spacer()
+                        }
+                        .foregroundColor(.white)
+                        .padding(12)
+                        .background(Color.orange)
+                        .cornerRadius(12)
+                        .padding(.horizontal)
+                    }
+
                     // Recommendation banner (driver only)
                     if !authVM.isGerente,
                        let recommended = vm.recommendedFloor {
