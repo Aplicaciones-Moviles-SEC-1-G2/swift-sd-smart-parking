@@ -73,19 +73,32 @@ struct DashboardView: View {
                             openingHour: vm.config.openingHour,
                             closingHour: vm.config.closingHour
                         )
-                        let demandLevel = PeakHoursSchedule.demandLevel(at: now)
+                        let demandLevel = PeakHoursSchedule.demandLevel(
+                            at: now,
+                            using: vm.historicSchedule
+                        )
                         let countdown = PeakHoursSchedule.transitionCountdown(
                             at: now,
                             openingHour: vm.config.openingHour,
-                            closingHour: vm.config.closingHour
+                            closingHour: vm.config.closingHour,
+                            using: vm.historicSchedule
                         )
 
                         VStack(spacing: 0) {
                             switch operatingStatus {
                             case .open:
-                                ParkingStatusBannerView(demandLevel: demandLevel, countdown: countdown)
-                                    .padding(.horizontal, 20)
-                                    .padding(.bottom, 12)
+                                Button {
+                                    showDemandInsights = true
+                                } label: {
+                                    ParkingStatusBannerView(
+                                        demandLevel: demandLevel,
+                                        countdown: countdown,
+                                        showsDisclosure: true
+                                    )
+                                }
+                                .buttonStyle(.plain)
+                                .padding(.horizontal, 20)
+                                .padding(.bottom, 12)
                             case .closingSoon(let mins):
                                 ClosingSoonBannerView(minutesLeft: mins)
                                     .padding(.horizontal, 20)
@@ -154,6 +167,13 @@ struct DashboardView: View {
         .sheet(isPresented: $showTripPlanner) {
             TripPlannerSheetView()
                 .environmentObject(vm.config)
+        }
+        .sheet(isPresented: $showDemandInsights) {
+            ParkingDemandInsightsView(
+                records: vm.vehicleRecords,
+                openingHour: vm.config.openingHour,
+                closingHour: vm.config.closingHour
+            )
         }
     }
     

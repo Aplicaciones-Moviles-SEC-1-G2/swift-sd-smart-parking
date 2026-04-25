@@ -64,7 +64,78 @@ class ParkingViewModel: ObservableObject {
 
         return best.key
     }
- 
+
+    // MARK: - Personalized recommendation
+
+    /// Lowest-numbered available spot on a given floor (closest to elevator/stairs).
+    private func lowestAvailableSpot(onFloor floor: Int) -> ParkingSpot? {
+        spots
+            .filter { $0.floor == floor && $0.isAvailable }
+            .min { $0.number < $1.number }
+    }
+
+    /// Floor with availability that is closest to the building entrance —
+    /// modeled here as the lowest floor number that has any free spot.
+    /// Used for the mobility-aware path.
+    private var lowestFloorWithAvailability: Int? {
+        floorAvailability
+            .filter { $0.value.available > 0 }
+            .keys
+            .min()
+    }
+
+    /// Personalized floor + spot recommendation that respects user-declared
+    /// mobility limitations and a preferred floor.
+    ///
+    /// Priority order (preferred floor wins over mobility — rationale: this is
+    /// a university building where the preferred floor is usually the floor of
+    /// the user's class, so parking elsewhere defeats the point even for a
+    /// driver with a mobility limitation. The closest-to-elevator spot on the
+    /// preferred floor is still picked):
+    ///   1. Preferred floor with availability → that floor + closest-to-elevator spot
+    ///   2. Mobility limitation → lowest floor with availability + closest-to-elevator spot
+    ///      (used when no preferred floor is set, or when preferred floor is full)
+    ///   3. Generic `recommendedFloor` as final fallback
+    ///   4. `nil` when no recommendation is possible (all full / suppressed tie)
+    ///
+    /// Spot selection inside the chosen floor is always the lowest-numbered
+    /// available spot, which corresponds to the spot closest to the
+    /// elevator/stairs core in the production numbering scheme.
+    func personalizedRecommendation(for prefs: UserPreferences?) -> PersonalizedRecommendation? {
+        // 1. Preferred floor wins when it has availability.
+        if let preferred = prefs?.preferredFloor,
+           let avail = floorAvailability[preferred],
+           avail.available > 0 {
+            return PersonalizedRecommendation(
+                floor: preferred,
+                spot: lowestAvailableSpot(onFloor: preferred),
+                reason: .preferredFloor
+            )
+        }
+
+        // Preferred floor was set but has no availability — flag it for the UI
+        // copy so the fallback can be explained.
+        let preferredIsFull = prefs?.preferredFloor.flatMap { floorAvailability[$0]?.available } == 0
+
+        // 2. Mobility path (no preferred match): lowest floor with availability.
+        if prefs?.hasMobilityLimitation == true {
+            guard let floor = lowestFloorWithAvailability else { return nil }
+            return PersonalizedRecommendation(
+                floor: floor,
+                spot: lowestAvailableSpot(onFloor: floor),
+                reason: preferredIsFull ? .preferredFloorFull(fallback: floor) : .mobility
+            )
+        }
+
+        // 3. Generic recommendation (with optional "preferred floor full" hint).
+        guard let generic = recommendedFloor else { return nil }
+        return PersonalizedRecommendation(
+            floor: generic,
+            spot: lowestAvailableSpot(onFloor: generic),
+            reason: preferredIsFull ? .preferredFloorFull(fallback: generic) : .generic
+        )
+    }
+
     // MARK: - Init
  
     init() {
@@ -218,7 +289,7 @@ class ParkingViewModel: ObservableObject {
                           let type      = RecordType(rawValue: typeRaw),
                           let timestamp = (data["timestamp"] as? Timestamp)?.dateValue()
                     else { return nil }
- 
+
                     return VehicleRecord(
                         id: doc.documentID,
                         plate: plate,
@@ -234,6 +305,7 @@ class ParkingViewModel: ObservableObject {
                         hitDailyCap: data["hitDailyCap"] as? Bool ?? false
                     )
                 }
+                self.historicSchedule = HistoricDemandSchedule.build(from: self.vehicleRecords)
             }
     }
  
@@ -507,8 +579,51 @@ class ParkingViewModel: ObservableObject {
     }
  
     func avgOccupancy(for period: ReportsView.ReportPeriod) -> Double { 0.65 }
-    func peakHour(for period: ReportsView.ReportPeriod) -> String { "10:00 AM" }
- 
+    func peakHour(for period: ReportsView.ReportPeriod) -> String {
+        let now = Date()
+        let calendar = Calendar.current
+        
+        // 1. Filtrar registros por fecha (Período) y tipo (Entrada)
+        let filteredEntries = vehicleRecords.filter { record in
+            // Primero, solo entradas
+            guard record.type == .entry else { return false }
+            
+            // Segundo, validar que el registro esté dentro del rango de tiempo
+            switch period {
+            case .today: // Ajusta este nombre según tu Enum (ej: .day o .daily)
+                return calendar.isDateInToday(record.timestamp)
+            case .week:
+                guard let sevenDaysAgo = calendar.date(byAdding: .day, value: -7, to: now) else { return false }
+                return record.timestamp >= sevenDaysAgo
+            case .month:
+                guard let thirtyDaysAgo = calendar.date(byAdding: .day, value: -30, to: now) else { return false }
+                return record.timestamp >= thirtyDaysAgo
+            }
+        }
+        
+        // 2. Agrupar por hora (0...23)
+        let hourGroups = Dictionary(grouping: filteredEntries) { record -> Int in
+            let components = calendar.dateComponents([.hour], from: record.timestamp)
+            return components.hour ?? 0
+        }
+        
+        // 3. Encontrar la hora con el conteo más alto
+        guard let maxHour = hourGroups.max(by: { $0.value.count < $1.value.count }) else {
+            return "N/A"
+        }
+        
+        // 4. Formatear el resultado (Ejemplo: "2:00 PM")
+        var components = DateComponents()
+        components.hour = maxHour.key
+        // Usamos el calendario para crear una fecha válida y formatearla
+        if let date = calendar.date(from: components) {
+            let formatter = DateFormatter()
+            formatter.dateFormat = "h:mm a"
+            return formatter.string(from: date)
+        }
+        
+        return "\(maxHour.key):00"
+    }
     func revenueChartData(for period: ReportsView.ReportPeriod) -> [ChartDataPoint] {
         switch period {
         case .today:
@@ -553,33 +668,39 @@ extension ParkingViewModel {
     
     // Esta función filtra los registros de los carros del usuario
     func listenToUserCars(for user: User) {
-        let plates = user.cars.map { $0.plate.uppercased() }
-        print("DEBUG: Buscando estas placas: \(plates)") // <--- Check 1
+        // 1. Extraemos las placas usando allValues() del ArrayMap
+        let plates = user.cars.allValues().map { $0.plate.uppercased() }
+        
+        print("DEBUG: Buscando estas placas: \(plates)")
         
         guard !plates.isEmpty else {
             print("DEBUG: El usuario no tiene placas registradas.")
+            // Limpiamos los registros si el usuario ya no tiene carros
+            DispatchQueue.main.async { self.activeUserRecords = [] }
             return
         }
         
         db.collection("vehicleRecords")
-            .whereField("plate", in: plates)
+            .whereField("plate", in: plates) // Firestore permite hasta 30 elementos en 'in'
             .order(by: "timestamp", descending: true)
             .addSnapshotListener { [weak self] snapshot, error in
                 
-                // --- AQUÍ VA EL PRINT CLAVE ---
                 if let error = error {
                     print("❌ ERROR DE FIREBASE: \(error.localizedDescription)")
+                    return
                 }
                 
                 let count = snapshot?.documents.count ?? 0
-                print("DEBUG: Documentos recibidos de Firestore: \(count)") // <--- Check 2
-                // ------------------------------
+                print("DEBUG: Documentos recibidos de Firestore: \(count)")
                 
                 guard let self = self, let docs = snapshot?.documents else { return }
                 
+                // Mapeamos los documentos a objetos de dominio
                 let records = docs.compactMap { self.mapDocumentToRecord($0) }
-                print("DEBUG: Registros mapeados con éxito: \(records.count)") // <--- Check 3
+                print("DEBUG: Registros mapeados con éxito: \(records.count)")
                 
+                // 2. Lógica para obtener solo el último estado por placa
+                // (Como vienen ordenados por timestamp desc, el primero que encontremos es el actual)
                 var latestStatus: [String: VehicleRecord] = [:]
                 for record in records {
                     if latestStatus[record.plate] == nil {
@@ -588,8 +709,9 @@ extension ParkingViewModel {
                 }
                 
                 DispatchQueue.main.async {
+                    // Filtramos solo aquellos cuyo último movimiento fue una 'entrada' (están en el parking)
                     self.activeUserRecords = Array(latestStatus.values).filter { $0.type == .entry }
-                    print("DEBUG: Registros finales en pantalla: \(self.activeUserRecords.count)") // <--- Check 4
+                    print("DEBUG: Registros finales en pantalla: \(self.activeUserRecords.count)")
                 }
             }
     }

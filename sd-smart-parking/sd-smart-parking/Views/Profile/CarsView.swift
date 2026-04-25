@@ -8,6 +8,7 @@ import SwiftUI
 
 struct CarsView: View {
     @EnvironmentObject var authVM: AuthViewModel
+    @EnvironmentObject var userRepo: UserRepository
     @State private var showingAddCar = false
     @State private var newName = ""
     @State private var newPlate = ""
@@ -15,9 +16,11 @@ struct CarsView: View {
     var body: some View {
         ScrollView {
             // Check if user exists and has cars
-            if let user = authVM.currentUser, !user.cars.isEmpty {
+
+            if let user = userRepo.currentUser, !user.cars.allValues().isEmpty {
+
                 VStack(spacing: 16) {
-                    ForEach(user.cars) { car in
+                    ForEach(user.cars.allValues()) { car in
                         CarCard(car: car)
                     }
                 }
@@ -59,10 +62,12 @@ struct CarsView: View {
                     ToolbarItem(placement: .confirmationAction) {
                         Button("Add") {
                             Task {
-                                await authVM.addCar(name: newName, plate: newPlate)
-                                        newName = ""
-                                        newPlate = ""
-                                        showingAddCar = false
+                                userRepo.addCar(name: newName, plate: newPlate)
+                                    
+                                    // 2. Limpiamos la UI inmediatamente
+                                    newName = ""
+                                    newPlate = ""
+                                    showingAddCar = false
                             }
                             
                         }
@@ -115,39 +120,29 @@ struct CarCard: View {
         .shadow(color: .black.opacity(0.05), radius: 5, x: 0, y: 2)
     }
 }
+
+
 #Preview {
-    // 1. Create the ViewModel instance
-    let viewModel = AuthViewModel()
+    let repo = UserRepository()
     
-    // 2. Create mock data
-    let sampleCars = [
-        Car(id: UUID(), plate: "GTC-456", UserID: UUID(), name: "Commuter Sedan"),
-        Car(id: UUID(), plate: "FAST-01", UserID: UUID(), name: "Weekend Cruiser")
-    ]
+    // Creamos el ArrayMap para el mock
+    var mockCars = ArrayMap<String, Car>()
+    let car1 = Car(id: UUID(), plate: "GTC-456", UserID: UUID(), name: "Commuter Sedan")
+    let car2 = Car(id: UUID(), plate: "FAST-01", UserID: UUID(), name: "Weekend Cruiser")
     
-    // 3. Inject the data into the ViewModel
-    viewModel.currentUser = User(
+    mockCars.put(car1, for: car1.normalizedPlate)
+    mockCars.put(car2, for: car2.normalizedPlate)
+    
+    repo.currentUser = User(
         id: UUID(),
         name: "Alex",
         email: "alex@uniandes.edu.co",
         password: "password",
-        cars: sampleCars
+        cars: mockCars // Pasamos el ArrayMap
     )
-    viewModel.isLoggedIn = true
-    
-    // 4. Return the view with the environment object attached
-    return NavigationStack {
-        CarsView()
-            .environmentObject(viewModel)
-    }
-}
-
-#Preview("Empty State") {
-    let emptyVM = AuthViewModel()
-    emptyVM.currentUser = User(id: UUID(), name: "New User", email: "test@test.com", password: "123", cars: [])
     
     return NavigationStack {
         CarsView()
-            .environmentObject(emptyVM)
+            .environmentObject(repo)
     }
 }

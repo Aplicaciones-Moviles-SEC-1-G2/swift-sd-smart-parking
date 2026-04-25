@@ -11,7 +11,7 @@ struct ConfigurationView: View {
     @EnvironmentObject var authVM: AuthViewModel
     @StateObject private var settings = ParkingConfig()
     @State private var showSaveConfirmation = false
-
+    @StateObject var userRepo = UserRepository()
     var body: some View {
         NavigationStack {
             List {
@@ -113,7 +113,7 @@ struct ConfigurationView: View {
 
                 // MARK: - Logout
                 Button(role: .destructive) {
-                    authVM.signOut()
+                    authVM.signOut(userRepo: userRepo)
                 } label: {
                     HStack {
                         Image(systemName: "rectangle.portrait.and.arrow.right")

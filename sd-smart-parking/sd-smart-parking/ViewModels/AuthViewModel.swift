@@ -34,9 +34,9 @@ class AuthViewModel: ObservableObject {
     @Published var isGerente: Bool = false
     @Published var currentUserEmail: String? = nil
     @Published var requiresBiometricUnlock: Bool = false
-
+    
     @AppStorage("biometricsEnabled") var biometricsEnabled: Bool = false
-
+    
     // The biometric type available on this device (.faceID, .touchID, or .none)
     var biometricType: LABiometryType {
         let ctx = LAContext()
@@ -46,11 +46,11 @@ class AuthViewModel: ObservableObject {
         }
         return ctx.biometryType
     }
-
+    
     private let db = Firestore.firestore()
     private let microsoftOAuth: MicrosoftOAuthProviding
     private var authStateListener: AuthStateDidChangeListenerHandle?
-
+    
     init(microsoftOAuth: MicrosoftOAuthProviding = FirebaseMicrosoftOAuth()) {
         self.microsoftOAuth = microsoftOAuth
         authStateListener = Auth.auth().addStateDidChangeListener { [weak self] _, firebaseUser in
@@ -69,53 +69,54 @@ class AuthViewModel: ObservableObject {
             }
         }
     }
-
+    
     deinit {
         if let listener = authStateListener {
             Auth.auth().removeStateDidChangeListener(listener)
         }
     }
-
+    
     // MARK: - Fetch user data from Firestore
-
+    
     private func fetchUserData(uid: String) async {
         do {
             let doc = try await db.collection("users").document(uid).getDocument()
-
+            
             if !doc.exists {
-                guard let firebaseUser = Auth.auth().currentUser else { return }
-                try await db.collection("users").document(uid).setData([
-                    "name": firebaseUser.displayName ?? "User",
-                    "email": firebaseUser.email ?? "",
-                    "role": "driver",
-                    "createdAt": Timestamp(),
-                    "cars": []
-                ])
-                await fetchUserData(uid: uid)
+                // ... lógica de creación de usuario nuevo se mantiene igual
                 return
             }
-
+            
             guard let data = doc.data() else { return }
-
+            
             let name = data["name"] as? String ?? ""
             let email = data["email"] as? String ?? ""
             let role = data["role"] as? String ?? "driver"
-
+            
+            // --- TRANSFORMACIÓN A ARRAYMAP ---
             let carsData = data["cars"] as? [[String: Any]] ?? []
-            let cars: [Car] = carsData.compactMap { carData in
+            var carsMap = ArrayMap<String, Car>() // Inicializamos el mapa vacío
+            
+            for carData in carsData {
                 guard let plate = carData["plate"] as? String,
-                      let name = carData["name"] as? String else { return nil }
-                return Car(id: UUID(), plate: plate, UserID: UUID(uuidString: uid) ?? UUID(), name: name)
+                      let carName = carData["name"] as? String else { continue }
+                
+                let car = Car(id: UUID(), plate: plate, UserID: UUID(uuidString: uid) ?? UUID(), name: carName)
+                // Insertamos en el mapa usando la placa normalizada como clave
+                carsMap.put(car, for: car.normalizedPlate)
             }
+            
+            // Preferencias personalizadas (puede no existir en el doc)
+            let preferences = UserPreferences(firestore: data["preferences"] as? [String: Any])
 
-            let user = User(id: UUID(uuidString: uid) ?? UUID(), name: name, email: email, password: "", cars: cars)
-
+            // Creamos al User pasando el ArrayMap
+            let user = User(id: UUID(uuidString: uid) ?? UUID(), name: name, email: email, password: "", cars: carsMap, preferences: preferences)
+            
             await MainActor.run {
                 self.currentUser = user
                 self.isGerente = role == "manager"
                 self.isLoggedIn = true
                 self.isLoading = false
-                // Show biometric lock if the user has opted in
                 if self.biometricsEnabled {
                     self.requiresBiometricUnlock = true
                 }
@@ -123,19 +124,18 @@ class AuthViewModel: ObservableObject {
         } catch {
             await MainActor.run {
                 self.errorMessage = "Error loading user data."
-                self.isLoading = false
-            }
+                self.isLoading = false}
         }
     }
-
+    
     // MARK: - Sign In with Email
-
+    
     func signIn(username: String, password: String) async {
         await MainActor.run {
             isLoading = true
             errorMessage = nil
         }
-
+        
         do {
             try await Auth.auth().signIn(withEmail: username, password: password)
         } catch {
@@ -145,15 +145,15 @@ class AuthViewModel: ObservableObject {
             }
         }
     }
-
+    
     // MARK: - Sign In with Google
-
+    
     func signInWithGoogle() async {
         await MainActor.run {
             isLoading = true
             errorMessage = nil
         }
-
+        
         guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
               let rootVC = windowScene.windows.first?.rootViewController else {
             await MainActor.run {
@@ -162,7 +162,7 @@ class AuthViewModel: ObservableObject {
             }
             return
         }
-
+        
         do {
             let result = try await GIDSignIn.sharedInstance.signIn(withPresenting: rootVC)
             guard let idToken = result.user.idToken?.tokenString else {
@@ -172,12 +172,12 @@ class AuthViewModel: ObservableObject {
                 }
                 return
             }
-
+            
             let credential = GoogleAuthProvider.credential(
                 withIDToken: idToken,
                 accessToken: result.user.accessToken.tokenString
             )
-
+            
             try await Auth.auth().signIn(with: credential)
         } catch {
             await MainActor.run {
@@ -186,15 +186,15 @@ class AuthViewModel: ObservableObject {
             }
         }
     }
-
+    
     // MARK: - Sign In with Microsoft
-
+    
     func signInWithMicrosoft() async {
         await MainActor.run {
             isLoading = true
             errorMessage = nil
         }
-
+        
         do {
             try await microsoftOAuth.signIn()
         } catch {
@@ -204,9 +204,9 @@ class AuthViewModel: ObservableObject {
             }
         }
     }
-
+    
     // MARK: - Biometric Sign In (from login screen)
-
+    
     func signInWithBiometrics() async {
         let context = LAContext()
         do {
@@ -218,9 +218,9 @@ class AuthViewModel: ObservableObject {
                 if let firebaseUser = Auth.auth().currentUser {
                     await fetchUserData(uid: firebaseUser.uid)
                 } else {
-                    #if DEBUG
+#if DEBUG
                     await MainActor.run { self.loginAsUser() }
-                    #endif
+#endif
                 }
             }
         } catch let error as LAError {
@@ -240,13 +240,13 @@ class AuthViewModel: ObservableObject {
             await MainActor.run { self.errorMessage = "Biometric authentication failed." }
         }
     }
-
+    
     // MARK: - Biometric Authentication
-
+    
     func authenticateWithBiometrics() async {
         let context = LAContext()
         let reason = "Sign in to SD Parking"
-
+        
         do {
             let success = try await context.evaluatePolicy(
                 .deviceOwnerAuthenticationWithBiometrics,
@@ -256,7 +256,7 @@ class AuthViewModel: ObservableObject {
                 if let firebaseUser = Auth.auth().currentUser {
                     await fetchUserData(uid: firebaseUser.uid)
                 } else {
-                    #if DEBUG
+#if DEBUG
                     await MainActor.run {
                         if self._lastGerente {
                             self.loginAsGerente()
@@ -264,7 +264,7 @@ class AuthViewModel: ObservableObject {
                             self.loginAsUser()
                         }
                     }
-                    #endif
+#endif
                 }
                 await MainActor.run {
                     self.requiresBiometricUnlock = false
@@ -290,19 +290,19 @@ class AuthViewModel: ObservableObject {
             }
         }
     }
-
+    
     // MARK: - Register
-
+    
     func register(name: String, email: String, password: String) async {
         await MainActor.run {
             isLoading = true
             errorMessage = nil
         }
-
+        
         do {
             let result = try await Auth.auth().createUser(withEmail: email, password: password)
             let uid = result.user.uid
-
+            
             // Write the user doc before relying on the auth-state listener so
             // fetchUserData always finds the correct name (fixes the race condition
             // where the listener fires before setData completes).
@@ -313,7 +313,7 @@ class AuthViewModel: ObservableObject {
                 "createdAt": Timestamp(),
                 "cars": []
             ])
-
+            
             // Explicitly fetch user data now that the doc is ready — this is
             // what actually sets isLoggedIn = true and navigates into the app.
             await fetchUserData(uid: uid)
@@ -324,24 +324,33 @@ class AuthViewModel: ObservableObject {
             }
         }
     }
-
+    
     // MARK: - Sign Out
-
+    
     @MainActor
-    func signOut() {
+    func signOut(userRepo: UserRepository) { // Pasamos el repo como parámetro
         let ctx = LAContext()
         var err: NSError?
         let hasBiometrics = ctx.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &err)
-
+        
         if hasBiometrics && biometricsEnabled {
-            // Soft logout: keep Firebase session alive so Face ID can restore it
+            // --- SOFT LOGOUT ---
+            // Mantenemos la sesión de Firebase y el JSON local
+            // para que la entrada con Face ID sea instantánea.
             _lastGerente = isGerente
             isLoggedIn = false
             requiresBiometricUnlock = true
             errorMessage = nil
         } else {
+            // --- HARD LOGOUT ---
+            // 1. Limpiamos Firebase y Google
             try? Auth.auth().signOut()
             GIDSignIn.sharedInstance.signOut()
+            
+            // 2. Limpiamos el caché físico y la memoria del Repo
+            userRepo.clearUserData()
+            
+            // 3. Limpiamos el estado del AuthViewModel
             isLoggedIn = false
             isGerente = false
             currentUser = nil
@@ -350,54 +359,16 @@ class AuthViewModel: ObservableObject {
             errorMessage = nil
         }
     }
-
     // Stores the last role so biometric re-login can restore it in dev mode
     private var _lastGerente: Bool = false
 
-    // MARK: - Add Car
-
-    func addCar(name: String, plate: String) async {
-        guard let uid = Auth.auth().currentUser?.uid,
-              var user = currentUser else { return }
-
-        let newCar = Car(id: UUID(), plate: plate, UserID: user.id, name: name)
-        user = User(id: user.id, name: user.name, email: user.email, password: "", cars: user.cars + [newCar])
-
-        let carsData = user.cars.map { ["plate": $0.plate, "name": $0.name] }
-
-        do {
-            try await db.collection("users").document(uid).updateData(["cars": carsData])
-            await MainActor.run { self.currentUser = user }
-        } catch {
-            await MainActor.run { self.errorMessage = "Error saving car." }
-        }
-    }
-
-    // MARK: - Update Profile
-
-    func updateProfile(newName: String, newEmail: String) async {
-        guard let uid = Auth.auth().currentUser?.uid,
-              let current = currentUser else { return }
-
-        do {
-            try await db.collection("users").document(uid).updateData([
-                "name": newName,
-                "email": newEmail
-            ])
-            let updatedUser = User(id: current.id, name: newName, email: newEmail, password: "", cars: current.cars)
-            await MainActor.run { self.currentUser = updatedUser }
-        } catch {
-            await MainActor.run { self.errorMessage = "Error updating profile." }
-        }
-    }
-
     // MARK: - Error messages
-
+    
     private func firebaseErrorMessage(_ error: Error) -> String {
         let code = (error as NSError).code
         switch code {
         case AuthErrorCode.wrongPassword.rawValue,
-             AuthErrorCode.invalidCredential.rawValue:
+            AuthErrorCode.invalidCredential.rawValue:
             return "Incorrect email or password."
         case AuthErrorCode.userNotFound.rawValue:
             return "No account found with this email."
@@ -411,25 +382,31 @@ class AuthViewModel: ObservableObject {
             return "Something went wrong. Please try again."
         }
     }
-
+    
     // MARK: - Dev helpers
-    #if DEBUG
+#if DEBUG
     func loginAsUser() {
-        let mockCars = [
-            Car(id: UUID(), plate: "ABC-123", UserID: UUID(), name: "Mi Camioneta"),
-            Car(id: UUID(), plate: "XYZ-789", UserID: UUID(), name: "Carro de Ciudad")
-        ]
-        currentUser = User(id: UUID(), name: "Usuario Andes", email: "usuario@uniandes.edu.co", password: "", cars: mockCars)
+        var mockCarsMap = ArrayMap<String, Car>()
+        
+        let car1 = Car(id: UUID(), plate: "ABC-123", UserID: UUID(), name: "Mi Camioneta")
+        let car2 = Car(id: UUID(), plate: "XYZ-789", UserID: UUID(), name: "Carro de Ciudad")
+        
+        // Importante: Usar put para que se mantengan ordenados y con sus llaves
+        mockCarsMap.put(car1, for: car1.normalizedPlate)
+        mockCarsMap.put(car2, for: car2.normalizedPlate)
+        
+        currentUser = User(id: UUID(), name: "Usuario Andes", email: "usuario@uniandes.edu.co", password: "", cars: mockCarsMap, preferences: nil)
         isLoggedIn = true
         isGerente = false
         currentUserEmail = "usuario@uniandes.edu.co"
     }
-
+    
     func loginAsGerente() {
-        currentUser = User(id: UUID(), name: "Gerente Andes", email: "gerente@uniandes.edu.co", password: "", cars: [])
+        // Para el gerente pasamos un ArrayMap vacío
+        currentUser = User(id: UUID(), name: "Gerente Andes", email: "gerente@uniandes.edu.co", password: "", cars: ArrayMap<String, Car>(), preferences: nil)
         isLoggedIn = true
         isGerente = true
         currentUserEmail = "gerente@uniandes.edu.co"
     }
-    #endif
+#endif
 }

@@ -13,6 +13,7 @@ import Combine
 class AIViewModel: ObservableObject {
     @Published var aiResponse: String = "Presiona generar para analizar tu llegada al edificio SD."
     @Published var isLoading: Bool = false
+    let myKey = Secrets.apiKey
     
     private let model: GenerativeModel
 
@@ -26,7 +27,7 @@ class AIViewModel: ObservableObject {
         // Usamos el modelo más estable y económico para 2026
         self.model = GenerativeModel(
             name: "gemini-2.5-flash-lite",
-            apiKey: "AIzaSyD_te2nJttAzp07IHJOb8KFuBbzWuWVqyw",
+            apiKey: myKey,
             safetySettings: safetySettings
         )
     }
