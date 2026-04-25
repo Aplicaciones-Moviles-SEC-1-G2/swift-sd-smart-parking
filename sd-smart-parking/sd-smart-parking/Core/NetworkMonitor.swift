@@ -4,6 +4,7 @@ import SwiftUI
 
 @MainActor
 final class NetworkMonitor: ObservableObject {
+    static let shared = NetworkMonitor()
     @Published private(set) var isConnected: Bool = true
 
     private let monitor = NWPathMonitor()

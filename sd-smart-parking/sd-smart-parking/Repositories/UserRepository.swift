@@ -35,7 +35,7 @@ class UserRepository: ObservableObject {
                 .sink { [weak self] connected in
                     self?.isOffline = !connected
                     if connected {
-                        self?.syncPendingActions()
+                        self?.syncQueuedActions()
                     }
                 }
                 .store(in: &cancellables)
@@ -154,8 +154,8 @@ class UserRepository: ObservableObject {
 
     // --- MOTOR DE SINCRONIZACIÓN ---
 
-    func syncPendingActions() {
-        guard var pendingActions = diskManager.load(filename: queueFileName, type: [PendingAction].self),
+    func syncQueuedActions() {
+        guard var pendingActions = diskManager.load(filename: queueFileName, type: [QueuedAction].self),
               !pendingActions.isEmpty else { return }
 
         Task {
@@ -169,7 +169,7 @@ class UserRepository: ObservableObject {
         }
     }
 
-    private func processAction(_ action: PendingAction) async -> Bool {
+    private func processAction(_ action: QueuedAction) async -> Bool {
         switch action.type {
         case .addCar:
             if let car = try? JSONDecoder().decode(Car.self, from: action.payload) {
@@ -192,8 +192,8 @@ class UserRepository: ObservableObject {
     }
 
     private func saveActionToQueue<T: Codable>(action: ActionType, data: T) {
-        var queue = diskManager.load(filename: queueFileName, type: [PendingAction].self) ?? []
-        let newAction = PendingAction(type: action, data: data)
+        var queue = diskManager.load(filename: queueFileName, type: [QueuedAction].self) ?? []
+        let newAction = QueuedAction(type: action, data: data)
         queue.append(newAction)
         diskManager.save(queue, to: queueFileName)
         print("📦 Acción guardada en cola: \(action)")

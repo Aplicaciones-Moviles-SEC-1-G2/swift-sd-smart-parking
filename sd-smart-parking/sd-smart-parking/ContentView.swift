@@ -10,6 +10,7 @@ import SwiftUI
 struct ContentView: View {
     @StateObject private var authVM = AuthViewModel()
     @StateObject private var parkingVM = ParkingViewModel()
+    @StateObject private var userRepo = UserRepository()
     @EnvironmentObject var networkMonitor: NetworkMonitor
     @State private var selectedTab: Int = 0
     @State private var scrollOffset: CGFloat = 0
