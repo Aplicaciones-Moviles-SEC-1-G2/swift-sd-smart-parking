@@ -78,6 +78,33 @@
   .org-kpi .label { font-size: 0.68rem; text-transform: uppercase; color: #888; letter-spacing:.4px; margin-bottom: 4px; }
   .org-kpi .value { font-size: 1.1rem; font-weight: 700; color: #1a1a2e; }
 
+  /* BQ-HOUR */
+  .bq-hour { background: white; border-radius: 10px; padding: 20px; box-shadow: 0 1px 4px rgba(0,0,0,.08); margin-bottom: 20px; border-top: 4px solid #8b5cf6; }
+  .bq-hour-header { display: flex; align-items: center; gap: 12px; margin-bottom: 6px; }
+  .bq-hour-badge { background: #8b5cf6; color: white; font-size: 0.7rem; font-weight: 700; padding: 3px 8px; border-radius: 4px; }
+  .bq-hour-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px,1fr)); gap: 10px; margin-bottom: 16px; }
+  .bq-hour-kpi { background: #f8f9fa; border-radius: 8px; padding: 10px 12px; }
+  .bq-hour-kpi .label { font-size: 0.68rem; text-transform: uppercase; color: #888; letter-spacing:.4px; margin-bottom: 4px; }
+  .bq-hour-kpi .value { font-size: 1.1rem; font-weight: 700; color: #1a1a2e; }
+  .bq-hour-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  @media(max-width:700px) { .bq-hour-cols { grid-template-columns: 1fr; } }
+
+  /* BQ-FLOOR */
+  .bq-floor { background: white; border-radius: 10px; padding: 20px; box-shadow: 0 1px 4px rgba(0,0,0,.08); margin-bottom: 20px; border-top: 4px solid #f59e0b; }
+  .bq-floor-header { display: flex; align-items: center; gap: 12px; margin-bottom: 6px; }
+  .bq-floor-badge { background: #f59e0b; color: white; font-size: 0.7rem; font-weight: 700; padding: 3px 8px; border-radius: 4px; }
+  .bq-floor-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px,1fr)); gap: 10px; margin-bottom: 16px; }
+  .bq-floor-kpi { background: #f8f9fa; border-radius: 8px; padding: 10px 12px; }
+  .bq-floor-kpi .label { font-size: 0.68rem; text-transform: uppercase; color: #888; letter-spacing:.4px; margin-bottom: 4px; }
+  .bq-floor-kpi .value { font-size: 1.1rem; font-weight: 700; color: #1a1a2e; }
+  .bq-floor-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  @media(max-width:700px) { .bq-floor-cols { grid-template-columns: 1fr; } }
+  .floor-dur-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; font-size: 0.82rem; }
+  .floor-dur-label { width: 60px; font-weight: 700; color: #555; flex-shrink: 0; }
+  .floor-dur-bar-bg { flex: 1; background: #f0f2f5; border-radius: 4px; height: 14px; overflow: hidden; }
+  .floor-dur-bar { height: 100%; border-radius: 4px; background: #f59e0b; transition: width .4s; }
+  .floor-dur-val { width: 60px; text-align: right; font-size: 0.78rem; font-weight: 700; color: #444; flex-shrink: 0; }
+
   /* BQ-13 */
   .bq13 { background: white; border-radius: 10px; padding: 20px; box-shadow: 0 1px 4px rgba(0,0,0,.08); margin-bottom: 20px; border-top: 4px solid #4f8ef7; }
   .bq13-header { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
@@ -106,6 +133,22 @@
   .recent-table tr:last-child td { border-bottom: none; }
   .tag-entry { background: #dbeafe; color: #1d4ed8; padding: 1px 7px; border-radius: 10px; font-size: 0.7rem; font-weight: 600; }
   .tag-exit  { background: #fee2e2; color: #b91c1c; padding: 1px 7px; border-radius: 10px; font-size: 0.7rem; font-weight: 600; }
+
+  /* BQ-RELIABILITY */
+  .bq-rel { background: white; border-radius: 10px; padding: 20px; box-shadow: 0 1px 4px rgba(0,0,0,.08); margin-bottom: 20px; border-top: 4px solid #ef4444; }
+  .bq-rel-header { display: flex; align-items: center; gap: 12px; margin-bottom: 6px; }
+  .bq-rel-badge { background: #ef4444; color: white; font-size: 0.7rem; font-weight: 700; padding: 3px 8px; border-radius: 4px; }
+  .bq-rel-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px,1fr)); gap: 10px; margin-bottom: 16px; }
+  .bq-rel-kpi { background: #f8f9fa; border-radius: 8px; padding: 10px 12px; }
+  .bq-rel-kpi .label { font-size: 0.68rem; text-transform: uppercase; color: #888; letter-spacing:.4px; margin-bottom: 4px; }
+  .bq-rel-kpi .value { font-size: 1.1rem; font-weight: 700; color: #1a1a2e; }
+  .bq-rel-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  @media(max-width:700px) { .bq-rel-cols { grid-template-columns: 1fr; } }
+  .review-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; font-size: 0.8rem; }
+  .review-label { width: 90px; color: #555; font-weight: 600; flex-shrink: 0; }
+  .review-bar-bg { flex: 1; background: #f0f2f5; border-radius: 4px; height: 13px; overflow: hidden; }
+  .review-bar { height: 100%; border-radius: 4px; transition: width .4s; }
+  .review-val { width: 45px; text-align: right; font-size: 0.75rem; font-weight: 700; color: #444; flex-shrink: 0; }
 </style>
 </head>
 <body>
@@ -168,15 +211,96 @@
         <span class="org-badge">BQ-ORG</span>
         <h2 style="font-size:.95rem;color:#1a1a2e;font-weight:600">Organization Clients — Which organizations generate the most parking demand?</h2>
       </div>
+      <p style="font-size:.82rem;color:#555;margin:0 0 14px;line-height:1.6;">
+        SD Smart Parking is a facility for <strong>Universidad de los Andes students and professors</strong>
+        (<code>@uniandes.edu.co</code>). Any user with a different email domain is considered a
+        <span style="background:#fef3c7;color:#92400e;font-weight:700;padding:1px 7px;border-radius:6px;font-size:.75rem;">Visitor / Guest</span>.
+        This breakdown helps identify how much of the parking demand comes from the university community
+        vs. external visitors.
+      </p>
       <div class="org-kpi-grid" id="orgKpis"></div>
       <div class="org-cols">
         <div>
           <div class="section-title">Events by Organization (top 8)</div>
+          <p style="font-size:.75rem;color:#888;margin:2px 0 10px;">
+            <span style="background:#dcfce7;color:#15803d;font-weight:700;padding:1px 6px;border-radius:4px;font-size:.7rem;">Uniandes</span>
+            = university community &nbsp;·&nbsp;
+            <span style="background:#fef3c7;color:#92400e;font-weight:700;padding:1px 6px;border-radius:4px;font-size:.7rem;">Visitor</span>
+            = external / guest
+          </p>
           <div id="orgBars"></div>
         </div>
         <div>
-          <div class="section-title">Registered vs Unregistered by Org</div>
+          <div class="section-title">Uniandes vs Visitors — demand split</div>
           <canvas id="orgChart" height="200"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- BQ-HOUR: Peak Demand Hours -->
+    <div class="bq-hour">
+      <div class="bq-hour-header">
+        <span class="bq-hour-badge">BQ-HOUR</span>
+        <h2 style="font-size:.95rem;color:#1a1a2e;font-weight:600">Peak Demand Hours — At what hours of the day is parking demand highest?</h2>
+      </div>
+      <p style="font-size:.82rem;color:#555;margin:0 0 14px;line-height:1.6;">
+        Understanding when demand peaks lets us know when the <strong>NSCache pre-warm</strong> (loaded on app launch via <code>withTaskGroup</code>) is most valuable — the app must have fresh spot data ready <em>before</em> the rush, not during it.
+      </p>
+      <div class="bq-hour-kpis" id="hourKpis"></div>
+      <div class="bq-hour-cols">
+        <div>
+          <div class="section-title">Entries by Hour of Day</div>
+          <canvas id="hourChart" height="200"></canvas>
+        </div>
+        <div>
+          <div class="section-title">Entry vs Exit distribution</div>
+          <canvas id="hourExitChart" height="200"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- BQ-FLOOR: Floor Demand & Dwell Time -->
+    <div class="bq-floor">
+      <div class="bq-floor-header">
+        <span class="bq-floor-badge">BQ-FLOOR</span>
+        <h2 style="font-size:.95rem;color:#1a1a2e;font-weight:600">Floor Demand — Which floor concentrates the most parking events and longest average stay?</h2>
+      </div>
+      <p style="font-size:.82rem;color:#555;margin:0 0 14px;line-height:1.6;">
+        <code>SpotCacheManager</code> stores spots keyed by floor. Knowing which floor is busiest justifies keeping that floor's cache entry in memory longest — and informs which floor the <strong>eventual connectivity</strong> offline banner matters most for.
+      </p>
+      <div class="bq-floor-kpis" id="floorKpis"></div>
+      <div class="bq-floor-cols">
+        <div>
+          <div class="section-title">Total Events by Floor</div>
+          <canvas id="floorEventChart" height="200"></canvas>
+        </div>
+        <div>
+          <div class="section-title">Average Stay Duration by Floor (hrs)</div>
+          <div id="floorDurBars"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BQ-RELIABILITY: OCR & Data Reliability -->
+    <div class="bq-rel">
+      <div class="bq-rel-header">
+        <span class="bq-rel-badge">BQ-RELIABILITY</span>
+        <h2 style="font-size:.95rem;color:#1a1a2e;font-weight:600">System Reliability — What percentage of plate readings require admin review due to low OCR confidence?</h2>
+      </div>
+      <p style="font-size:.82rem;color:#555;margin:0 0 14px;line-height:1.6;">
+        Every parking record stores an <code>ocrConfidence</code> score (0–1). Readings below <strong>0.75</strong> are flagged for manual admin review.
+        Thanks to <strong>eventual connectivity</strong>, entries captured offline in the basement (no signal) are still saved with their OCR score and synced back to Firestore automatically —
+        so this reliability view is always complete, even after a connectivity gap.
+      </p>
+      <div class="bq-rel-kpis" id="relKpis"></div>
+      <div class="bq-rel-cols">
+        <div>
+          <div class="section-title">High Confidence vs Needs Review</div>
+          <canvas id="relDoughnut" height="220"></canvas>
+        </div>
+        <div>
+          <div class="section-title">OCR Confidence by Floor</div>
+          <div id="relFloorBars"></div>
         </div>
       </div>
     </div>
@@ -644,20 +768,55 @@ async function load() {
     // Extracts the email domain from ownerEmail to derive the organization.
     // Unregistered vehicles (no ownerEmail) are grouped as "Unregistered".
     const domainLabels = {
+      // Universidad de los Andes
       'uniandes.edu.co': 'Uniandes',
-      'gmail.com': 'Gmail (External)',
-      'hotmail.com': 'Hotmail (External)',
-      'outlook.com': 'Outlook (External)',
-      'yahoo.com': 'Yahoo (External)',
+      // Google
+      'gmail.com': 'Gmail',
+      'googlemail.com': 'Gmail',
+      // Microsoft
+      'hotmail.com': 'Hotmail',
+      'hotmail.es': 'Hotmail',
+      'outlook.com': 'Outlook',
+      'outlook.es': 'Outlook',
+      'live.com': 'Outlook',
+      'msn.com': 'Outlook',
+      // Yahoo
+      'yahoo.com': 'Yahoo',
+      'yahoo.es': 'Yahoo',
+      'ymail.com': 'Yahoo',
+      // Colombian universities
+      'javeriana.edu.co': 'Javeriana',
+      'unal.edu.co': 'Unal',
+      'udea.edu.co': 'U. de Antioquia',
+      'eafit.edu.co': 'EAFIT',
+      'rosario.edu.co': 'U. del Rosario',
+      'uan.edu.co': 'U. Antonio Nariño',
+      'upb.edu.co': 'UPB',
+      'externado.edu.co': 'U. Externado',
+      'sabana.edu.co': 'U. de La Sabana',
+      'uninorte.edu.co': 'Uninorte',
+      // Corporate / Other
+      'icloud.com': 'Apple iCloud',
+      'me.com': 'Apple iCloud',
+      'protonmail.com': 'ProtonMail',
+      'proton.me': 'ProtonMail',
     };
+
+    // Group unknown .edu.co domains under "Other University"
+    function resolveOrg(email) {
+      if (!email || !email.includes('@')) return 'Unregistered';
+      const domain = email.split('@')[1].toLowerCase();
+      if (domainLabels[domain]) return domainLabels[domain];
+      if (domain.endsWith('.edu.co') || domain.endsWith('.edu')) return 'Other University';
+      if (domain.endsWith('.gov.co') || domain.endsWith('.gov')) return 'Government';
+      if (domain.endsWith('.com.co') || domain.endsWith('.co')) return 'Other (Colombia)';
+      return 'Other';
+    }
+
     const orgCounts = {};   // { orgName: { total, registered } }
     const allPeriodRecords = records; // already filtered by period
     allPeriodRecords.forEach(r => {
-      let org = 'Unregistered';
-      if (r.ownerEmail && r.ownerEmail.includes('@')) {
-        const domain = r.ownerEmail.split('@')[1].toLowerCase();
-        org = domainLabels[domain] || domain;
-      }
+      const org = resolveOrg(r.ownerEmail);
       if (!orgCounts[org]) orgCounts[org] = { total: 0, registered: 0 };
       orgCounts[org].total++;
       if (r.isRegistered) orgCounts[org].registered++;
@@ -669,38 +828,47 @@ async function load() {
     const totalOrgEvents = allPeriodRecords.length || 1;
     const uniqueOrgs = orgEntries.length;
     const topOrg = topOrgs[0]?.[0] || '—';
-    const regOrgs = orgEntries.filter(([,v]) => v.registered > 0).length;
+
+    const uniandesTotal = (orgCounts['Uniandes'] || {}).total || 0;
+    const visitorTotal  = totalOrgEvents - uniandesTotal;
+    const visitorPct    = totalOrgEvents > 0 ? Math.round((visitorTotal / totalOrgEvents) * 100) : 0;
+    const uniPct        = totalOrgEvents > 0 ? Math.round((uniandesTotal / totalOrgEvents) * 100) : 0;
 
     // KPI cards
     document.getElementById('orgKpis').innerHTML = [
       { label: 'Unique Organizations', value: uniqueOrgs },
-      { label: 'Top Organization', value: topOrg },
-      { label: 'Orgs with Registered Users', value: regOrgs },
-    ].map(k => `<div class="org-kpi"><div class="label">${k.label}</div><div class="value">${k.value}</div></div>`).join('');
+      { label: 'Top Organization',     value: topOrg },
+      { label: 'Uniandes Community',   value: `${uniandesTotal} (${uniPct}%)`, color: '#15803d' },
+      { label: 'Visitors / Guests',    value: `${visitorTotal} (${visitorPct}%)`, color: '#92400e' },
+    ].map(k => `<div class="org-kpi"><div class="label">${k.label}</div><div class="value" style="color:${k.color||'#1a1a2e'}">${k.value}</div></div>`).join('');
 
-    // Bar chart
+    // Bar chart — tag each row as Uniandes or Visitor
     const orgColors = ['#22c55e','#4f8ef7','#f59e0b','#8b5cf6','#ef4444','#14b8a6','#f97316','#64748b'];
     document.getElementById('orgBars').innerHTML = topOrgs.map(([name, d], i) => {
-      const pct = Math.round((d.total / maxOrgCount) * 100);
+      const pct      = Math.round((d.total / maxOrgCount) * 100);
       const sharePct = Math.round((d.total / totalOrgEvents) * 100);
+      const isUni    = name === 'Uniandes';
+      const tag      = isUni
+        ? `<span style="font-size:.65rem;font-weight:700;background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;margin-left:6px;">Uniandes</span>`
+        : `<span style="font-size:.65rem;font-weight:700;background:#fef3c7;color:#92400e;padding:1px 6px;border-radius:4px;margin-left:6px;">Visitor</span>`;
       return `<div class="org-row">
-        <div class="org-name" title="${name}">${name}</div>
-        <div class="org-bar-bg"><div class="org-bar" style="width:${pct}%;background:${orgColors[i % orgColors.length]}"></div></div>
+        <div class="org-name" title="${name}">${name}${tag}</div>
+        <div class="org-bar-bg"><div class="org-bar" style="width:${pct}%;background:${isUni ? '#22c55e' : orgColors[i % orgColors.length]}"></div></div>
         <div class="org-count">${d.total}</div>
         <div class="org-pct">${sharePct}%</div>
       </div>`;
     }).join('') || '<p style="color:#888;font-size:.8rem">No organization data in this period</p>';
 
-    // Doughnut: registered vs unregistered split per top 5 orgs
+    // Doughnut: Uniandes vs Visitors split
     let orgChartInst = Chart.getChart('orgChart');
     if (orgChartInst) orgChartInst.destroy();
     new Chart(document.getElementById('orgChart'), {
       type: 'doughnut',
       data: {
-        labels: topOrgs.slice(0,5).map(([name]) => name),
+        labels: ['Uniandes (Community)', 'Visitors / Guests'],
         datasets: [{
-          data: topOrgs.slice(0,5).map(([,v]) => v.total),
-          backgroundColor: orgColors.slice(0,5),
+          data: [uniandesTotal, visitorTotal],
+          backgroundColor: ['#22c55e', '#f59e0b'],
           borderWidth: 2
         }]
       },
@@ -719,6 +887,189 @@ async function load() {
         }
       }
     });
+
+    // ── BQ-HOUR: Peak Demand Hours ──────────────────────────────────────────
+    const entriesByHour = Array(24).fill(0);
+    const exitsByHour   = Array(24).fill(0);
+    records.forEach(r => {
+      const ts = r.timestamp?.toDate ? r.timestamp.toDate() : new Date(r.timestamp);
+      const h  = ts.getHours();
+      if (r.type === 'entry') entriesByHour[h]++;
+      else                    exitsByHour[h]++;
+    });
+
+    const peakHour     = entriesByHour.indexOf(Math.max(...entriesByHour));
+    const quietHour    = entriesByHour.indexOf(Math.min(...entriesByHour.filter(v => v > 0)));
+    const peakCount    = entriesByHour[peakHour];
+    const hourLabels   = Array.from({length:24}, (_,i) => `${String(i).padStart(2,'0')}:00`);
+    const morningTotal = entriesByHour.slice(6,12).reduce((a,b)=>a+b,0);
+    const afterTotal   = entriesByHour.slice(12,20).reduce((a,b)=>a+b,0);
+
+    document.getElementById('hourKpis').innerHTML = [
+      { label: 'Peak Entry Hour',   value: `${hourLabels[peakHour]}`, sub: `${peakCount} events` },
+      { label: 'Quietest Hour',     value: quietHour >= 0 ? hourLabels[quietHour] : '—' },
+      { label: 'Morning (6–12h)',   value: morningTotal, sub: 'entries' },
+      { label: 'Afternoon (12–20h)',value: afterTotal,   sub: 'entries' },
+    ].map(k => `<div class="bq-hour-kpi"><div class="label">${k.label}</div><div class="value">${k.value}</div>${k.sub?`<div style="font-size:.68rem;color:#888">${k.sub}</div>`:''}</div>`).join('');
+
+    const hourBarColors = hourLabels.map((_,i) => i === peakHour ? '#8b5cf6' : '#c4b5fd');
+    let hourChartInst = Chart.getChart('hourChart');
+    if (hourChartInst) hourChartInst.destroy();
+    new Chart(document.getElementById('hourChart'), {
+      type: 'bar',
+      data: {
+        labels: hourLabels,
+        datasets: [{ label: 'Entries', data: entriesByHour, backgroundColor: hourBarColors, borderRadius: 3 }]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { ticks: { font: { size: 9 }, maxRotation: 45 } },
+          y: { beginAtZero: true, ticks: { stepSize: 1 } }
+        }
+      }
+    });
+
+    let hourExitInst = Chart.getChart('hourExitChart');
+    if (hourExitInst) hourExitInst.destroy();
+    new Chart(document.getElementById('hourExitChart'), {
+      type: 'bar',
+      data: {
+        labels: hourLabels,
+        datasets: [
+          { label: 'Entries', data: entriesByHour, backgroundColor: '#8b5cf6', borderRadius: 3 },
+          { label: 'Exits',   data: exitsByHour,   backgroundColor: '#f59e0b', borderRadius: 3 }
+        ]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { position: 'bottom', labels: { font: { size: 10 } } } },
+        scales: {
+          x: { stacked: false, ticks: { font: { size: 9 }, maxRotation: 45 } },
+          y: { beginAtZero: true, ticks: { stepSize: 1 } }
+        }
+      }
+    });
+
+    // ── BQ-FLOOR: Floor Demand & Dwell Time ─────────────────────────────────
+    const floorData = {}; // { floor: { entries, totalDur, durCount } }
+    records.forEach(r => {
+      const f = r.floor ?? 'Unknown';
+      if (!floorData[f]) floorData[f] = { entries: 0, totalDur: 0, durCount: 0 };
+      floorData[f].entries++;
+      if (r.durationHours != null && r.durationHours > 0) {
+        floorData[f].totalDur  += r.durationHours;
+        floorData[f].durCount  += 1;
+      }
+    });
+
+    const floorEntries = Object.entries(floorData)
+      .filter(([f]) => f !== 'Unknown')
+      .sort((a,b) => b[1].entries - a[1].entries);
+
+    const busiestFloor  = floorEntries[0]?.[0] ?? '—';
+    const busiestCount  = floorEntries[0]?.[1].entries ?? 0;
+    const allDurRecords = floorEntries.reduce((s,[,v])=>s+v.durCount,0);
+    const allDurSum     = floorEntries.reduce((s,[,v])=>s+v.totalDur,0);
+    const overallAvgDur = allDurRecords > 0 ? (allDurSum / allDurRecords).toFixed(1) : '—';
+    const maxDur        = Math.max(...floorEntries.map(([,v])=> v.durCount>0 ? v.totalDur/v.durCount : 0), 1);
+
+    document.getElementById('floorKpis').innerHTML = [
+      { label: 'Busiest Floor',      value: `Floor ${busiestFloor}`, sub: `${busiestCount} events` },
+      { label: 'Overall Avg Stay',   value: overallAvgDur !== '—' ? `${overallAvgDur} hrs` : '—' },
+      { label: 'Floors with Data',   value: floorEntries.length },
+    ].map(k => `<div class="bq-floor-kpi"><div class="label">${k.label}</div><div class="value">${k.value}</div>${k.sub?`<div style="font-size:.68rem;color:#888">${k.sub}</div>`:''}</div>`).join('');
+
+    const floorColors = ['#f59e0b','#fbbf24','#fcd34d','#fde68a','#fef3c7'];
+    let floorEventInst = Chart.getChart('floorEventChart');
+    if (floorEventInst) floorEventInst.destroy();
+    new Chart(document.getElementById('floorEventChart'), {
+      type: 'bar',
+      data: {
+        labels: floorEntries.map(([f]) => `Floor ${f}`),
+        datasets: [{ label: 'Events', data: floorEntries.map(([,v])=>v.entries), backgroundColor: floorColors, borderRadius: 4 }]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+      }
+    });
+
+    const maxFloorEvents = floorEntries[0]?.[1].entries || 1;
+    document.getElementById('floorDurBars').innerHTML = floorEntries.map(([f, v]) => {
+      const avg    = v.durCount > 0 ? (v.totalDur / v.durCount).toFixed(1) : null;
+      const barPct = avg ? Math.round((avg / maxDur) * 100) : 0;
+      return `<div class="floor-dur-row">
+        <div class="floor-dur-label">Floor ${f}</div>
+        <div class="floor-dur-bar-bg"><div class="floor-dur-bar" style="width:${barPct}%"></div></div>
+        <div class="floor-dur-val">${avg ? avg + ' hrs' : 'No data'}</div>
+      </div>`;
+    }).join('') || '<p style="color:#888;font-size:.8rem">No duration data available</p>';
+
+    // ── BQ-RELIABILITY: OCR Confidence & Admin Review ───────────────────────
+    const OCR_THRESHOLD = 0.75;
+    const relByFloor = {};
+
+    records.forEach(r => {
+      const conf  = r.ocrConfidence ?? 1.0;
+      const floor = r.floor ?? 'Unknown';
+      if (!relByFloor[floor]) relByFloor[floor] = { total: 0, needsReview: 0, sumConf: 0 };
+      relByFloor[floor].total++;
+      relByFloor[floor].sumConf += conf;
+      if (conf < OCR_THRESHOLD) relByFloor[floor].needsReview++;
+    });
+
+    const relTotal       = records.length || 1;
+    const relNeedsReview = records.filter(r => (r.ocrConfidence ?? 1.0) < OCR_THRESHOLD).length;
+    const relHighConf    = relTotal - relNeedsReview;
+    const relAvgConf     = records.length > 0
+      ? (records.reduce((s,r) => s + (r.ocrConfidence ?? 1.0), 0) / records.length * 100).toFixed(1)
+      : '—';
+    const reviewPct      = Math.round((relNeedsReview / relTotal) * 100);
+
+    document.getElementById('relKpis').innerHTML = [
+      { label: 'Avg OCR Confidence',   value: relAvgConf !== '—' ? `${relAvgConf}%` : '—' },
+      { label: 'High Confidence (≥75%)', value: relHighConf, color: '#15803d' },
+      { label: 'Needs Admin Review',   value: `${relNeedsReview} (${reviewPct}%)`, color: '#dc2626' },
+      { label: 'Total Records Scanned', value: relTotal },
+    ].map(k => `<div class="bq-rel-kpi"><div class="label">${k.label}</div><div class="value" style="color:${k.color||'#1a1a2e'}">${k.value}</div></div>`).join('');
+
+    let relDoughnutInst = Chart.getChart('relDoughnut');
+    if (relDoughnutInst) relDoughnutInst.destroy();
+    new Chart(document.getElementById('relDoughnut'), {
+      type: 'doughnut',
+      data: {
+        labels: ['High Confidence (≥75%)', 'Needs Review (<75%)'],
+        datasets: [{ data: [relHighConf, relNeedsReview], backgroundColor: ['#22c55e', '#ef4444'], borderWidth: 2 }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { position: 'bottom', labels: { font: { size: 10 } } },
+          tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${ctx.parsed} records` } }
+        }
+      }
+    });
+
+    const relFloorEntries = Object.entries(relByFloor)
+      .filter(([f]) => f !== 'Unknown')
+      .sort((a,b) => a[0] - b[0]);
+    const maxReview = Math.max(...relFloorEntries.map(([,v]) => v.needsReview), 1);
+
+    document.getElementById('relFloorBars').innerHTML = relFloorEntries.map(([f, v]) => {
+      const avgConf  = v.total > 0 ? (v.sumConf / v.total * 100).toFixed(0) : 0;
+      const revPct   = Math.round((v.needsReview / (v.total || 1)) * 100);
+      const barPct   = Math.round((v.needsReview / maxReview) * 100);
+      const barColor = revPct > 30 ? '#ef4444' : revPct > 10 ? '#f59e0b' : '#22c55e';
+      return `<div class="review-row">
+        <div class="review-label">Floor ${f}</div>
+        <div class="review-bar-bg"><div class="review-bar" style="width:${barPct}%;background:${barColor}"></div></div>
+        <div class="review-val">${v.needsReview} (${revPct}%)</div>
+      </div>
+      <div style="font-size:.68rem;color:#888;margin:-6px 0 10px 100px">avg confidence: ${avgConf}%</div>`;
+    }).join('') || '<p style="color:#888;font-size:.8rem">No floor data available</p>';
 
     // Recent events table
     const recentRecords = recentSnap.docs.map(d => ({ ...d.data(), ts: d.data().timestamp?.toDate?.() || new Date(d.data().timestamp) }));

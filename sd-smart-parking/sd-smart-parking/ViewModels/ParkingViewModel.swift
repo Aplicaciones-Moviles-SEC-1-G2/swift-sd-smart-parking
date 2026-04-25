@@ -18,6 +18,7 @@ class ParkingViewModel: ObservableObject {
     @Published var errorMessage: String? = nil
     @Published var activeUserRecords: [VehicleRecord] = []
     @Published var pendingActionsCount: Int = 0
+    @Published var historicSchedule: HistoricDemandSchedule? = nil
 
     let db = Firestore.firestore()
     private var spotsListener: ListenerRegistration?

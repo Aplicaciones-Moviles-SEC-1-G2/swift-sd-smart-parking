@@ -11,6 +11,7 @@ struct SpotsView: View {
     @EnvironmentObject var vm: ParkingViewModel
     @EnvironmentObject var authVM: AuthViewModel
     @EnvironmentObject var networkMonitor: NetworkMonitor
+    @EnvironmentObject var userRepo: UserRepository
 
     @State private var expandedFloors: Set<Int> = []
     @State private var pendingBulkFree          = false
