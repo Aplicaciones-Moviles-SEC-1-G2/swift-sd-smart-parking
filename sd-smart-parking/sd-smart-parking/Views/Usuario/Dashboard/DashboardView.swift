@@ -16,7 +16,6 @@ struct DashboardView: View {
     @Binding var scrollOffset: CGFloat
     @State private var showTripPlanner = false
     @State private var showHistory = false
-    @State private var showDemandInsights = false
     
     var body: some View {
         ZStack(alignment: .top) {
