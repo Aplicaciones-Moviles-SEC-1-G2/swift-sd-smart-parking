@@ -10,12 +10,12 @@ import SwiftUI
 
 struct DashboardView: View {
     @EnvironmentObject var vm: ParkingViewModel
+    @EnvironmentObject var authVM: AuthViewModel
+    @EnvironmentObject var networkMonitor: NetworkMonitor
     @Binding var selectedTab: Int
     @Binding var scrollOffset: CGFloat
-    @EnvironmentObject var authVM: AuthViewModel
     @State private var showTripPlanner = false
     @State private var showHistory = false
-    @State private var showDemandInsights = false
     
     var body: some View {
         ZStack(alignment: .top) {
@@ -36,9 +36,34 @@ struct DashboardView: View {
                     }
                     .frame(height: 0)
 
-                    // 2. ESPACIADOR DINÁMICO
-                    // Este espacio permite que el contenido empiece debajo del header azul
                     Color.clear.frame(height: 80)
+
+                    // MARK: - Offline Banner
+                    if !networkMonitor.isConnected {
+                        HStack(spacing: 8) {
+                            Image(systemName: "wifi.slash")
+                            Text("Offline Mode — Showing cached data")
+                                .font(.caption.weight(.medium))
+                            Spacer()
+                            if vm.pendingActionsCount > 0 {
+                                Text("\(vm.pendingActionsCount) pending")
+                                    .font(.caption2.weight(.semibold))
+                                    .padding(.horizontal, 8)
+                                    .padding(.vertical, 3)
+                                    .background(Color.orange.opacity(0.2))
+                                    .foregroundColor(.orange)
+                                    .clipShape(Capsule())
+                            }
+                        }
+                        .font(.caption)
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 10)
+                        .background(Color.orange)
+                        .padding(.horizontal, 20)
+                        .cornerRadius(10)
+                        .padding(.bottom, 8)
+                    }
 
                     // MARK: - Time-Aware Content
                     TimelineView(.periodic(from: Date(), by: 60)) { context in

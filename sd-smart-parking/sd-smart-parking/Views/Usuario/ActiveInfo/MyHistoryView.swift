@@ -8,6 +8,7 @@ import SwiftUI
 struct MyHistoryView: View {
     @EnvironmentObject var vm: ParkingViewModel
     @EnvironmentObject var authVM: AuthViewModel
+    @EnvironmentObject var networkMonitor: NetworkMonitor
     @Environment(\.dismiss) private var dismiss
 
     private var userPlates: Set<String> {
@@ -41,6 +42,18 @@ struct MyHistoryView: View {
         NavigationStack {
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 20) {
+                    if !networkMonitor.isConnected {
+                        HStack(spacing: 8) {
+                            Image(systemName: "clock.arrow.circlepath")
+                            Text("Showing cached history — live updates paused")
+                                .font(.caption.weight(.medium))
+                            Spacer()
+                        }
+                        .foregroundColor(.white)
+                        .padding(12)
+                        .background(Color.orange)
+                        .cornerRadius(10)
+                    }
                     summaryCard
                     if userRecords.isEmpty {
                         emptyState

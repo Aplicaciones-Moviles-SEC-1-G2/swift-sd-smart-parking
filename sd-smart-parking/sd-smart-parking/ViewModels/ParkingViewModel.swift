@@ -17,11 +17,8 @@ class ParkingViewModel: ObservableObject {
     @Published var isLoading: Bool = false
     @Published var errorMessage: String? = nil
     @Published var activeUserRecords: [VehicleRecord] = []
-    /// Peak/valley ranges derived from the latest `vehicleRecords` snapshot.
-    /// Nil when there aren't enough historic entries yet — callers fall back
-    /// to `PeakHoursSchedule`'s hardcoded ranges.
-    @Published var historicSchedule: HistoricDemandSchedule?
-     
+    @Published var pendingActionsCount: Int = 0
+
     let db = Firestore.firestore()
     private var spotsListener: ListenerRegistration?
     private var recordsListener: ListenerRegistration?
@@ -144,12 +141,88 @@ class ParkingViewModel: ObservableObject {
     init() {
         listenToSpots()
         listenToRecords()
-        // ParkingConfig is a nested ObservableObject. SwiftUI views that observe
-        // ParkingViewModel won't re-render when config's @Published properties change
-        // unless we forward its objectWillChange up to ours.
+        pendingActionsCount = PendingActionsQueue.shared.all.count
         configCancellable = config.objectWillChange
             .receive(on: DispatchQueue.main)
             .sink { [weak self] _ in self?.objectWillChange.send() }
+    }
+
+    // MARK: - Parallel Initial Load (Concurrency: withTaskGroup)
+    // Two concurrent background I/O tasks run simultaneously:
+    //   • Task 1 pre-warms NSCache from Firestore (background thread)
+    //   • Task 2 fetches recent records so they are ready for offline display
+    // withTaskGroup suspends until ALL child tasks finish, then the
+    // MainActor update runs on the main thread — demonstrating I/O → Main dispatch.
+    func loadInitialDataParallel() async {
+        await withTaskGroup(of: Void.self) { group in
+            group.addTask { await self.prewarmSpotsCache() }
+            group.addTask { await self.prewarmRecordsCache() }
+        }
+        await MainActor.run { isLoading = false }
+    }
+
+    private func prewarmSpotsCache() async {
+        do {
+            let snapshot = try await db.collection("parkingSpots").order(by: "floor").getDocuments()
+            let parsed: [ParkingSpot] = snapshot.documents.compactMap { doc in
+                let d = doc.data()
+                guard let number = d["number"] as? Int,
+                      let floor  = d["floor"]  as? Int else { return nil }
+                return ParkingSpot(
+                    id: UUID(uuidString: doc.documentID) ?? UUID(),
+                    number: number,
+                    floor: floor,
+                    isAvailable: d["isAvailable"] as? Bool ?? true,
+                    reservedByEmail: d["reservedByEmail"] as? String
+                )
+            }
+            SpotCacheManager.shared.store(parsed)
+        } catch {
+            print("Spot cache pre-warm failed: \(error.localizedDescription)")
+        }
+    }
+
+    private func prewarmRecordsCache() async {
+        do {
+            _ = try await db.collection("vehicleRecords")
+                .order(by: "timestamp", descending: true)
+                .limit(to: 20)
+                .getDocuments()
+        } catch {
+            print("Records cache pre-warm failed: \(error.localizedDescription)")
+        }
+    }
+
+    // MARK: - Sync Pending Actions (Eventual Connectivity)
+    // Called when network is restored. Drains the FileManager-backed queue
+    // by replaying each queued action against Firestore.
+    func syncPendingActions() {
+        let pending = PendingActionsQueue.shared.all
+        guard !pending.isEmpty else { return }
+        Task {
+            for action in pending {
+                var data: [String: Any] = [
+                    "plate":     action.plate,
+                    "type":      action.actionType,
+                    "timestamp": Timestamp(date: action.timestamp),
+                    "isRegistered": false,
+                    "ocrConfidence": 1.0,
+                    "hitDailyCap": false
+                ]
+                if let floor = action.floor       { data["floor"]       = floor }
+                if let spot  = action.spotNumber  { data["spotNumber"]  = spot  }
+                if let email = action.userEmail   { data["ownerEmail"]  = email }
+                do {
+                    try await db.collection("vehicleRecords").addDocument(data: data)
+                    PendingActionsQueue.shared.remove(id: action.id)
+                } catch {
+                    print("Retry failed for pending action \(action.id): \(error.localizedDescription)")
+                }
+            }
+            await MainActor.run {
+                pendingActionsCount = PendingActionsQueue.shared.all.count
+            }
+        }
     }
  
     deinit {
@@ -178,8 +251,6 @@ class ParkingViewModel: ObservableObject {
                     )
                 }
 
-                // Deduplicate by spot number. When two docs share the same number,
-                // keep the occupied/reserved one and delete the extra from Firestore.
                 var keeperByNumber = [Int: ParkingSpot]()
                 for spot in allSpots {
                     if let existing = keeperByNumber[spot.number] {
@@ -194,9 +265,14 @@ class ParkingViewModel: ObservableObject {
                     }
                 }
 
-                self.spots = keeperByNumber.values.sorted {
+                let sorted = keeperByNumber.values.sorted {
                     $0.floor == $1.floor ? $0.number < $1.number : $0.floor < $1.floor
                 }
+
+                // Refresh NSCache with the latest Firestore snapshot
+                SpotCacheManager.shared.store(sorted)
+
+                self.spots = sorted
             }
     }
  
@@ -234,9 +310,26 @@ class ParkingViewModel: ObservableObject {
     }
  
     // MARK: - Add Record
- 
-    // MARK: - Add Record (CORREGIDO)
-        func addRecord(_ record: VehicleRecord) {
+
+    // When offline, the action is persisted to the FileManager-backed PendingActionsQueue
+    // so it can be replayed once connectivity is restored (syncPendingActions).
+    func addRecord(_ record: VehicleRecord, isOffline: Bool = false) {
+        if isOffline {
+            let action = PendingAction(
+                actionType: record.type.rawValue,
+                plate: record.plate,
+                floor: record.floor,
+                spotNumber: record.spotNumber,
+                userEmail: record.ownerEmail
+            )
+            PendingActionsQueue.shared.enqueue(action)
+            pendingActionsCount = PendingActionsQueue.shared.all.count
+            return
+        }
+        addRecordOnline(record)
+    }
+
+    private func addRecordOnline(_ record: VehicleRecord) {
             var data: [String: Any] = [
                 "plate":         record.plate,
                 "type":          record.type.rawValue,

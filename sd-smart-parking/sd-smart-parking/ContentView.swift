@@ -10,11 +10,10 @@ import SwiftUI
 struct ContentView: View {
     @StateObject private var authVM = AuthViewModel()
     @StateObject private var parkingVM = ParkingViewModel()
-    @StateObject var userRepo = UserRepository()
-    
+    @EnvironmentObject var networkMonitor: NetworkMonitor
     @State private var selectedTab: Int = 0
     @State private var scrollOffset: CGFloat = 0
-    
+
     var body: some View {
         ZStack(alignment: .top) { // ZStack para permitir el banner flotante
             Group {
@@ -43,19 +42,11 @@ struct ContentView: View {
         .environmentObject(parkingVM)
         .environmentObject(userRepo) // Inyectamos el repo para que cualquier vista acceda a los carros
         .task {
-                    await parkingVM.generateSpotsIfEmpty()
-                    userRepo.loadUser()
-                }
-                // ESTA ES LA PIEZA QUE FALTABA
-        .onChange(of: authVM.currentUser?.id) { oldValue, newValue in
-            // Si newValue no es nil, significa que hay un ID válido
-            if let user = authVM.currentUser {
-                print("🔗 Conectando UserRepository con el ID: \(user.id)")
-                userRepo.currentUser = user
-                
-                // Opcional: Cargar los carros específicos de este usuario
-                userRepo.loadUser()
-            }
+            await parkingVM.generateSpotsIfEmpty()
+            await parkingVM.loadInitialDataParallel()
+        }
+        .onChange(of: networkMonitor.isConnected) { _, isConnected in
+            if isConnected { parkingVM.syncPendingActions() }
         }
     }
 }
