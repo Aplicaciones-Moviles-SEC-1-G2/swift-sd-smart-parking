@@ -11,9 +11,11 @@ import FirebaseAuth
 import Combine
 import Firebase
 
+import SwiftUI
 class UserRepository: ObservableObject {
     @Published var currentUser: User?
     @Published var isOffline: Bool = false
+    @Published var pendingPlates: Set<String> = []
     
     private let db = Firestore.firestore()
     private let diskManager = DiskPersistenceManager.shared
@@ -24,146 +26,182 @@ class UserRepository: ObservableObject {
     private var cancellables = Set<AnyCancellable>()
 
     init() {
+        loadUser()
+        setupNetworkObserver()
+    }
+    
+    private func setupNetworkObserver() {
+        networkMonitor.$isConnected
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] connected in
+                self?.isOffline = !connected
+                if connected {
+                    self?.syncQueuedActions()
+                }
+            }
+            .store(in: &cancellables)
+    }
 
-            loadUser()
-            setupNetworkObserver()
+    // MARK: - Local Persistence
+    func loadUser() {
+        if let cachedUser = diskManager.load(filename: profileFileName, type: User.self) {
+            self.currentUser = cachedUser
+        }
+    }
+
+    private func saveUserLocally() {
+        guard let user = currentUser else { return }
+        diskManager.save(user, to: profileFileName)
+    }
+
+    // MARK: - Core Actions
+    func addCar(name: String, plate: String) {
+        // Obtenemos el UID de Firebase directamente para evitar inconsistencias
+        guard let firebaseUID = Auth.auth().currentUser?.uid else { return }
+        
+        let newCar = Car(
+            id: UUID(),
+            plate: plate,
+            UserID: firebaseUID,
+            name: name
+        )
+        
+        // 1. Update UI (ArrayMap) & Disk Cache
+        self.currentUser?.cars.put(newCar, for: newCar.normalizedPlate)
+        saveUserLocally()
+        
+        // 2. Sync Logic
+        if isOffline {
+            saveActionToQueue(action: .addCar, data: newCar)
+        } else {
+            Task {
+                addToPending(plate)
+                await uploadCarToFirestore(newCar)
+            }
         }
         
-        private func setupNetworkObserver() {
-            networkMonitor.$isConnected
-                .receive(on: DispatchQueue.main)
-                .sink { [weak self] connected in
-                    self?.isOffline = !connected
-                    if connected {
-                        self?.syncQueuedActions()
-                    }
-                }
-                .store(in: &cancellables)
-        }
+        self.objectWillChange.send()
+    }
+    
+    // Crea estas dos funciones de ayuda en UserRepository para no repetir código:
 
-        func loadUser() {
-            if let cachedUser = diskManager.load(filename: profileFileName, type: User.self) {
-                self.currentUser = cachedUser
+    private func addToPending(_ plate: String) {
+        DispatchQueue.main.async {
+            self.pendingPlates.insert(plate)
+        }
+    }
+
+    private func removeFromPending(_ plate: String) {
+        DispatchQueue.main.async {
+            self.pendingPlates.remove(plate)
+        }
+    }
+    func isCarPending(plate: String) -> Bool {
+        // Cargamos la cola actual
+        guard let queue = diskManager.load(filename: queueFileName, type: [QueuedAction].self) else { return false }
+        
+        // Buscamos si hay alguna acción de tipo addCar que contenga esa placa en su payload
+        return queue.contains { action in
+            guard action.type == .addCar else { return false }
+            // Intentamos decodificar el carro del payload para comparar la placa
+            if let car = try? JSONDecoder().decode(Car.self, from: action.payload) {
+                return car.plate == plate
+            }
+            return false
+        }
+    }
+
+    func refreshPendingStatus() {
+        // 1. Cargamos la cola del disco
+        guard let queue = diskManager.load(filename: queueFileName, type: [QueuedAction].self) else {
+            DispatchQueue.main.async { self.pendingPlates = [] }
+            return
+        }
+        
+        // 2. Extraemos solo las placas de las acciones tipo .addCar
+        let plates = queue.compactMap { action -> String? in
+            guard action.type == .addCar else { return nil }
+            let car = try? JSONDecoder().decode(Car.self, from: action.payload)
+            return car?.plate
+        }
+        
+        // 3. Actualizamos la UI en el hilo principal con una pequeña animación
+        DispatchQueue.main.async {
+            withAnimation(.spring()) {
+                self.pendingPlates = Set(plates)
             }
         }
-
-    // MÉTODO: AGREGAR CARRO (Llamado desde el ViewModel)
-    func addCar(name: String, plate: String) {
-            guard var user = currentUser else { return }
-            
-            let newCar = Car(id: UUID(), plate: plate, UserID: user.id, name: name)
-            let key = newCar.normalizedPlate // Nuestra clave para la búsqueda binaria
-            
-            DispatchQueue.main.async {
-                // Usamos 'put' de ArrayMap en lugar de 'append' de Array
-                user.cars.put(newCar, for: key)
-                
-                self.currentUser = user
-                self.saveUserLocally()
-            }
-            
-            Task {
-                await self.uploadCarToFirestore(newCar)
-            }
-        }
-
-
-    // MÉTODO: ACTUALIZAR PERFIL (Llamado desde el ViewModel)
+    }
     func updateProfile(newName: String, newEmail: String) {
         guard var user = currentUser else { return }
         user = User(id: user.id, name: newName, email: newEmail, password: "", cars: user.cars, preferences: user.preferences)
 
-        // 1. Local
         self.currentUser = user
-        diskManager.save(user, to: profileFileName)
+        saveUserLocally()
 
-        // 2. Sincronización
-        if !isOffline {
-            Task { await uploadProfileToFirebase(newName: newName, newEmail: newEmail) }
-        } else {
-            // Aquí podrías crear un struct "ProfileUpdate" para el payload
+        if isOffline {
             saveActionToQueue(action: .updateProfile, data: ["name": newName, "email": newEmail])
-        }
-    }
-
-    // MÉTODO: ACTUALIZAR PREFERENCIAS (mobility / preferred floor)
-    func updatePreferences(_ preferences: UserPreferences) {
-        guard var user = currentUser else { return }
-        user.preferences = preferences
-
-        // 1. Local
-        self.currentUser = user
-        diskManager.save(user, to: profileFileName)
-
-        // 2. Sincronización
-        if !isOffline {
-            Task { await uploadPreferencesToFirebase(preferences) }
         } else {
-            saveActionToQueue(action: .updatePreferences, data: preferences)
+            Task { await uploadProfileToFirebase(newName: newName, newEmail: newEmail) }
         }
     }
 
-    // --- LÓGICA PRIVADA DE FIREBASE ---
+    func updatePreferences(_ preferences: UserPreferences) {
+        currentUser?.preferences = preferences
+        saveUserLocally()
 
-    private func uploadCarToFirestore(_ car: Car) async {
-        // 1. Usamos el UID directo de Firebase Auth en lugar del id del modelo local
-        guard let firebaseUID = Auth.auth().currentUser?.uid else {
-            print("⚠️ No hay una sesión de Firebase activa")
-            return
+        if isOffline {
+            saveActionToQueue(action: .updatePreferences, data: preferences)
+        } else {
+            Task { await uploadPreferencesToFirebase(preferences) }
         }
+    }
+
+    // MARK: - Firebase Internal Logic
+    private func uploadCarToFirestore(_ car: Car) async {
+        guard let uid = Auth.auth().currentUser?.uid else { return }
         
-        // 2. Preparamos los datos (el ID del carro sí puede ser el UUID que generaste)
-        let carData: [String: Any] = [
-            //"id": car.id.uuidString,
-            "name": car.name,
-            "plate": car.plate,
-            //"UserID": firebaseUID
-        ]
+        let carData: [String: Any] = ["name": car.name, "plate": car.plate]
         
         do {
-            // 3. Apuntamos al documento que tiene el UID de Firebase
-            try await db.collection("users").document(firebaseUID).setData([
+            try await db.collection("users").document(uid).setData([
                 "cars": FieldValue.arrayUnion([carData])
             ], merge: true)
-            
-            print("✅ Carro guardado en el documento correcto: \(firebaseUID)")
+            removeFromPending(car.plate)
+            print("✅ Carro sincronizado: \(car.plate)")
         } catch {
-            print("❌ Error: \(error.localizedDescription)")
-            self.saveActionToQueue(action: .addCar, data: car)
+            print("❌ Fallo subida, encolando...")
+            saveActionToQueue(action: .addCar, data: car)
         }
     }
+
     private func uploadProfileToFirebase(newName: String, newEmail: String) async {
         guard let uid = Auth.auth().currentUser?.uid else { return }
         try? await db.collection("users").document(uid).updateData([
-            "name": newName,
-            "email": newEmail
+            "name": newName, "email": newEmail
         ])
     }
 
     private func uploadPreferencesToFirebase(_ preferences: UserPreferences) async {
         guard let uid = Auth.auth().currentUser?.uid else { return }
-        do {
-            try await db.collection("users").document(uid).setData(
-                ["preferences": preferences.toFirestore()],
-                merge: true
-            )
-        } catch {
-            self.saveActionToQueue(action: .updatePreferences, data: preferences)
-        }
+        try? await db.collection("users").document(uid).setData(
+            ["preferences": preferences.toFirestore()], merge: true
+        )
     }
 
-    // --- MOTOR DE SINCRONIZACIÓN ---
-
+    // MARK: - Sync Engine
     func syncQueuedActions() {
-        guard var pendingActions = diskManager.load(filename: queueFileName, type: [QueuedAction].self),
-              !pendingActions.isEmpty else { return }
+        guard var queue = diskManager.load(filename: queueFileName, type: [QueuedAction].self), !queue.isEmpty else { return }
 
         Task {
-            for action in pendingActions {
+            print("📦 Procesando \(queue.count) acciones pendientes...")
+            var remainingActions = queue
+            
+            for action in queue {
                 let success = await processAction(action)
                 if success {
-                    pendingActions.removeAll(where: { $0.id == action.id })
-                    diskManager.save(pendingActions, to: queueFileName)
+                    remainingActions.removeAll(where: { $0.id == action.id })
+                    diskManager.save(remainingActions, to: queueFileName)
                 }
             }
         }
@@ -173,7 +211,7 @@ class UserRepository: ObservableObject {
         switch action.type {
         case .addCar:
             if let car = try? JSONDecoder().decode(Car.self, from: action.payload) {
-                await uploadCarToFirestore(car) // <-- Cambiado: pasamos el car decodificado
+                await uploadCarToFirestore(car)
                 return true
             }
         case .updateProfile:
@@ -193,41 +231,14 @@ class UserRepository: ObservableObject {
 
     private func saveActionToQueue<T: Codable>(action: ActionType, data: T) {
         var queue = diskManager.load(filename: queueFileName, type: [QueuedAction].self) ?? []
-        let newAction = QueuedAction(type: action, data: data)
-        queue.append(newAction)
+        queue.append(QueuedAction(type: action, data: data))
         diskManager.save(queue, to: queueFileName)
-        print("📦 Acción guardada en cola: \(action)")
     }
-    
-    private func saveUserLocally() {
-        guard let user = currentUser else { return }
-        diskManager.save(user, to: profileFileName)
-    }
-    
     
     func clearUserData() {
-        // 1. Limpiamos la memoria
         self.currentUser = nil
-        
-        // 2. Accedemos al primer elemento de la lista de URLs
-        guard let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first else {
-            print("❌ No se pudo encontrar la carpeta de documentos")
-            return
-        }
-        
-        let fileURL = documentsDirectory.appendingPathComponent("user_profile_cache.json")
-        
-        // 3. Borramos el archivo físico
-        do {
-            if FileManager.default.fileExists(atPath: fileURL.path) {
-                try FileManager.default.removeItem(at: fileURL)
-                print("🗑️ Memoria y JSON local eliminados con éxito.")
-            }
-        } catch {
-            print("❌ Error al borrar el archivo: \(error.localizedDescription)")
-        }
+        diskManager.delete(filename: profileFileName)
+        diskManager.delete(filename: queueFileName)
+        print("🗑️ Datos locales eliminados.")
     }
-    
-    
 }
-

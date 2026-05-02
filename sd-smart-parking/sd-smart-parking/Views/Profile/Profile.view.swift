@@ -70,11 +70,13 @@ struct ProfileView: View {
                     
                     // Link to CarsView passing the real user object
                     if let user = authVM.currentUser {
-                        NavigationLink(destination: CarsView()) {
+                        NavigationLink(destination: CarsView().onAppear {
+                            // Forzamos que el repo tenga el usuario que authVM ya encontró
+                            userRepo.currentUser = authVM.currentUser
+                        }.environmentObject(userRepo)) {
                             HStack {
                                 Label("My Cars", systemImage: "car.fill")
                                 Spacer()
-                                // Dynamic badge showing number of cars
                                 Text("\(user.cars.count())")
                                     .font(.caption)
                                     .padding(.horizontal, 8)

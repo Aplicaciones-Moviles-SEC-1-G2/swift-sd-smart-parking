@@ -10,62 +10,74 @@ import SwiftUI
 struct SDNavigationView: View {
     @StateObject private var navManager = NavigationManager()
     @StateObject private var weatherVM  = WeatherViewModel()
+    @EnvironmentObject var userRepo: UserRepository
     @State private var showNavigation = false
     
     var body: some View {
-        NavigationStack {
-            ScrollView { // Usamos ScrollView para evitar que los elementos se corten
-                VStack(spacing: 20) {
-                    
-                    // 1. IA RECOMMENDATION CARD (Prioridad visual)
-                    AIRecommendationCard()
-                        .frame(maxWidth: .infinity)
-                        .padding(.top, 5)
-                    
-                    // 2. LIVE CAPACITY CARD
-                    //LiveCapacityCard(available: 40, total: 120, queue: 3)
-                    
-                    // 3. MAP CONTAINER
-                    ZStack(alignment: .bottomTrailing) {
-                        AppleMapsView(navManager: navManager)
-                            .frame(height: 300) // Altura fija para el mapa
-                            .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
-                            .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 4)
+            NavigationStack {
+                ScrollView {
+                    VStack(spacing: 20) {
+                        AIRecommendationCard()
                         
-                        // Weather Overlay (Arriba Izquierda)
-                        weatherOverlay
-                        
-                        // Route Info Overlay (Abajo Derecha)
-                        routeInfoOverlay
-                    }
-                    
-                    // 4. ACTION BUTTON
-                    Button {
-                        showNavigation = true
-                    } label: {
-                        HStack {
-                            Image(systemName: "paperplane.fill")
-                            Text("Start Navigation")
+                        // CONTENEDOR DEL MAPA PROTEGIDO
+                        ZStack(alignment: .bottomTrailing) {
+                            AppleMapsView(navManager: navManager)
+                                .frame(height: 300)
+                                .clipShape(RoundedRectangle(cornerRadius: 24))
+                                .overlay {
+                                    // Capa de aviso si estamos offline
+                                    if userRepo.isOffline {
+                                        RoundedRectangle(cornerRadius: 24)
+                                            .fill(.black.opacity(0.05))
+                                            .allowsHitTesting(false)
+                                    }
+                                }
+                            
+                            // Si estamos offline, el overlay de ruta se vuelve naranja para alertar
+                            routeInfoOverlay
+                                .background(userRepo.isOffline ? Color.orange.opacity(0.1) : Color.clear)
+                                .cornerRadius(14)
                         }
-                        .font(.headline)
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 16)
-                        .background(Color.blue.gradient) // Gradiente sutil
-                        .cornerRadius(16)
-                        .shadow(color: .blue.opacity(0.3), radius: 8, x: 0, y: 4)
+                        
+                        // BOTÓN DE ACCIÓN CON ESTADO DE RED
+                        Button {
+                            showNavigation = true
+                        } label: {
+                            HStack {
+                                Image(systemName: userRepo.isOffline ? "bolt.slash.fill" : "paperplane.fill")
+                                Text(userRepo.isOffline ? "Iniciar con última ruta" : "Start Navigation")
+                            }
+                            .font(.headline)
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 16)
+                            // Cambiamos el color para indicar que no es la ruta "en vivo"
+                            .background(userRepo.isOffline ? Color.gray.gradient : Color.blue.gradient)
+                            .cornerRadius(16)
+                        }
+                    }
+                    .padding(.horizontal)
+                }
+                .navigationTitle("Preview")
+                .onAppear {
+                    if userRepo.isOffline {
+                        navManager.loadPreviewCache()
                     }
                 }
-                .padding(.horizontal)
-            }
-            .background(Color(.systemGray6))
-            .navigationTitle("Navigation")
-            .fullScreenCover(isPresented: $showNavigation) {
-                ActiveNavigationView()
-                    .environmentObject(navManager)
+                // Si recupera internet mientras ve la pantalla, forzamos recálculo
+                .onChange(of: userRepo.isOffline) { oldValue, isOffline in
+                    if !isOffline {
+                        navManager.refreshRoute()
+                        navManager.savePreviewCache() // Actualizamos el cache
+                    }
+                }
+                .fullScreenCover(isPresented: $showNavigation) {
+                    ActiveNavigationView()
+                        .environmentObject(navManager)
+                }
             }
         }
-    }
+    
     
     // MARK: - Overlays pulidos
     
@@ -95,21 +107,30 @@ struct SDNavigationView: View {
         VStack(alignment: .trailing, spacing: 4) {
             Text("SD Building")
                 .font(.caption.bold())
-                .foregroundColor(.primary)
             
             HStack(spacing: 12) {
                 Label(navManager.travelTime, systemImage: "clock.fill")
                 Label(navManager.distance, systemImage: "road.lanes")
             }
             .font(.system(size: 11, weight: .medium))
-            .foregroundColor(.secondary)
+            
+            // --- ESTE ES EL INDICADOR DE RECUPERACIÓN ---
+            if userRepo.isOffline, let lastDate = navManager.lastUpdateDate {
+                HStack(spacing: 4) {
+                    Image(systemName: "exclamationmark.shield.fill")
+                    // Formato relativo automático: "hace 5 minutos"
+                    Text("Actualizado \(lastDate, style: .relative) atrás")
+                }
+                .font(.system(size: 9, weight: .bold))
+                .foregroundColor(.orange)
+                .padding(.top, 2)
+            }
         }
         .padding(10)
         .background(.ultraThinMaterial)
         .cornerRadius(14)
         .padding(12)
-    }
-}
+    }}
 
 // MARK: - Live Capacity Card Pulida
 
