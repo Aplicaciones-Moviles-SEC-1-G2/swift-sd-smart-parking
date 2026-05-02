@@ -31,25 +31,35 @@ struct AppleMapsView: View {
             }
         }
         .mapStyle(.standard)
-        .onChange(of: navManager.route) {
-            // ✅ Solo mover la cámara la primera vez que llega la ruta
-            guard !hasSetInitialCamera else { return }
-            hasSetInitialCamera = true
-            updateCamera()
-        }
+        .onChange(of: navManager.route) { oldRoute, newRoute in
+                    if newRoute != nil {
+                        updateCamera() // Ahora sí, llamamos a la función que vive aquí
+                    }
+                }
+                .onAppear {
+                    // Enfocar cache inicial si existe
+                    updateCamera()
+                }
     }
     
     private func updateCamera() {
-        guard let route = navManager.route else { return }
+        // Intentamos obtener la polilínea real, y si no, la cacheada
+        let polyline = navManager.route?.polyline ?? navManager.cachedPolyline
         
-        var rect = route.polyline.boundingMapRect
-        let paddingFactor = 1.1
+        guard let targetPolyline = polyline else {
+            print("⚠️ No hay ruta real ni cacheada para enfocar")
+            return
+        }
+        
+        var rect = targetPolyline.boundingMapRect
+        let paddingFactor = 1.2 // Aumenté un poco el padding para que respire más el mapa
+        
         rect = rect.insetBy(
             dx: -rect.size.width * (paddingFactor - 1),
             dy: -rect.size.height * (paddingFactor - 1)
         )
         
-        withAnimation(.easeInOut(duration: 0.8)) {  // ✅ Animación suave
+        withAnimation(.easeInOut(duration: 0.8)) {
             cameraPosition = .rect(rect)
         }
     }

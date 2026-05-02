@@ -101,7 +101,12 @@ class AuthViewModel: ObservableObject {
                 guard let plate = carData["plate"] as? String,
                       let carName = carData["name"] as? String else { continue }
                 
-                let car = Car(id: UUID(), plate: plate, UserID: UUID(uuidString: uid) ?? UUID(), name: carName)
+                let car = Car(
+                    id: UUID(),
+                    plate: plate,
+                    UserID: uid,
+                    name: carName
+                )
                 // Insertamos en el mapa usando la placa normalizada como clave
                 carsMap.put(car, for: car.normalizedPlate)
             }
@@ -388,8 +393,8 @@ class AuthViewModel: ObservableObject {
     func loginAsUser() {
         var mockCarsMap = ArrayMap<String, Car>()
         
-        let car1 = Car(id: UUID(), plate: "ABC-123", UserID: UUID(), name: "Mi Camioneta")
-        let car2 = Car(id: UUID(), plate: "XYZ-789", UserID: UUID(), name: "Carro de Ciudad")
+        let car1 = Car(id: UUID(), plate: "ABC-123", UserID: "PREV1", name: "Mi Camioneta")
+        let car2 = Car(id: UUID(), plate: "XYZ-789", UserID: "PREV2", name: "Carro de Ciudad")
         
         // Importante: Usar put para que se mantengan ordenados y con sus llaves
         mockCarsMap.put(car1, for: car1.normalizedPlate)
