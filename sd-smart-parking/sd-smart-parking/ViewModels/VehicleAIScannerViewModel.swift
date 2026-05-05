@@ -45,10 +45,10 @@ class VehicleAIScannerViewModel: ObservableObject {
     func analyze(image: UIImage) {
         state = .analyzing
         let prepared = Self.resized(image, maxSide: 1280)
+        let preparedJPEG = prepared.jpegData(compressionQuality: 0.7)
 
         // Cache lookup — saves a Gemini round-trip when the operator re-scans
         // the exact same vehicle photo (same JPEG bytes -> same SHA256 key).
-        let preparedJPEG = prepared.jpegData(compressionQuality: 0.7)
         let cacheKey = preparedJPEG.map { AIScanCache.key(forJPEGData: $0) }
         if let key = cacheKey, let cached = AIScanCache.shared.get(key) {
             state = .success(cached)
@@ -69,6 +69,14 @@ class VehicleAIScannerViewModel: ObservableObject {
                 if let key = cacheKey, let data = preparedJPEG {
                     AIScanCache.shared.put(identification, for: key, cost: data.count)
                 }
+
+                // Append to local scan history (Codable + FileManager). Best-effort
+                // write — failures don't surface to the user. Reuses the same
+                // SHA256 hex string the cache key already derived from the bytes.
+                let hashHex = (cacheKey as String?) ?? ""
+                ScanHistoryStore.shared.append(
+                    ScanHistoryEntry(identification: identification, imageHashHex: hashHex)
+                )
             } catch let decodingError as VehicleAIScannerError {
                 self.state = .failure(decodingError.message)
             } catch {

@@ -20,6 +20,7 @@ struct VehicleAIScannerSheet: View {
     @State private var capturedImage: UIImage? = nil
     @State private var showPicker: Bool = true
     @State private var showPlateOCRFallback: Bool = false
+    @State private var showHistory: Bool = false
 
     var body: some View {
         NavigationStack {
@@ -30,6 +31,16 @@ struct VehicleAIScannerSheet: View {
                     ToolbarItem(placement: .cancellationAction) {
                         Button("Cancel") { dismiss() }
                     }
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button {
+                            showHistory = true
+                        } label: {
+                            Image(systemName: "clock.arrow.circlepath")
+                        }
+                    }
+                }
+                .sheet(isPresented: $showHistory) {
+                    ScanHistorySheet()
                 }
                 .sheet(isPresented: $showPicker) {
                     CameraImagePicker { image in
