@@ -15,9 +15,11 @@ struct VehicleAIScannerSheet: View {
     let onUseResult: (VehicleIdentification) -> Void
 
     @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject private var networkMonitor: NetworkMonitor
     @StateObject private var vm = VehicleAIScannerViewModel()
     @State private var capturedImage: UIImage? = nil
     @State private var showPicker: Bool = true
+    @State private var showPlateOCRFallback: Bool = false
 
     var body: some View {
         NavigationStack {
@@ -33,13 +35,30 @@ struct VehicleAIScannerSheet: View {
                     CameraImagePicker { image in
                         capturedImage = image
                         showPicker = false
-                        if let image {
+                        guard let image else {
+                            dismiss()
+                            return
+                        }
+                        if networkMonitor.isConnected {
                             vm.analyze(image: image)
                         } else {
-                            dismiss()
+                            showPlateOCRFallback = true
                         }
                     }
                     .ignoresSafeArea()
+                }
+                .sheet(isPresented: $showPlateOCRFallback) {
+                    PlateOCRSheet { plate, _ in
+                        let identification = VehicleIdentification(
+                            plate: plate,
+                            plateVisible: true,
+                            color: "unknown",
+                            brand: "unknown",
+                            model: "unknown"
+                        )
+                        onUseResult(identification)
+                        dismiss()
+                    }
                 }
         }
     }
@@ -59,6 +78,10 @@ struct VehicleAIScannerSheet: View {
 
                 switch vm.state {
                 case .idle:
+                    if !networkMonitor.isConnected {
+                        OfflineNoticeBadge(message: "Sin conexión — usaremos OCR local")
+                            .padding(.top, 12)
+                    }
                     Text("Take a photo of the vehicle to analyze it.")
                         .foregroundColor(.secondary)
                         .padding(.top, 40)
