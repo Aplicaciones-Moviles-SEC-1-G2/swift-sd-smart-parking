@@ -10,6 +10,7 @@ import LocalAuthentication
 
 struct LoginView: View {
     @EnvironmentObject var authVM: AuthViewModel
+    @EnvironmentObject private var networkMonitor: NetworkMonitor
     @State private var email = ""
     @State private var password = ""
     private var biometricIcon: String {
@@ -147,9 +148,18 @@ struct LoginView: View {
                             .stroke(Color.gray.opacity(0.2), lineWidth: 1)
                     )
                     .shadow(color: Color.black.opacity(0.05), radius: 3, x: 0, y: 2)
+                    .opacity(networkMonitor.isConnected ? 1.0 : 0.45)
                 }
                 .contentShape(Rectangle())
+                .disabled(!networkMonitor.isConnected || authVM.isLoading)
                 .padding(.horizontal, 24)
+
+                if !networkMonitor.isConnected {
+                    Text("Sin conexión — usa Face ID si tienes sesión guardada")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .padding(.horizontal, 24)
+                }
 
                 // MARK: - Face ID / Touch ID Button
                 Button {
@@ -224,4 +234,5 @@ struct LoginView: View {
 #Preview {
     LoginView()
         .environmentObject(AuthViewModel())
+        .environmentObject(NetworkMonitor())
 }
