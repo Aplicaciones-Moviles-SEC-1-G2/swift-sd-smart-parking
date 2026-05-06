@@ -17,6 +17,11 @@ class TripPlannerViewModel: ObservableObject {
 
     private let store: CalendarEventStoring
 
+    /// Capacity = 5: a typical user explores 2-3 alternative arrival/duration
+    /// combinations before locking in a plan. 5 leaves headroom without
+    /// holding stale entries forever.
+    private let costCache = LRUCache<TripCacheKey, Double>(capacity: 5)
+
     init(store: CalendarEventStoring = EKEventStore()) {
         self.store = store
         let calendar = Calendar.current
@@ -91,7 +96,11 @@ class TripPlannerViewModel: ObservableObject {
     // MARK: - Cost
 
     func estimatedCost() -> Double {
-        ParkingConfig.calculateFee(hours: durationHours, currentDayTotal: 0)
+        let key = TripCacheKey(arrivalDate: arrivalDate, durationHours: durationHours)
+        if let cached = costCache.get(key) { return cached }
+        let cost = ParkingConfig.calculateFee(hours: durationHours, currentDayTotal: 0)
+        costCache.put(cost, for: key)
+        return cost
     }
 
     // MARK: - Calendar Export
