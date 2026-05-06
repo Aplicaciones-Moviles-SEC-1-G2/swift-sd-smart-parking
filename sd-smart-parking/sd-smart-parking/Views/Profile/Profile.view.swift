@@ -88,6 +88,29 @@ struct ProfileView: View {
                     }
                 }
 
+                // Diego — Top scanned brands (Gerente only). Reads from
+                // KeyValueStore-backed ScanStats; non-destructive section
+                // appended without touching surrounding teammate code.
+                if authVM.isGerente {
+                    let top = ScanStats.shared.topBrands(3)
+                    if !top.isEmpty {
+                        Section("Top scanned brands") {
+                            ForEach(top, id: \.brand) { entry in
+                                HStack {
+                                    Text(entry.brand.capitalized)
+                                    Spacer()
+                                    Text("\(entry.count)")
+                                        .font(.caption.bold())
+                                        .padding(.horizontal, 8)
+                                        .padding(.vertical, 2)
+                                        .background(Color(.systemGray5))
+                                        .clipShape(Capsule())
+                                }
+                            }
+                        }
+                    }
+                }
+
                 // 3. Logout
                 Button(role: .destructive) {
                     authVM.signOut(userRepo: userRepo  )
