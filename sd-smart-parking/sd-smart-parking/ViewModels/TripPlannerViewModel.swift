@@ -103,6 +103,21 @@ class TripPlannerViewModel: ObservableObject {
         return cost
     }
 
+    // MARK: - SwiftData Hand-off
+
+    /// Pure value snapshot the SwiftUI layer turns into a `SavedTripPlan`
+    /// (a SwiftData @Model). Keeping this VM free of SwiftData types means
+    /// the @Model never crosses out of MainActor.
+    func makeExportSnapshot(parkingName: String) -> TripExportSnapshot {
+        TripExportSnapshot(
+            arrivalDate: arrivalDate,
+            leaveDate: leaveDate,
+            parkingName: parkingName,
+            estimatedCostCOP: estimatedCost(),
+            wasExportedToCalendar: didExport
+        )
+    }
+
     // MARK: - Calendar Export
 
     func exportTrip(parkingName: String, closingHour: Int) async {
