@@ -4,12 +4,16 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct TripPlannerSheetView: View {
     @StateObject private var tripVM = TripPlannerViewModel()
     @EnvironmentObject var config: ParkingConfig
     @EnvironmentObject private var networkMonitor: NetworkMonitor
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.modelContext) private var modelContext
+
+    @State private var showHistory = false
 
     /// Preference persisted across launches via UserDefaults. Prefix `diego.`
     /// so it never collides with teammate-owned keys (e.g. `biometricsEnabled`).
@@ -100,6 +104,14 @@ struct TripPlannerSheetView: View {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }
                 }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        showHistory = true
+                    } label: {
+                        Image(systemName: "clock.arrow.circlepath")
+                    }
+                    .accessibilityLabel("Trip History")
+                }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Add to Calendar") {
                         Task {
@@ -123,6 +135,22 @@ struct TripPlannerSheetView: View {
             }
             .onChange(of: tripVM.arrivalDate) {
                 tripVM.clampLeaveDate(closingHour: config.closingHour)
+            }
+            .onChange(of: tripVM.didExport) { _, didExport in
+                guard didExport else { return }
+                let snapshot = tripVM.makeExportSnapshot(parkingName: config.parkingName)
+                let saved = SavedTripPlan(
+                    arrivalDate: snapshot.arrivalDate,
+                    leaveDate: snapshot.leaveDate,
+                    parkingName: snapshot.parkingName,
+                    estimatedCostCOP: snapshot.estimatedCostCOP,
+                    wasExportedToCalendar: true
+                )
+                modelContext.insert(saved)
+                try? modelContext.save()
+            }
+            .sheet(isPresented: $showHistory) {
+                TripHistoryView()
             }
         }
     }
