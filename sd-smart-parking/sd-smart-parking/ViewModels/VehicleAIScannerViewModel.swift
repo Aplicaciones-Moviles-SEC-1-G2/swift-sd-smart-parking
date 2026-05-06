@@ -46,6 +46,15 @@ class VehicleAIScannerViewModel: ObservableObject {
         state = .analyzing
         let prepared = Self.resized(image, maxSide: 1280)
 
+        // Cache lookup — saves a Gemini round-trip when the operator re-scans
+        // the exact same vehicle photo (same JPEG bytes -> same SHA256 key).
+        let preparedJPEG = prepared.jpegData(compressionQuality: 0.7)
+        let cacheKey = preparedJPEG.map { AIScanCache.key(forJPEGData: $0) }
+        if let key = cacheKey, let cached = AIScanCache.shared.get(key) {
+            state = .success(cached)
+            return
+        }
+
         Task {
             do {
                 let response = try await model.generateContent(prepared, Self.prompt)
@@ -55,6 +64,11 @@ class VehicleAIScannerViewModel: ObservableObject {
                 }
                 let identification = try Self.decode(raw)
                 self.state = .success(identification)
+
+                // Cache write — only if we have a stable key and JPEG bytes.
+                if let key = cacheKey, let data = preparedJPEG {
+                    AIScanCache.shared.put(identification, for: key, cost: data.count)
+                }
             } catch let decodingError as VehicleAIScannerError {
                 self.state = .failure(decodingError.message)
             } catch {
