@@ -77,6 +77,9 @@ class VehicleAIScannerViewModel: ObservableObject {
                 ScanHistoryStore.shared.append(
                     ScanHistoryEntry(identification: identification, imageHashHex: hashHex)
                 )
+
+                // Update brand stats (KeyValueStore). Ignored for "unknown".
+                ScanStats.shared.increment(brand: identification.brand)
             } catch let decodingError as VehicleAIScannerError {
                 self.state = .failure(decodingError.message)
             } catch {
