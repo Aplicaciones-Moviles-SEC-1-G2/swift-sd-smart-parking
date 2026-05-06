@@ -126,6 +126,12 @@ struct LoginView: View {
                 .padding(.horizontal, 24)
 
                 // MARK: - Microsoft Button
+                if let lastEmail = MicrosoftKeychain.lastEmail() {
+                    Text("Last Microsoft user: \(lastEmail)")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .padding(.horizontal, 24)
+                }
                 Button {
                     Task { await authVM.signInWithMicrosoft() }
                 } label: {

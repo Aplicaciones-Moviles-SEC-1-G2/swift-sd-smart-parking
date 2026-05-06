@@ -199,9 +199,16 @@ class AuthViewModel: ObservableObject {
             isLoading = true
             errorMessage = nil
         }
-        
+
         do {
             try await microsoftOAuth.signIn()
+
+            // Persist a "remember last Microsoft user" hint in Keychain so
+            // we can show a "Continue as <email>" caption on next launch.
+            // Best-effort: failures don't surface to the user.
+            if let user = Auth.auth().currentUser, let email = user.email {
+                MicrosoftKeychain.saveCredentials(uid: user.uid, email: email)
+            }
         } catch {
             await MainActor.run {
                 self.errorMessage = "Microsoft Sign-In was cancelled or failed."
