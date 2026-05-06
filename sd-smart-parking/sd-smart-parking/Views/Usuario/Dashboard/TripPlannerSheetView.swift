@@ -8,6 +8,7 @@ import SwiftUI
 struct TripPlannerSheetView: View {
     @StateObject private var tripVM = TripPlannerViewModel()
     @EnvironmentObject var config: ParkingConfig
+    @EnvironmentObject private var networkMonitor: NetworkMonitor
     @Environment(\.dismiss) private var dismiss
 
     private var validationError: String? {
@@ -52,6 +53,12 @@ struct TripPlannerSheetView: View {
                         Text("\(Int(tripVM.estimatedCost()))")
                             .font(.title2.bold())
                             .foregroundColor(.blue)
+                    }
+
+                    if !networkMonitor.isConnected {
+                        OfflineNoticeBadge(
+                            message: "Sin conexión — el costo y exportar a Calendar siguen funcionando"
+                        )
                     }
 
                     if tripVM.isPeak {
@@ -102,4 +109,5 @@ struct TripPlannerSheetView: View {
 #Preview {
     TripPlannerSheetView()
         .environmentObject(ParkingConfig())
+        .environmentObject(NetworkMonitor())
 }

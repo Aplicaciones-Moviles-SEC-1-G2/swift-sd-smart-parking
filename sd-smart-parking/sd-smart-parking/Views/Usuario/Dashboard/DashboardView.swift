@@ -173,7 +173,8 @@ struct DashboardView: View {
             ParkingDemandInsightsView(
                 records: vm.vehicleRecords,
                 openingHour: vm.config.openingHour,
-                closingHour: vm.config.closingHour
+                closingHour: vm.config.closingHour,
+                lastSyncedAt: vm.vehicleRecords.first?.timestamp
             )
         }
     }
