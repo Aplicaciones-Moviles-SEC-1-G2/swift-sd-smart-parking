@@ -73,6 +73,23 @@ struct LRUCacheTests {
         #expect(c.get("c") == 3)
         #expect(c.get("a") == nil)
     }
+
+    @Test func clearReleasesNodes() async throws {
+        // Defends "no retention cycles in the doubly-linked node graph" — if
+        // prev/next references created a strong cycle, the boxed value would
+        // outlive the cache even after `clear()`.
+        final class Box { let v: Int; init(_ v: Int) { self.v = v } }
+        let cache = LRUCache<String, Box>(capacity: 2)
+
+        weak var ref: Box?
+        do {
+            let box = Box(42)
+            ref = box
+            cache.put(box, for: "k")
+        }
+        cache.clear()
+        #expect(ref == nil)
+    }
 }
 
 @Suite("TripCacheKey")
@@ -106,5 +123,18 @@ struct TripCacheKeyTests {
         let k1 = TripCacheKey(arrivalDate: date, durationHours: 1.0)
         let k2 = TripCacheKey(arrivalDate: date, durationHours: 1.5)
         #expect(k1 != k2)
+    }
+
+    @Test func durationBucketIsFlooredNotRounded() async throws {
+        // Asymmetric bucketing fix: arrival truncates via Int(...) cast and
+        // duration now matches with `.rounded(.down)`. Under round-to-nearest,
+        // 1.49h would round up into bucket 18 (matching 1.50h); flooring
+        // keeps 1.49h in bucket 17 with 1.45h, which is the intended policy.
+        let date = Date(timeIntervalSince1970: 1_700_000_000)
+        let k145 = TripCacheKey(arrivalDate: date, durationHours: 1.45)
+        let k149 = TripCacheKey(arrivalDate: date, durationHours: 1.49)
+        let k150 = TripCacheKey(arrivalDate: date, durationHours: 1.50)
+        #expect(k145 == k149)
+        #expect(k149 != k150)
     }
 }

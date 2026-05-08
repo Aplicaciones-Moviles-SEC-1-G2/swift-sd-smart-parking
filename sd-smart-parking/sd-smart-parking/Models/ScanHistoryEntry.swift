@@ -9,6 +9,10 @@
 
 import Foundation
 
+/// Codable evolution rule: any new field MUST be optional or have a Codable
+/// default. Otherwise decoding historical entries fails, `ScanHistoryStore`
+/// falls back to `[]`, and the user's local scan history is silently wiped on
+/// the next launch after a schema change.
 struct ScanHistoryEntry: Codable, Identifiable, Equatable {
     let id: UUID
     let identification: VehicleIdentification

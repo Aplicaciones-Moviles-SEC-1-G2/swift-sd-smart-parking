@@ -37,6 +37,7 @@ final class AIScanCache: @unchecked Sendable {
     /// the cost limit kicks in before the count limit and bounds memory.
     private let cache: NSCache<NSString, CachedIdentificationBox>
 
+    /// Internal init exposed for tests; production paths should use `.shared`.
     init(countLimit: Int = 30, totalCostLimit: Int = 1 * 1024 * 1024) {
         let c = NSCache<NSString, CachedIdentificationBox>()
         c.countLimit = countLimit

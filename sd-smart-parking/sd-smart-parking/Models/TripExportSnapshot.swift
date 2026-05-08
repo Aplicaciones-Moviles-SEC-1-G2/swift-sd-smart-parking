@@ -2,16 +2,18 @@
 //  TripExportSnapshot.swift
 //  sd-smart-parking
 //
-//  Plain value type the TripPlannerViewModel uses to hand off trip data to
-//  the SwiftUI layer without ever touching the SwiftData @Model class.
-//  Keeps the @Model entity isolated to MainActor (the view), avoiding data
-//  races that would arise if the non-MainActor VM constructed a SavedTripPlan
-//  and passed it across actor boundaries.
+//  DTO seam between TripPlannerViewModel and the SwiftUI layer that owns the
+//  SwiftData @Model (SavedTripPlan). Keeps SwiftData types — which are
+//  MainActor-bound by virtue of `@Model` — out of the VM surface. This is an
+//  architectural boundary, NOT a fix for actor crossing: the VM is itself
+//  MainActor-isolated under SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor. The
+//  seam exists so the VM stays oblivious to the persistence layer and tests
+//  can exercise export logic without standing up a ModelContainer.
 //
 
 import Foundation
 
-struct TripExportSnapshot {
+struct TripExportSnapshot: Sendable {
     let arrivalDate: Date
     let leaveDate: Date
     let parkingName: String

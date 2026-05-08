@@ -26,6 +26,8 @@ struct OfflineNoticeBadge: View {
         .background(Color.blue.opacity(0.12))
         .foregroundColor(.blue)
         .clipShape(Capsule())
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Offline. \(message)")
     }
 }
 

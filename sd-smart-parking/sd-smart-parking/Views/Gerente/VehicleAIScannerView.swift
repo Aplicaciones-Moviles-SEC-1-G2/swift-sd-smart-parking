@@ -68,6 +68,10 @@ struct VehicleAIScannerSheet: View {
                             model: "unknown"
                         )
                         onUseResult(identification)
+                        // Symmetric cleanup before dismiss — keeps the
+                        // showPlateOCRFallback state from reactivating if
+                        // the parent re-presents this sheet later.
+                        showPlateOCRFallback = false
                         dismiss()
                     }
                 }
@@ -192,6 +196,10 @@ struct VehicleAIScannerSheet: View {
 
     private func errorView(_ message: String) -> some View {
         VStack(spacing: 12) {
+            if !networkMonitor.isConnected {
+                OfflineNoticeBadge(message: "Sin conexión — usa el OCR local")
+            }
+
             Image(systemName: "exclamationmark.triangle.fill")
                 .font(.system(size: 40))
                 .foregroundColor(.red)
@@ -199,12 +207,23 @@ struct VehicleAIScannerSheet: View {
                 .font(.subheadline)
                 .foregroundColor(.red)
                 .multilineTextAlignment(.center)
-            Button("Try Again") {
-                capturedImage = nil
-                vm.reset()
-                showPicker = true
+
+            HStack(spacing: 12) {
+                Button("Try Again") {
+                    capturedImage = nil
+                    vm.reset()
+                    showPicker = true
+                }
+                .buttonStyle(.bordered)
+
+                if !networkMonitor.isConnected {
+                    Button("Use local OCR") {
+                        showPlateOCRFallback = true
+                    }
+                    .buttonStyle(.borderedProminent)
+                }
             }
-            .buttonStyle(.borderedProminent)
+            .controlSize(.large)
         }
         .padding(.vertical, 20)
     }

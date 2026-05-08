@@ -16,7 +16,12 @@ struct ProfileView: View {
     @EnvironmentObject var userRepo: UserRepository
     //let user: User
     @State private var now = Date()
-        
+
+    /// Diego — observe the shared ScanStats so the "Top scanned brands"
+    /// section updates in-place when a new AI scan increments a counter,
+    /// instead of waiting for the next view-lifecycle bounce.
+    @StateObject private var scanStats = ScanStats.shared
+
     let timer = Timer.publish(every: 60, on: .main, in: .common).autoconnect()
     
     var body: some View {
@@ -92,7 +97,7 @@ struct ProfileView: View {
                 // KeyValueStore-backed ScanStats; non-destructive section
                 // appended without touching surrounding teammate code.
                 if authVM.isGerente {
-                    let top = ScanStats.shared.topBrands(3)
+                    let top = scanStats.topBrands(3)
                     if !top.isEmpty {
                         Section("Top scanned brands") {
                             ForEach(top, id: \.brand) { entry in
