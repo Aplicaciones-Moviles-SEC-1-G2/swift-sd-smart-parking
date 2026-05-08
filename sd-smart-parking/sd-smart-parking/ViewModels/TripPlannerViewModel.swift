@@ -121,6 +121,12 @@ class TripPlannerViewModel: ObservableObject {
     // MARK: - Calendar Export
 
     func exportTrip(parkingName: String, closingHour: Int) async {
+        // Reset the one-shot event flag so `.onChange(of: tripVM.didExport)` in
+        // TripPlannerSheetView fires on every successful export. Without this,
+        // a second consecutive Add-to-Calendar tap would not insert another
+        // SavedTripPlan because `.onChange(of:)` only fires on transitions.
+        await MainActor.run { didExport = false }
+
         let status = store.authorizationStatus(for: .event)
 
         switch status {

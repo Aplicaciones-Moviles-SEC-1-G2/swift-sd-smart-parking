@@ -86,8 +86,9 @@ struct LoginView: View {
                     .background(email.isEmpty || password.count < 4 ? Color.gray : Color.blue)
                     .foregroundColor(.white)
                     .cornerRadius(15)
+                    .opacity(networkMonitor.isConnected ? 1.0 : 0.45)
                 }
-                .disabled(authVM.isLoading || email.isEmpty || password.count < 4)
+                .disabled(!networkMonitor.isConnected || authVM.isLoading || email.isEmpty || password.count < 4)
                 .padding(.horizontal, 24)
 
                 // MARK: - Divider
@@ -121,8 +122,10 @@ struct LoginView: View {
                             .stroke(Color.gray.opacity(0.2), lineWidth: 1)
                     )
                     .shadow(color: Color.black.opacity(0.05), radius: 3, x: 0, y: 2)
+                    .opacity(networkMonitor.isConnected ? 1.0 : 0.45)
                 }
                 .contentShape(Rectangle())
+                .disabled(!networkMonitor.isConnected || authVM.isLoading)
                 .padding(.horizontal, 24)
 
                 // MARK: - Microsoft Button
@@ -161,7 +164,7 @@ struct LoginView: View {
                 .padding(.horizontal, 24)
 
                 if !networkMonitor.isConnected {
-                    Text("Sin conexión — usa Face ID si tienes sesión guardada")
+                    Text("Sin conexión — los métodos online están deshabilitados. Usa Face ID si tienes sesión guardada.")
                         .font(.caption)
                         .foregroundColor(.secondary)
                         .padding(.horizontal, 24)

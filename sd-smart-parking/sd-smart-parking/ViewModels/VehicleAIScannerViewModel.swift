@@ -22,8 +22,24 @@ class VehicleAIScannerViewModel: ObservableObject {
     @Published var state: ScanState = .idle
 
     private let model: GenerativeModel
+    private let cache: AIScanCache
+    private let history: ScanHistoryStore
+    private let stats: ScanStats
 
-    init() {
+    /// Dependencies default to the shared singletons in production. Tests
+    /// inject fresh instances to keep the cache HIT path deterministic.
+    /// Optional + nil-coalesce keeps the default parameter expression out of
+    /// a nonisolated synthesized context (the @MainActor `ScanStats.shared`
+    /// would otherwise warn under stricter concurrency).
+    init(
+        cache: AIScanCache? = nil,
+        history: ScanHistoryStore? = nil,
+        stats: ScanStats? = nil
+    ) {
+        self.cache = cache ?? .shared
+        self.history = history ?? .shared
+        self.stats = stats ?? .shared
+
         let safetySettings = [
             SafetySetting(harmCategory: .harassment, threshold: .blockNone),
             SafetySetting(harmCategory: .dangerousContent, threshold: .blockNone)
@@ -50,8 +66,12 @@ class VehicleAIScannerViewModel: ObservableObject {
         // Cache lookup — saves a Gemini round-trip when the operator re-scans
         // the exact same vehicle photo (same JPEG bytes -> same SHA256 key).
         let cacheKey = preparedJPEG.map { AIScanCache.key(forJPEGData: $0) }
-        if let key = cacheKey, let cached = AIScanCache.shared.get(key) {
+        if let key = cacheKey, let cached = cache.get(key) {
             state = .success(cached)
+            // History + stats must run on HIT too, otherwise re-scanning the
+            // same vehicle drops the entry from local history and skews the
+            // top-brands counter.
+            recordSuccess(cached, hashHex: key as String)
             return
         }
 
@@ -67,19 +87,11 @@ class VehicleAIScannerViewModel: ObservableObject {
 
                 // Cache write — only if we have a stable key and JPEG bytes.
                 if let key = cacheKey, let data = preparedJPEG {
-                    AIScanCache.shared.put(identification, for: key, cost: data.count)
+                    cache.put(identification, for: key, cost: data.count)
                 }
 
-                // Append to local scan history (Codable + FileManager). Best-effort
-                // write — failures don't surface to the user. Reuses the same
-                // SHA256 hex string the cache key already derived from the bytes.
                 let hashHex = (cacheKey as String?) ?? ""
-                ScanHistoryStore.shared.append(
-                    ScanHistoryEntry(identification: identification, imageHashHex: hashHex)
-                )
-
-                // Update brand stats (KeyValueStore). Ignored for "unknown".
-                ScanStats.shared.increment(brand: identification.brand)
+                recordSuccess(identification, hashHex: hashHex)
             } catch let decodingError as VehicleAIScannerError {
                 self.state = .failure(decodingError.message)
             } catch {
@@ -90,6 +102,18 @@ class VehicleAIScannerViewModel: ObservableObject {
 
     func reset() {
         state = .idle
+    }
+
+    // MARK: - Private
+
+    /// Persists a successful identification into local history (Codable+FileManager)
+    /// and brand stats (KeyValueStore). Reused by BOTH cache HIT and Gemini MISS
+    /// branches so re-scans keep both stores in sync.
+    private func recordSuccess(_ identification: VehicleIdentification, hashHex: String) {
+        history.append(
+            ScanHistoryEntry(identification: identification, imageHashHex: hashHex)
+        )
+        stats.increment(brand: identification.brand)
     }
 
     // MARK: - Helpers
