@@ -60,6 +60,10 @@ class VehicleAIScannerViewModel: ObservableObject {
 
     func analyze(image: UIImage) {
         state = .analyzing
+        // TODO: move `resized` + `jpegData` to `Task.detached` so the camera
+        // sheet doesn't pay the resize cost on MainActor. Skipped here because
+        // the synchronous HIT branch is what the unit tests assert; deferring
+        // until that test surface is rebuilt around an `await` analyze.
         let prepared = Self.resized(image, maxSide: 1280)
         let preparedJPEG = prepared.jpegData(compressionQuality: 0.7)
 
