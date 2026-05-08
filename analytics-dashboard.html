@@ -134,6 +134,18 @@
   .tag-entry { background: #dbeafe; color: #1d4ed8; padding: 1px 7px; border-radius: 10px; font-size: 0.7rem; font-weight: 600; }
   .tag-exit  { background: #fee2e2; color: #b91c1c; padding: 1px 7px; border-radius: 10px; font-size: 0.7rem; font-weight: 600; }
 
+  /* BQ-COST (Mateo — BQ5 & BQ6) */
+  .bq-cost { background: white; border-radius: 10px; padding: 20px; box-shadow: 0 1px 4px rgba(0,0,0,.08); margin-bottom: 20px; border-top: 4px solid #10b981; }
+  .bq-cost-header { display: flex; align-items: center; gap: 12px; margin-bottom: 6px; }
+  .bq-cost-badge { background: #10b981; color: white; font-size: 0.7rem; font-weight: 700; padding: 3px 8px; border-radius: 4px; }
+  .bq-cost-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px,1fr)); gap: 10px; margin-bottom: 16px; }
+  .bq-cost-kpi { background: #f8f9fa; border-radius: 8px; padding: 10px 12px; }
+  .bq-cost-kpi .label { font-size: 0.68rem; text-transform: uppercase; color: #888; letter-spacing:.4px; margin-bottom: 4px; }
+  .bq-cost-kpi .value { font-size: 1.1rem; font-weight: 700; color: #1a1a2e; }
+  .bq-cost-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  @media(max-width:700px) { .bq-cost-cols { grid-template-columns: 1fr; } }
+  .cost-divider { border: none; border-top: 1px solid #f0f2f5; margin: 18px 0; }
+
   /* BQ-RELIABILITY */
   .bq-rel { background: white; border-radius: 10px; padding: 20px; box-shadow: 0 1px 4px rgba(0,0,0,.08); margin-bottom: 20px; border-top: 4px solid #ef4444; }
   .bq-rel-header { display: flex; align-items: center; gap: 12px; margin-bottom: 6px; }
@@ -149,6 +161,16 @@
   .review-bar-bg { flex: 1; background: #f0f2f5; border-radius: 4px; height: 13px; overflow: hidden; }
   .review-bar { height: 100%; border-radius: 4px; transition: width .4s; }
   .review-val { width: 45px; text-align: right; font-size: 0.75rem; font-weight: 700; color: #444; flex-shrink: 0; }
+  .author-badge { font-size: 0.65rem; font-weight: 700; padding: 2px 8px; border-radius: 10px; margin-left: 4px; vertical-align: middle; }
+  .author-juanes { background: #dbeafe; color: #1d4ed8; }
+  .author-mateo  { background: #fce7f3; color: #9d174d; }
+  .header-link { padding: 6px 14px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.35); background: rgba(255,255,255,0.1); color: white; font-size: 0.8rem; font-weight: 600; text-decoration: none; cursor: pointer; white-space: nowrap; }
+  .header-link:hover { background: rgba(255,255,255,0.2); }
+  details.collapsible { margin-bottom: 14px; }
+  details.collapsible > summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: 10px; }
+  details.collapsible > summary::-webkit-details-marker { display: none; }
+  details.collapsible > summary::after { content: '▾'; margin-left: auto; font-size: 0.85rem; color: #aaa; transition: transform 0.2s; flex-shrink: 0; }
+  details.collapsible:not([open]) > summary::after { transform: rotate(-90deg); }
 </style>
 </head>
 <body>
@@ -163,6 +185,8 @@
     </select>
     <input type="date" id="datePicker">
     <button onclick="load()">Apply</button>
+    <a class="header-link" href="https://htmlpreview.github.io/?https://github.com/Aplicaciones-Moviles-SEC-1-G2/swift-sd-smart-parking/blob/develop/analytics-dashboard.html" target="_blank">🔗 Live Preview</a>
+    <a class="header-link" href="https://github.com/Aplicaciones-Moviles-SEC-1-G2/swift-sd-smart-parking/blob/develop/analytics-dashboard.html" target="_blank">GitHub</a>
   </div>
 </header>
 
@@ -170,6 +194,11 @@
   <div id="status">Loading data…</div>
 
   <div id="content" style="display:none">
+    <details class="collapsible" open>
+      <summary style="background:white;border-radius:10px;padding:12px 16px;box-shadow:0 1px 4px rgba(0,0,0,.08);margin-bottom:14px;font-size:0.85rem;font-weight:600;color:#444;">
+        📊 Live Overview — KPIs &amp; Charts
+        <span class="author-badge author-juanes">Juanes</span>
+      </summary>
     <div class="kpis">
       <div class="kpi blue"><div class="label">Total Spots (Actual)</div><div class="value" id="kTotalSpots">—</div><div class="sub" id="kConfigSub">from Firestore</div></div>
       <div class="kpi green"><div class="label">Available Now</div><div class="value" id="kAvail">—</div><div class="sub" id="kAvailPct">—</div></div>
@@ -181,36 +210,45 @@
 
     <div class="charts">
       <div class="card full">
-        <h3 id="activityLabel">Entry / Exit Activity</h3>
+        <h3 id="activityLabel">Entry / Exit Activity <span class="author-badge author-juanes">Juanes</span></h3>
         <canvas id="activityChart" height="80"></canvas>
       </div>
       <div class="card">
-        <h3>Hourly Peak (7–11 AM) — BQ-4</h3>
+        <h3>Hourly Peak (7–11 AM) — BQ-4 <span class="author-badge author-juanes">Juanes</span></h3>
         <canvas id="peakChart" height="160"></canvas>
       </div>
       <div class="card">
-        <h3>Live Floor Occupancy — BQ-3</h3>
+        <h3>Live Floor Occupancy — BQ-3 <span class="author-badge author-juanes">Juanes</span></h3>
         <div id="floorBars"></div>
       </div>
     </div>
+    </details>
 
     <!-- AI Insights -->
-    <div class="insights">
-      <div class="insights-header">
+    <details class="insights collapsible" open>
+      <summary class="insights-header">
         <span class="insights-badge">AI Insights</span>
+        <span class="author-badge author-juanes">Juanes</span>
         <span class="insights-title">Automated analysis based on current Firestore data</span>
-      </div>
+      </summary>
       <div class="insights-grid" id="insightsGrid"></div>
-    </div>
+    </details>
 
-    <div class="bq-grid" id="bqGrid"></div>
+    <details class="collapsible" open>
+      <summary style="background:white;border-radius:10px;padding:12px 16px;box-shadow:0 1px 4px rgba(0,0,0,.08);margin-bottom:6px;display:flex;align-items:center;gap:8px;">
+        <span style="font-size:0.72rem;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.5px;">Quick BQ Answers</span>
+        <span class="author-badge author-juanes">Juanes</span>
+      </summary>
+      <div class="bq-grid" id="bqGrid"></div>
+    </details>
 
     <!-- BQ-ORG: Organization Clients -->
-    <div class="org-section">
-      <div class="org-header">
+    <details class="org-section collapsible" open>
+      <summary class="org-header">
         <span class="org-badge">BQ-ORG</span>
+        <span class="author-badge author-juanes">Juanes</span>
         <h2 style="font-size:.95rem;color:#1a1a2e;font-weight:600">Organization Clients — Which organizations generate the most parking demand?</h2>
-      </div>
+      </summary>
       <p style="font-size:.82rem;color:#555;margin:0 0 14px;line-height:1.6;">
         SD Smart Parking is a facility for <strong>Universidad de los Andes students and professors</strong>
         (<code>@uniandes.edu.co</code>). Any user with a different email domain is considered a
@@ -235,14 +273,15 @@
           <canvas id="orgChart" height="200"></canvas>
         </div>
       </div>
-    </div>
+    </details>
 
     <!-- BQ-HOUR: Peak Demand Hours -->
-    <div class="bq-hour">
-      <div class="bq-hour-header">
+    <details class="bq-hour collapsible" open>
+      <summary class="bq-hour-header">
         <span class="bq-hour-badge">BQ-HOUR</span>
+        <span class="author-badge author-juanes">Juanes</span>
         <h2 style="font-size:.95rem;color:#1a1a2e;font-weight:600">Peak Demand Hours — At what hours of the day is parking demand highest?</h2>
-      </div>
+      </summary>
       <p style="font-size:.82rem;color:#555;margin:0 0 14px;line-height:1.6;">
         Understanding when demand peaks lets us know when the <strong>NSCache pre-warm</strong> (loaded on app launch via <code>withTaskGroup</code>) is most valuable — the app must have fresh spot data ready <em>before</em> the rush, not during it.
       </p>
@@ -257,14 +296,15 @@
           <canvas id="hourExitChart" height="200"></canvas>
         </div>
       </div>
-    </div>
+    </details>
 
     <!-- BQ-FLOOR: Floor Demand & Dwell Time -->
-    <div class="bq-floor">
-      <div class="bq-floor-header">
+    <details class="bq-floor collapsible" open>
+      <summary class="bq-floor-header">
         <span class="bq-floor-badge">BQ-FLOOR</span>
+        <span class="author-badge author-juanes">Juanes</span>
         <h2 style="font-size:.95rem;color:#1a1a2e;font-weight:600">Floor Demand — Which floor concentrates the most parking events and longest average stay?</h2>
-      </div>
+      </summary>
       <p style="font-size:.82rem;color:#555;margin:0 0 14px;line-height:1.6;">
         <code>SpotCacheManager</code> stores spots keyed by floor. Knowing which floor is busiest justifies keeping that floor's cache entry in memory longest — and informs which floor the <strong>eventual connectivity</strong> offline banner matters most for.
       </p>
@@ -279,14 +319,58 @@
           <div id="floorDurBars"></div>
         </div>
       </div>
-    </div>
+    </details>
+
+    <!-- BQ-COST: Mateo BQ5 & BQ6 — Cost Cap & Average Payment -->
+    <details class="bq-cost collapsible" open>
+      <summary class="bq-cost-header">
+        <span class="bq-cost-badge">BQ-5 &amp; BQ-6</span>
+        <span class="author-badge author-mateo">Mateo</span>
+        <h2 style="font-size:.95rem;color:#1a1a2e;font-weight:600">Cost Analytics — Cap reach rate &amp; average payment per car</h2>
+      </summary>
+      <p style="font-size:.82rem;color:#555;margin:0 0 14px;line-height:1.6;">
+        Derived from <code>vehicleRecords</code> in Firestore. The daily cap is <strong>COP $16,000</strong> (hourly rate × hours, capped).
+        <code>hitDailyCap</code> is written directly on each exit record by the iOS app.
+      </p>
+
+      <!-- BQ5 KPIs -->
+      <div class="section-title">BQ-5 — What share of cars in the SD Building reach the daily cost cap?</div>
+      <div class="bq-cost-kpis" id="costCapKpis"></div>
+      <div class="bq-cost-cols" style="margin-bottom:0">
+        <div>
+          <div class="section-title">Cap reached vs. below cap</div>
+          <canvas id="capDonut" height="220"></canvas>
+        </div>
+        <div>
+          <div class="section-title">Cap-reach breakdown by registration status</div>
+          <canvas id="capRegBar" height="220"></canvas>
+        </div>
+      </div>
+
+      <hr class="cost-divider">
+
+      <!-- BQ6 KPIs -->
+      <div class="section-title">BQ-6 — What is the average total payment per car?</div>
+      <div class="bq-cost-kpis" id="avgPayKpis"></div>
+      <div class="bq-cost-cols">
+        <div>
+          <div class="section-title">Payment distribution across unique cars (COP)</div>
+          <canvas id="payDistChart" height="220"></canvas>
+        </div>
+        <div>
+          <div class="section-title">Avg payment — registered vs unregistered cars</div>
+          <canvas id="payRegChart" height="220"></canvas>
+        </div>
+      </div>
+    </details>
 
     <!-- BQ-RELIABILITY: OCR & Data Reliability -->
-    <div class="bq-rel">
-      <div class="bq-rel-header">
+    <details class="bq-rel collapsible" open>
+      <summary class="bq-rel-header">
         <span class="bq-rel-badge">BQ-RELIABILITY</span>
+        <span class="author-badge author-juanes">Juanes</span>
         <h2 style="font-size:.95rem;color:#1a1a2e;font-weight:600">System Reliability — What percentage of plate readings require admin review due to low OCR confidence?</h2>
-      </div>
+      </summary>
       <p style="font-size:.82rem;color:#555;margin:0 0 14px;line-height:1.6;">
         Every parking record stores an <code>ocrConfidence</code> score (0–1). Readings below <strong>0.75</strong> are flagged for manual admin review.
         Thanks to <strong>eventual connectivity</strong>, entries captured offline in the basement (no signal) are still saved with their OCR score and synced back to Firestore automatically —
@@ -303,14 +387,15 @@
           <div id="relFloorBars"></div>
         </div>
       </div>
-    </div>
+    </details>
 
     <!-- BQ-13 dedicated accuracy section -->
-    <div class="bq13">
-      <div class="bq13-header">
+    <details class="bq13 collapsible" open>
+      <summary class="bq13-header">
         <span class="bq13-badge">BQ-13</span>
+        <span class="author-badge author-juanes">Juanes</span>
         <h2>Real-Time Accuracy Validation — Are spot counts and queue estimates accurate?</h2>
-      </div>
+      </summary>
       <div class="bq13-cols">
 
         <div class="gauge-wrap">
@@ -342,7 +427,7 @@
           <tbody id="recentRows"></tbody>
         </table>
       </div>
-    </div>
+    </details>
 
   </div>
 </main>
@@ -1007,6 +1092,162 @@ async function load() {
         <div class="floor-dur-val">${avg ? avg + ' hrs' : 'No data'}</div>
       </div>`;
     }).join('') || '<p style="color:#888;font-size:.8rem">No duration data available</p>';
+
+    // ── BQ-COST: Mateo BQ5 & BQ6 ────────────────────────────────────────────
+    const HOURLY_RATE = 2000;
+    const DAILY_CAP   = 16000;
+    const calcFee = hours => Math.min(hours * HOURLY_RATE, DAILY_CAP);
+
+    // BQ5 — cap reach rate
+    const costExits     = records.filter(r => r.type === 'exit');
+    const allCapPlates  = new Set(costExits.map(r => r.plate).filter(Boolean));
+    const hitCapPlates  = new Set(costExits.filter(r => r.hitDailyCap).map(r => r.plate).filter(Boolean));
+    const capTotal      = allCapPlates.size;
+    const capHit        = hitCapPlates.size;
+    const capBelow      = capTotal - capHit;
+    const capPct        = capTotal > 0 ? Math.round((capHit / capTotal) * 100) : 0;
+
+    // BQ6 — average payment per car
+    const exitsByPlate  = {};
+    costExits.forEach(r => {
+      if (!r.plate) return;
+      if (!exitsByPlate[r.plate]) exitsByPlate[r.plate] = { records: [], isRegistered: r.isRegistered };
+      exitsByPlate[r.plate].records.push(r);
+    });
+    const perCarData = Object.values(exitsByPlate).map(car => ({
+      total:        car.records.filter(r => r.durationHours > 0).reduce((s,r) => s + calcFee(r.durationHours), 0),
+      isRegistered: car.isRegistered
+    }));
+    const totalCars    = perCarData.length;
+    const avgPayment   = totalCars > 0 ? perCarData.reduce((s,c) => s + c.total, 0) / totalCars : 0;
+    const maxPayment   = totalCars > 0 ? Math.max(...perCarData.map(c => c.total)) : 0;
+    const medianPayment = (() => {
+      if (!totalCars) return 0;
+      const sorted = [...perCarData].sort((a,b) => a.total - b.total);
+      const mid = Math.floor(sorted.length / 2);
+      return sorted.length % 2 ? sorted[mid].total : (sorted[mid-1].total + sorted[mid].total) / 2;
+    })();
+
+    const regCars   = perCarData.filter(c =>  c.isRegistered);
+    const unregCars = perCarData.filter(c => !c.isRegistered);
+    const avgReg    = regCars.length   ? regCars.reduce((s,c)=>s+c.total,0)/regCars.length   : 0;
+    const avgUnreg  = unregCars.length ? unregCars.reduce((s,c)=>s+c.total,0)/unregCars.length : 0;
+
+    // Payment distribution buckets
+    const payBuckets = [0,0,0,0,0]; // <4K | 4–8K | 8–12K | 12–16K | =cap
+    perCarData.forEach(c => {
+      if      (c.total >= DAILY_CAP) payBuckets[4]++;
+      else if (c.total >= 12000)     payBuckets[3]++;
+      else if (c.total >= 8000)      payBuckets[2]++;
+      else if (c.total >= 4000)      payBuckets[1]++;
+      else                           payBuckets[0]++;
+    });
+
+    const formatCOP = v => v === 0 ? '$0' : '$' + Math.round(v).toLocaleString('es-CO');
+
+    // BQ5 KPIs
+    document.getElementById('costCapKpis').innerHTML = [
+      { label: 'Unique Cars (exits)',  value: capTotal },
+      { label: 'Reached Daily Cap',    value: `${capHit} (${capPct}%)`,  color: capPct > 30 ? '#dc2626' : '#f59e0b' },
+      { label: 'Below Cap',            value: `${capBelow} (${100-capPct}%)`, color: '#15803d' },
+      { label: 'Daily Cap (COP)',       value: formatCOP(DAILY_CAP) },
+    ].map(k => `<div class="bq-cost-kpi"><div class="label">${k.label}</div><div class="value" style="color:${k.color||'#1a1a2e'}">${k.value}</div></div>`).join('');
+
+    let capDonutInst = Chart.getChart('capDonut');
+    if (capDonutInst) capDonutInst.destroy();
+    new Chart(document.getElementById('capDonut'), {
+      type: 'doughnut',
+      data: {
+        labels: ['Reached cap', 'Below cap'],
+        datasets: [{ data: [capHit, capBelow], backgroundColor: ['#f59e0b','#10b981'], borderWidth: 2 }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { position: 'bottom', labels: { font: { size: 11 } } },
+          tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${ctx.parsed} cars (${capTotal ? Math.round(ctx.parsed/capTotal*100) : 0}%)` } }
+        }
+      }
+    });
+
+    // Cap reach by registration status — unique plates only, consistent with donut & KPIs
+    const regPlatesAll   = Object.entries(exitsByPlate).filter(([,car]) =>  car.isRegistered);
+    const unregPlatesAll = Object.entries(exitsByPlate).filter(([,car]) => !car.isRegistered);
+    const regCapHit   = regPlatesAll.filter(([plate])   => hitCapPlates.has(plate)).length;
+    const unregCapHit = unregPlatesAll.filter(([plate]) => hitCapPlates.has(plate)).length;
+    const regTotal    = regPlatesAll.length   || 1;
+    const unregTotal  = unregPlatesAll.length || 1;
+
+    let capRegInst = Chart.getChart('capRegBar');
+    if (capRegInst) capRegInst.destroy();
+    new Chart(document.getElementById('capRegBar'), {
+      type: 'bar',
+      data: {
+        labels: ['Registered', 'Unregistered'],
+        datasets: [
+          { label: 'Reached cap',  data: [regCapHit, unregCapHit], backgroundColor: '#f59e0b', borderRadius: 4 },
+          { label: 'Below cap',    data: [regTotal - regCapHit, unregTotal - unregCapHit], backgroundColor: '#10b981', borderRadius: 4 }
+        ]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { position: 'bottom', labels: { font: { size: 10 } } } },
+        scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true, ticks: { stepSize: 1 } } }
+      }
+    });
+
+    // BQ6 KPIs
+    document.getElementById('avgPayKpis').innerHTML = [
+      { label: 'Avg Payment / Car',    value: formatCOP(avgPayment),    color: '#1a1a2e' },
+      { label: 'Median Payment / Car', value: formatCOP(medianPayment) },
+      { label: 'Highest Single Total', value: formatCOP(maxPayment),    color: '#dc2626' },
+      { label: 'Avg — Registered',     value: formatCOP(avgReg),        color: '#1d4ed8' },
+      { label: 'Avg — Unregistered',   value: formatCOP(avgUnreg),      color: '#7c3aed' },
+    ].map(k => `<div class="bq-cost-kpi"><div class="label">${k.label}</div><div class="value" style="color:${k.color||'#1a1a2e'}">${k.value}</div></div>`).join('');
+
+    let payDistInst = Chart.getChart('payDistChart');
+    if (payDistInst) payDistInst.destroy();
+    new Chart(document.getElementById('payDistChart'), {
+      type: 'bar',
+      data: {
+        labels: ['< $4K', '$4–8K', '$8–12K', '$12–16K', 'At cap ($16K)'],
+        datasets: [{
+          label: 'Cars',
+          data: payBuckets,
+          backgroundColor: ['#10b981','#4f8ef7','#8b5cf6','#f59e0b','#ef4444'],
+          borderRadius: 4
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { display: false },
+          tooltip: { callbacks: { label: ctx => ` ${ctx.parsed.y} car${ctx.parsed.y !== 1 ? 's' : ''}` } }
+        },
+        scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+      }
+    });
+
+    let payRegInst = Chart.getChart('payRegChart');
+    if (payRegInst) payRegInst.destroy();
+    new Chart(document.getElementById('payRegChart'), {
+      type: 'bar',
+      data: {
+        labels: ['Registered', 'Unregistered'],
+        datasets: [{
+          label: 'Avg payment (COP)',
+          data: [Math.round(avgReg), Math.round(avgUnreg)],
+          backgroundColor: ['#1d4ed8','#7c3aed'],
+          borderRadius: 4
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { display: false },
+          tooltip: { callbacks: { label: ctx => ` ${formatCOP(ctx.parsed.y)} COP avg` } }
+        },
+        scales: { y: { beginAtZero: true } }
+      }
+    });
 
     // ── BQ-RELIABILITY: OCR Confidence & Admin Review ───────────────────────
     const OCR_THRESHOLD = 0.75;
