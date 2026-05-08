@@ -13,6 +13,10 @@ struct LoginView: View {
     @EnvironmentObject private var networkMonitor: NetworkMonitor
     @State private var email = ""
     @State private var password = ""
+    /// Cached snapshot of `MicrosoftKeychain.lastEmail()` so we don't pay an
+    /// XPC round-trip to `securityd` on every body recompose. Refreshed on
+    /// appear and after any auth attempt completes.
+    @State private var lastMicrosoftEmail: String?
     private var biometricIcon: String {
         authVM.biometricType == .touchID ? "touchid" : "faceid"
     }
@@ -129,7 +133,7 @@ struct LoginView: View {
                 .padding(.horizontal, 24)
 
                 // MARK: - Microsoft Button
-                if let lastEmail = MicrosoftKeychain.lastEmail() {
+                if let lastEmail = lastMicrosoftEmail {
                     Text("Last Microsoft user: \(lastEmail)")
                         .font(.caption)
                         .foregroundColor(.secondary)
@@ -236,6 +240,10 @@ struct LoginView: View {
             .padding(.top, 40)
             }
             .navigationBarHidden(true)
+        }
+        .onAppear { lastMicrosoftEmail = MicrosoftKeychain.lastEmail() }
+        .onChange(of: authVM.isLoading) { _, isLoading in
+            if !isLoading { lastMicrosoftEmail = MicrosoftKeychain.lastEmail() }
         }
     }
 }
