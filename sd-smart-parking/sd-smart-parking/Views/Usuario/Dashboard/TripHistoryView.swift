@@ -85,7 +85,13 @@ struct TripHistoryView: View {
         for index in offsets {
             modelContext.delete(trips[index])
         }
-        try? modelContext.save()
+        do {
+            try modelContext.save()
+        } catch {
+            // TODO: surface to UI via a banner; for now keep the failure
+            // visible in the console rather than swallowing.
+            print("SwiftData save failed (TripHistoryView): \(error)")
+        }
     }
 }
 

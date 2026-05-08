@@ -38,6 +38,14 @@ struct TripPlannerSheetView: View {
     var body: some View {
         NavigationStack {
             Form {
+                if !networkMonitor.isConnected {
+                    Section {
+                        OfflineNoticeBadge(
+                            message: "Sin conexión — el costo y exportar al calendario siguen funcionando"
+                        )
+                    }
+                }
+
                 Section("Entry") {
                     DatePicker(
                         "Arrival",
@@ -79,12 +87,6 @@ struct TripPlannerSheetView: View {
                         Text(displayedCost.value)
                             .font(.title2.bold())
                             .foregroundColor(.blue)
-                    }
-
-                    if !networkMonitor.isConnected {
-                        OfflineNoticeBadge(
-                            message: "Sin conexión — el costo y exportar a Calendar siguen funcionando"
-                        )
                     }
 
                     if tripVM.isPeak {
@@ -147,7 +149,13 @@ struct TripPlannerSheetView: View {
                     wasExportedToCalendar: true
                 )
                 modelContext.insert(saved)
-                try? modelContext.save()
+                do {
+                    try modelContext.save()
+                } catch {
+                    // TODO: surface to UI via a banner; for now keep the
+                    // failure visible in the console rather than swallowing.
+                    print("SwiftData save failed (TripPlannerSheetView): \(error)")
+                }
             }
             .sheet(isPresented: $showHistory) {
                 TripHistoryView()
