@@ -166,6 +166,11 @@
   .author-mateo  { background: #fce7f3; color: #9d174d; }
   .header-link { padding: 6px 14px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.35); background: rgba(255,255,255,0.1); color: white; font-size: 0.8rem; font-weight: 600; text-decoration: none; cursor: pointer; white-space: nowrap; }
   .header-link:hover { background: rgba(255,255,255,0.2); }
+  details.collapsible { margin-bottom: 14px; }
+  details.collapsible > summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: 10px; }
+  details.collapsible > summary::-webkit-details-marker { display: none; }
+  details.collapsible > summary::after { content: '▾'; margin-left: auto; font-size: 0.85rem; color: #aaa; transition: transform 0.2s; flex-shrink: 0; }
+  details.collapsible:not([open]) > summary::after { transform: rotate(-90deg); }
 </style>
 </head>
 <body>
@@ -189,6 +194,11 @@
   <div id="status">Loading data…</div>
 
   <div id="content" style="display:none">
+    <details class="collapsible" open>
+      <summary style="background:white;border-radius:10px;padding:12px 16px;box-shadow:0 1px 4px rgba(0,0,0,.08);margin-bottom:14px;font-size:0.85rem;font-weight:600;color:#444;">
+        📊 Live Overview — KPIs &amp; Charts
+        <span class="author-badge author-juanes">Juanes</span>
+      </summary>
     <div class="kpis">
       <div class="kpi blue"><div class="label">Total Spots (Actual)</div><div class="value" id="kTotalSpots">—</div><div class="sub" id="kConfigSub">from Firestore</div></div>
       <div class="kpi green"><div class="label">Available Now</div><div class="value" id="kAvail">—</div><div class="sub" id="kAvailPct">—</div></div>
@@ -200,37 +210,45 @@
 
     <div class="charts">
       <div class="card full">
-        <h3 id="activityLabel">Entry / Exit Activity</h3>
+        <h3 id="activityLabel">Entry / Exit Activity <span class="author-badge author-juanes">Juanes</span></h3>
         <canvas id="activityChart" height="80"></canvas>
       </div>
       <div class="card">
-        <h3>Hourly Peak (7–11 AM) — BQ-4</h3>
+        <h3>Hourly Peak (7–11 AM) — BQ-4 <span class="author-badge author-juanes">Juanes</span></h3>
         <canvas id="peakChart" height="160"></canvas>
       </div>
       <div class="card">
-        <h3>Live Floor Occupancy — BQ-3</h3>
+        <h3>Live Floor Occupancy — BQ-3 <span class="author-badge author-juanes">Juanes</span></h3>
         <div id="floorBars"></div>
       </div>
     </div>
+    </details>
 
     <!-- AI Insights -->
-    <div class="insights">
-      <div class="insights-header">
+    <details class="insights collapsible" open>
+      <summary class="insights-header">
         <span class="insights-badge">AI Insights</span>
+        <span class="author-badge author-juanes">Juanes</span>
         <span class="insights-title">Automated analysis based on current Firestore data</span>
-      </div>
+      </summary>
       <div class="insights-grid" id="insightsGrid"></div>
-    </div>
+    </details>
 
-    <div class="bq-grid" id="bqGrid"></div>
+    <details class="collapsible" open>
+      <summary style="background:white;border-radius:10px;padding:12px 16px;box-shadow:0 1px 4px rgba(0,0,0,.08);margin-bottom:6px;display:flex;align-items:center;gap:8px;">
+        <span style="font-size:0.72rem;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.5px;">Quick BQ Answers</span>
+        <span class="author-badge author-juanes">Juanes</span>
+      </summary>
+      <div class="bq-grid" id="bqGrid"></div>
+    </details>
 
     <!-- BQ-ORG: Organization Clients -->
-    <div class="org-section">
-      <div class="org-header">
+    <details class="org-section collapsible" open>
+      <summary class="org-header">
         <span class="org-badge">BQ-ORG</span>
         <span class="author-badge author-juanes">Juanes</span>
         <h2 style="font-size:.95rem;color:#1a1a2e;font-weight:600">Organization Clients — Which organizations generate the most parking demand?</h2>
-      </div>
+      </summary>
       <p style="font-size:.82rem;color:#555;margin:0 0 14px;line-height:1.6;">
         SD Smart Parking is a facility for <strong>Universidad de los Andes students and professors</strong>
         (<code>@uniandes.edu.co</code>). Any user with a different email domain is considered a
@@ -255,15 +273,15 @@
           <canvas id="orgChart" height="200"></canvas>
         </div>
       </div>
-    </div>
+    </details>
 
     <!-- BQ-HOUR: Peak Demand Hours -->
-    <div class="bq-hour">
-      <div class="bq-hour-header">
+    <details class="bq-hour collapsible" open>
+      <summary class="bq-hour-header">
         <span class="bq-hour-badge">BQ-HOUR</span>
         <span class="author-badge author-juanes">Juanes</span>
         <h2 style="font-size:.95rem;color:#1a1a2e;font-weight:600">Peak Demand Hours — At what hours of the day is parking demand highest?</h2>
-      </div>
+      </summary>
       <p style="font-size:.82rem;color:#555;margin:0 0 14px;line-height:1.6;">
         Understanding when demand peaks lets us know when the <strong>NSCache pre-warm</strong> (loaded on app launch via <code>withTaskGroup</code>) is most valuable — the app must have fresh spot data ready <em>before</em> the rush, not during it.
       </p>
@@ -278,15 +296,15 @@
           <canvas id="hourExitChart" height="200"></canvas>
         </div>
       </div>
-    </div>
+    </details>
 
     <!-- BQ-FLOOR: Floor Demand & Dwell Time -->
-    <div class="bq-floor">
-      <div class="bq-floor-header">
+    <details class="bq-floor collapsible" open>
+      <summary class="bq-floor-header">
         <span class="bq-floor-badge">BQ-FLOOR</span>
         <span class="author-badge author-juanes">Juanes</span>
         <h2 style="font-size:.95rem;color:#1a1a2e;font-weight:600">Floor Demand — Which floor concentrates the most parking events and longest average stay?</h2>
-      </div>
+      </summary>
       <p style="font-size:.82rem;color:#555;margin:0 0 14px;line-height:1.6;">
         <code>SpotCacheManager</code> stores spots keyed by floor. Knowing which floor is busiest justifies keeping that floor's cache entry in memory longest — and informs which floor the <strong>eventual connectivity</strong> offline banner matters most for.
       </p>
@@ -301,15 +319,15 @@
           <div id="floorDurBars"></div>
         </div>
       </div>
-    </div>
+    </details>
 
     <!-- BQ-COST: Mateo BQ5 & BQ6 — Cost Cap & Average Payment -->
-    <div class="bq-cost">
-      <div class="bq-cost-header">
+    <details class="bq-cost collapsible" open>
+      <summary class="bq-cost-header">
         <span class="bq-cost-badge">BQ-5 &amp; BQ-6</span>
         <span class="author-badge author-mateo">Mateo</span>
         <h2 style="font-size:.95rem;color:#1a1a2e;font-weight:600">Cost Analytics — Cap reach rate &amp; average payment per car</h2>
-      </div>
+      </summary>
       <p style="font-size:.82rem;color:#555;margin:0 0 14px;line-height:1.6;">
         Derived from <code>vehicleRecords</code> in Firestore. The daily cap is <strong>COP $16,000</strong> (hourly rate × hours, capped).
         <code>hitDailyCap</code> is written directly on each exit record by the iOS app.
@@ -344,15 +362,15 @@
           <canvas id="payRegChart" height="220"></canvas>
         </div>
       </div>
-    </div>
+    </details>
 
     <!-- BQ-RELIABILITY: OCR & Data Reliability -->
-    <div class="bq-rel">
-      <div class="bq-rel-header">
+    <details class="bq-rel collapsible" open>
+      <summary class="bq-rel-header">
         <span class="bq-rel-badge">BQ-RELIABILITY</span>
         <span class="author-badge author-juanes">Juanes</span>
         <h2 style="font-size:.95rem;color:#1a1a2e;font-weight:600">System Reliability — What percentage of plate readings require admin review due to low OCR confidence?</h2>
-      </div>
+      </summary>
       <p style="font-size:.82rem;color:#555;margin:0 0 14px;line-height:1.6;">
         Every parking record stores an <code>ocrConfidence</code> score (0–1). Readings below <strong>0.75</strong> are flagged for manual admin review.
         Thanks to <strong>eventual connectivity</strong>, entries captured offline in the basement (no signal) are still saved with their OCR score and synced back to Firestore automatically —
@@ -369,15 +387,15 @@
           <div id="relFloorBars"></div>
         </div>
       </div>
-    </div>
+    </details>
 
     <!-- BQ-13 dedicated accuracy section -->
-    <div class="bq13">
-      <div class="bq13-header">
+    <details class="bq13 collapsible" open>
+      <summary class="bq13-header">
         <span class="bq13-badge">BQ-13</span>
         <span class="author-badge author-juanes">Juanes</span>
         <h2>Real-Time Accuracy Validation — Are spot counts and queue estimates accurate?</h2>
-      </div>
+      </summary>
       <div class="bq13-cols">
 
         <div class="gauge-wrap">
@@ -409,7 +427,7 @@
           <tbody id="recentRows"></tbody>
         </table>
       </div>
-    </div>
+    </details>
 
   </div>
 </main>
