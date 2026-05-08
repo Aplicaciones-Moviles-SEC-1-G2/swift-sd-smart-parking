@@ -98,6 +98,11 @@ class TripPlannerViewModel: ObservableObject {
     func estimatedCost() -> Double {
         let key = TripCacheKey(arrivalDate: arrivalDate, durationHours: durationHours)
         if let cached = costCache.get(key) { return cached }
+        // TODO: invalidate `costCache` when `ParkingConfig.hourlyRate` changes.
+        // Today `ParkingConfig.calculateFee` uses a literal `2000` instead of
+        // `self.hourlyRate`, which masks the stale-cache risk: if calculateFee
+        // ever instance-ifies and reads the live rate, this LRU would return
+        // stale costs across Firestore-driven rate updates.
         let cost = ParkingConfig.calculateFee(hours: durationHours, currentDayTotal: 0)
         costCache.put(cost, for: key)
         return cost
