@@ -16,7 +16,12 @@ struct ProfileView: View {
     @EnvironmentObject var userRepo: UserRepository
     //let user: User
     @State private var now = Date()
-        
+
+    /// Diego — observe the shared ScanStats so the "Top scanned brands"
+    /// section updates in-place when a new AI scan increments a counter,
+    /// instead of waiting for the next view-lifecycle bounce.
+    @StateObject private var scanStats = ScanStats.shared
+
     let timer = Timer.publish(every: 60, on: .main, in: .common).autoconnect()
     
     var body: some View {
@@ -70,17 +75,42 @@ struct ProfileView: View {
                     
                     // Link to CarsView passing the real user object
                     if let user = authVM.currentUser {
-                        NavigationLink(destination: CarsView()) {
+                        NavigationLink(destination: CarsView().onAppear {
+                            // Forzamos que el repo tenga el usuario que authVM ya encontró
+                            userRepo.currentUser = authVM.currentUser
+                        }.environmentObject(userRepo)) {
                             HStack {
                                 Label("My Cars", systemImage: "car.fill")
                                 Spacer()
-                                // Dynamic badge showing number of cars
                                 Text("\(user.cars.count())")
                                     .font(.caption)
                                     .padding(.horizontal, 8)
                                     .padding(.vertical, 2)
                                     .background(Color(.systemGray5))
                                     .clipShape(Capsule())
+                            }
+                        }
+                    }
+                }
+
+                // Diego — Top scanned brands (Gerente only). Reads from
+                // KeyValueStore-backed ScanStats; non-destructive section
+                // appended without touching surrounding teammate code.
+                if authVM.isGerente {
+                    let top = scanStats.topBrands(3)
+                    if !top.isEmpty {
+                        Section("Top scanned brands") {
+                            ForEach(top, id: \.brand) { entry in
+                                HStack {
+                                    Text(entry.brand.capitalized)
+                                    Spacer()
+                                    Text("\(entry.count)")
+                                        .font(.caption.bold())
+                                        .padding(.horizontal, 8)
+                                        .padding(.vertical, 2)
+                                        .background(Color(.systemGray5))
+                                        .clipShape(Capsule())
+                                }
                             }
                         }
                     }

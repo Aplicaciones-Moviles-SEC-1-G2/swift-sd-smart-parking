@@ -17,6 +17,11 @@ class TripPlannerViewModel: ObservableObject {
 
     private let store: CalendarEventStoring
 
+    /// Capacity = 5: a typical user explores 2-3 alternative arrival/duration
+    /// combinations before locking in a plan. 5 leaves headroom without
+    /// holding stale entries forever.
+    private let costCache = LRUCache<TripCacheKey, Double>(capacity: 5)
+
     init(store: CalendarEventStoring = EKEventStore()) {
         self.store = store
         let calendar = Calendar.current
@@ -91,12 +96,42 @@ class TripPlannerViewModel: ObservableObject {
     // MARK: - Cost
 
     func estimatedCost() -> Double {
-        ParkingConfig.calculateFee(hours: durationHours, currentDayTotal: 0)
+        let key = TripCacheKey(arrivalDate: arrivalDate, durationHours: durationHours)
+        if let cached = costCache.get(key) { return cached }
+        // TODO: invalidate `costCache` when `ParkingConfig.hourlyRate` changes.
+        // Today `ParkingConfig.calculateFee` uses a literal `2000` instead of
+        // `self.hourlyRate`, which masks the stale-cache risk: if calculateFee
+        // ever instance-ifies and reads the live rate, this LRU would return
+        // stale costs across Firestore-driven rate updates.
+        let cost = ParkingConfig.calculateFee(hours: durationHours, currentDayTotal: 0)
+        costCache.put(cost, for: key)
+        return cost
+    }
+
+    // MARK: - SwiftData Hand-off
+
+    /// Pure value snapshot the SwiftUI layer turns into a `SavedTripPlan`
+    /// (a SwiftData @Model). Keeping this VM free of SwiftData types means
+    /// the @Model never crosses out of MainActor.
+    func makeExportSnapshot(parkingName: String) -> TripExportSnapshot {
+        TripExportSnapshot(
+            arrivalDate: arrivalDate,
+            leaveDate: leaveDate,
+            parkingName: parkingName,
+            estimatedCostCOP: estimatedCost(),
+            wasExportedToCalendar: didExport
+        )
     }
 
     // MARK: - Calendar Export
 
     func exportTrip(parkingName: String, closingHour: Int) async {
+        // Reset the one-shot event flag so `.onChange(of: tripVM.didExport)` in
+        // TripPlannerSheetView fires on every successful export. Without this,
+        // a second consecutive Add-to-Calendar tap would not insert another
+        // SavedTripPlan because `.onChange(of:)` only fires on transitions.
+        await MainActor.run { didExport = false }
+
         let status = store.authorizationStatus(for: .event)
 
         switch status {

@@ -49,10 +49,15 @@ class AuthViewModel: ObservableObject {
     
     private let db = Firestore.firestore()
     private let microsoftOAuth: MicrosoftOAuthProviding
+    private let keychain: KeychainStoring
     private var authStateListener: AuthStateDidChangeListenerHandle?
-    
-    init(microsoftOAuth: MicrosoftOAuthProviding = FirebaseMicrosoftOAuth()) {
+
+    init(
+        microsoftOAuth: MicrosoftOAuthProviding = FirebaseMicrosoftOAuth(),
+        keychain: KeychainStoring = KeychainHelper.live
+    ) {
         self.microsoftOAuth = microsoftOAuth
+        self.keychain = keychain
         authStateListener = Auth.auth().addStateDidChangeListener { [weak self] _, firebaseUser in
             guard let self else { return }
             if let firebaseUser = firebaseUser {
@@ -101,7 +106,12 @@ class AuthViewModel: ObservableObject {
                 guard let plate = carData["plate"] as? String,
                       let carName = carData["name"] as? String else { continue }
                 
-                let car = Car(id: UUID(), plate: plate, UserID: UUID(uuidString: uid) ?? UUID(), name: carName)
+                let car = Car(
+                    id: UUID(),
+                    plate: plate,
+                    UserID: uid,
+                    name: carName
+                )
                 // Insertamos en el mapa usando la placa normalizada como clave
                 carsMap.put(car, for: car.normalizedPlate)
             }
@@ -194,9 +204,16 @@ class AuthViewModel: ObservableObject {
             isLoading = true
             errorMessage = nil
         }
-        
+
         do {
             try await microsoftOAuth.signIn()
+
+            // Persist a "remember last Microsoft user" hint in Keychain so
+            // we can show a "Continue as <email>" caption on next launch.
+            // Best-effort: failures don't surface to the user.
+            if let user = Auth.auth().currentUser, let email = user.email {
+                MicrosoftKeychain.saveCredentials(uid: user.uid, email: email)
+            }
         } catch {
             await MainActor.run {
                 self.errorMessage = "Microsoft Sign-In was cancelled or failed."
@@ -346,11 +363,15 @@ class AuthViewModel: ObservableObject {
             // 1. Limpiamos Firebase y Google
             try? Auth.auth().signOut()
             GIDSignIn.sharedInstance.signOut()
-            
+
             // 2. Limpiamos el caché físico y la memoria del Repo
             userRepo.clearUserData()
-            
-            // 3. Limpiamos el estado del AuthViewModel
+
+            // 3. Limpiamos las credenciales de Microsoft del Keychain — la
+            //    sesión Microsoft no debe sobrevivir a un logout explícito.
+            MicrosoftKeychain.clearCredentials(store: keychain)
+
+            // 4. Limpiamos el estado del AuthViewModel
             isLoggedIn = false
             isGerente = false
             currentUser = nil
@@ -388,8 +409,8 @@ class AuthViewModel: ObservableObject {
     func loginAsUser() {
         var mockCarsMap = ArrayMap<String, Car>()
         
-        let car1 = Car(id: UUID(), plate: "ABC-123", UserID: UUID(), name: "Mi Camioneta")
-        let car2 = Car(id: UUID(), plate: "XYZ-789", UserID: UUID(), name: "Carro de Ciudad")
+        let car1 = Car(id: UUID(), plate: "ABC-123", UserID: "PREV1", name: "Mi Camioneta")
+        let car2 = Car(id: UUID(), plate: "XYZ-789", UserID: "PREV2", name: "Carro de Ciudad")
         
         // Importante: Usar put para que se mantengan ordenados y con sus llaves
         mockCarsMap.put(car1, for: car1.normalizedPlate)

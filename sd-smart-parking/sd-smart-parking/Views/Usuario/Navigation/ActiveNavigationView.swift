@@ -7,22 +7,25 @@
 import SwiftUI
 import MapKit
 
-
 struct ActiveNavigationView: View {
     
+    // MARK: - Environment & State
     @EnvironmentObject var navigationManager: NavigationManager
     @Environment(\.dismiss) private var dismiss
-    
-    @State private var isNavigating: Bool = false
+    @EnvironmentObject var userRepo: UserRepository
+    // Usamos el estado del Manager para la lógica, y solo dejamos
+    // el estado de la cámara aquí por ser puramente visual.
     @State private var cameraPosition: MapCameraPosition = .userLocation(
         followsHeading: false,
         fallback: .automatic
     )
     
     var body: some View {
+        let nav = navigationManager
         ZStack {
-            // MARK: - MAP
+            // MARK: - MAP LAYER
             Map(position: $cameraPosition) {
+                // Indicador de usuario personalizado
                 UserAnnotation {
                     ZStack {
                         Circle()
@@ -38,18 +41,28 @@ struct ActiveNavigationView: View {
                     }
                 }
                 
+                // Destino: Edificio SD
                 Marker("SD Building", systemImage: "car.2.fill",
-                       coordinate: CLLocationCoordinate2D(latitude: 4.6014, longitude: -74.0649))
+                       coordinate: navigationManager.destination)
                     .tint(.blue)
                 
-                if let route = navigationManager.route {
+                // Dibujar la ruta si existe
+                if let route = nav.route {
                     MapPolyline(route.polyline)
                         .stroke(.blue, style: StrokeStyle(lineWidth: 8, lineCap: .round, lineJoin: .round))
                 }
+                //ACA HAY PROTECCION DE VIEW
+                else if let cachedPolyline = nav.cachedPolyline {
+                        // Mostramos la ruta guardada en gris o azul tenue para indicar "Offline"
+                        MapPolyline(cachedPolyline)
+                        .stroke(.gray, style: StrokeStyle(lineWidth: 8, lineCap: .round, lineJoin: .round))
+                    }
+                
             }
             .mapStyle(.standard(elevation: .realistic, emphasis: .automatic, showsTraffic: true))
             .mapControls {
-                if !isNavigating {
+                // Solo mostramos controles si NO estamos navegando activamente
+                if !navigationManager.isNavigating {
                     MapUserLocationButton()
                     MapCompass()
                     MapPitchToggle()
@@ -57,11 +70,12 @@ struct ActiveNavigationView: View {
             }
             .ignoresSafeArea()
             
-            // MARK: - CLOSE BUTTON (Fix problem 2)
+            // MARK: - TOP CONTROLS (Close Button)
             VStack {
                 HStack {
-                    //Spacer()
                     Button {
+                        // Limpiamos navegación antes de salir
+                        navigationManager.endNavigation()
                         dismiss()
                     } label: {
                         Image(systemName: "xmark")
@@ -72,24 +86,32 @@ struct ActiveNavigationView: View {
                             .clipShape(Circle())
                             .shadow(color: .black.opacity(0.1), radius: 4)
                     }
-                    .padding(.top, 25) // Evita el notch
+                    .padding(.top, 25)
                     .padding(.leading, 25)
                     Spacer()
                 }
                 Spacer()
+                // --- INTEGRACIÓN DEL BANNER OFFLINE ---
+                if userRepo.isOffline {
+                                        OfflineBanner(lastUpdate: nav.lastUpdateDate)
+                                            .padding(.top, 25)
+                                            .padding(.trailing, 25)
+                                    }
+                Spacer()
             }
             
-            // MARK: - BOTTOM CARD (Fix problem 1: English Translation)
+            // MARK: - BOTTOM INTERFACE CARD
             VStack {
                 Spacer()
                 
                 VStack(spacing: 16) {
+                    // Indicador de arrastre (Estético)
                     Capsule()
                         .fill(Color.secondary.opacity(0.3))
                         .frame(width: 40, height: 5)
                     
-                    if isNavigating, let route = navigationManager.route {
-                        // --- Active Navigation Mode ---
+                    if navigationManager.isNavigating, let route = navigationManager.route {
+                        // --- MODO: NAVEGACIÓN ACTIVA ---
                         Text("On your way to SD Building")
                             .font(.headline)
                         
@@ -120,7 +142,7 @@ struct ActiveNavigationView: View {
                         
                         Button {
                             navigationManager.endNavigation()
-                            dismiss()
+                            dismiss() // Cerramos al terminar
                         } label: {
                             Text("End Trip")
                                 .font(.headline)
@@ -132,7 +154,7 @@ struct ActiveNavigationView: View {
                         }
                         
                     } else {
-                        // --- Preview Mode ---
+                        // --- MODO: PREVISTA (READY TO START) ---
                         Text("Ready to navigate")
                             .font(.headline)
                         
@@ -162,7 +184,7 @@ struct ActiveNavigationView: View {
                         }
                         
                         Button {
-                            startNavigation()
+                            startNavigationAction()
                         } label: {
                             Label("Start Trip", systemImage: "play.fill")
                                 .font(.headline)
@@ -179,31 +201,37 @@ struct ActiveNavigationView: View {
                 .cornerRadius(28)
                 .padding()
                 .shadow(color: .black.opacity(0.15), radius: 15)
-                .animation(.easeInOut(duration: 0.3), value: isNavigating)
+                // Escuchamos el cambio de estado del manager para animar la tarjeta
+                .animation(.easeInOut(duration: 0.3), value: navigationManager.isNavigating)
             }
         }
         .navigationBarHidden(true)
     }
     
-    // MARK: - LOGIC & FORMATTERS
+    // MARK: - HELPER FUNCTIONS
     
-    private func startNavigation() {
-        isNavigating = true
+    private func startNavigationAction() {
+        // 1. Cambiamos el estado global
+        navigationManager.isNavigating = true
+        
+        // 2. Animación inicial: Centrar en usuario con rumbo
         withAnimation(.easeInOut(duration: 1.2)) {
             cameraPosition = .userLocation(followsHeading: true, fallback: .automatic)
         }
         
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
-            // Nota: Aquí podrías necesitar inyectar el LocationManager para obtener la coordenada real
-            withAnimation(.easeInOut(duration: 0.8)) {
-                cameraPosition = .camera(
-                    MapCamera(
-                        centerCoordinate: CLLocationCoordinate2D(latitude: 4.6767, longitude: -74.0483), // Ejemplo
-                        distance: 300,
-                        heading: 0,
-                        pitch: 65
+        // 3. Si tenemos ubicación, inclinamos la cámara a 3D después del primer zoom
+        if let userCoords = navigationManager.userLocation?.coordinate {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+                withAnimation(.easeInOut(duration: 0.8)) {
+                    cameraPosition = .camera(
+                        MapCamera(
+                            centerCoordinate: userCoords,
+                            distance: 350,
+                            heading: 0,
+                            pitch: 65 // Efecto 3D
+                        )
                     )
-                )
+                }
             }
         }
     }
@@ -217,11 +245,36 @@ struct ActiveNavigationView: View {
         return String(format: "%.1f km", meters / 1000)
     }
 }
-#Preview {
-    ActiveNavigationView()
-        .environmentObject(NavigationManager())
+
+// En un archivo separado o dentro de ActiveNavigationView
+struct OfflineBanner: View {
+    var lastUpdate: Date?
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "wifi.slash")
+                .font(.caption2.bold())
+            
+            VStack(alignment: .leading, spacing: 0) {
+                Text("Offline Mode")
+                    .font(.caption.bold())
+                if let date = lastUpdate {
+                    Text("Data from: \(date, style: .time)")
+                        .font(.system(size: 8))
+                }
+            }
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 6)
+        .background(.orange.opacity(0.9))
+        .foregroundColor(.white)
+        .clipShape(Capsule())
+        .shadow(radius: 4)
+        .transition(.move(edge: .top).combined(with: .opacity))
+    }
 }
 
+// MARK: - PREVIEW
 #Preview {
     ActiveNavigationView()
         .environmentObject(NavigationManager())

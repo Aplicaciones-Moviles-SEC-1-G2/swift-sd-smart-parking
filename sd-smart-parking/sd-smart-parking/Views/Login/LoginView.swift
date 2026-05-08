@@ -10,8 +10,13 @@ import LocalAuthentication
 
 struct LoginView: View {
     @EnvironmentObject var authVM: AuthViewModel
+    @EnvironmentObject private var networkMonitor: NetworkMonitor
     @State private var email = ""
     @State private var password = ""
+    /// Cached snapshot of `MicrosoftKeychain.lastEmail()` so we don't pay an
+    /// XPC round-trip to `securityd` on every body recompose. Refreshed on
+    /// appear and after any auth attempt completes.
+    @State private var lastMicrosoftEmail: String?
     private var biometricIcon: String {
         authVM.biometricType == .touchID ? "touchid" : "faceid"
     }
@@ -85,8 +90,9 @@ struct LoginView: View {
                     .background(email.isEmpty || password.count < 4 ? Color.gray : Color.blue)
                     .foregroundColor(.white)
                     .cornerRadius(15)
+                    .opacity(networkMonitor.isConnected ? 1.0 : 0.45)
                 }
-                .disabled(authVM.isLoading || email.isEmpty || password.count < 4)
+                .disabled(!networkMonitor.isConnected || authVM.isLoading || email.isEmpty || password.count < 4)
                 .padding(.horizontal, 24)
 
                 // MARK: - Divider
@@ -120,11 +126,19 @@ struct LoginView: View {
                             .stroke(Color.gray.opacity(0.2), lineWidth: 1)
                     )
                     .shadow(color: Color.black.opacity(0.05), radius: 3, x: 0, y: 2)
+                    .opacity(networkMonitor.isConnected ? 1.0 : 0.45)
                 }
                 .contentShape(Rectangle())
+                .disabled(!networkMonitor.isConnected || authVM.isLoading)
                 .padding(.horizontal, 24)
 
                 // MARK: - Microsoft Button
+                if let lastEmail = lastMicrosoftEmail {
+                    Text("Last Microsoft user: \(lastEmail)")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .padding(.horizontal, 24)
+                }
                 Button {
                     Task { await authVM.signInWithMicrosoft() }
                 } label: {
@@ -147,9 +161,18 @@ struct LoginView: View {
                             .stroke(Color.gray.opacity(0.2), lineWidth: 1)
                     )
                     .shadow(color: Color.black.opacity(0.05), radius: 3, x: 0, y: 2)
+                    .opacity(networkMonitor.isConnected ? 1.0 : 0.45)
                 }
                 .contentShape(Rectangle())
+                .disabled(!networkMonitor.isConnected || authVM.isLoading)
                 .padding(.horizontal, 24)
+
+                if !networkMonitor.isConnected {
+                    Text("Sin conexión — los métodos online están deshabilitados. Usa Face ID si tienes sesión guardada.")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .padding(.horizontal, 24)
+                }
 
                 // MARK: - Face ID / Touch ID Button
                 Button {
@@ -218,10 +241,15 @@ struct LoginView: View {
             }
             .navigationBarHidden(true)
         }
+        .onAppear { lastMicrosoftEmail = MicrosoftKeychain.lastEmail() }
+        .onChange(of: authVM.isLoading) { _, isLoading in
+            if !isLoading { lastMicrosoftEmail = MicrosoftKeychain.lastEmail() }
+        }
     }
 }
 
 #Preview {
     LoginView()
         .environmentObject(AuthViewModel())
+        .environmentObject(NetworkMonitor())
 }

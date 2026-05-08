@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import SwiftData
 import FirebaseCore
 
 class AppDelegate: NSObject, UIApplicationDelegate {
@@ -28,6 +29,7 @@ struct sd_smart_parkingApp: App {
                 .environmentObject(navigationManager)
                 .environmentObject(networkMonitor)
                 .preferredColorScheme(.light)
+                .modelContainer(for: SavedTripPlan.self)
         }
     }
 }

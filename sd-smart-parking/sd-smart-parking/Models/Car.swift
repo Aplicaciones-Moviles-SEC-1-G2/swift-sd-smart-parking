@@ -9,8 +9,9 @@ import Foundation
 struct Car: Identifiable, Codable {
     let id: UUID
     let plate: String
-    let UserID: UUID
+    let UserID: String
     let name: String
+    //var isSynced: Bool = true
 
     var normalizedPlate: String {
             plate.uppercased().replacingOccurrences(of: " ", with: "")

@@ -33,9 +33,9 @@ struct ContentView: View {
             
             // EL BANNER GLOBAL: Solo se muestra si isLoggedIn Y userRepo detecta offline
             if authVM.isLoggedIn && userRepo.isOffline {
-                ConnectionBannerView()
-                    .transition(.move(edge: .top).combined(with: .opacity))
-                    .zIndex(1) // Asegura que esté por encima de todo
+                //ConnectionBannerView()
+                    //.transition(.move(edge: .top).combined(with: .opacity))
+                    //.zIndex(1) // Asegura que esté por encima de todo
             }
         }
         .animation(.spring(), value: userRepo.isOffline) // Animación suave al aparecer/desaparecer

@@ -15,9 +15,12 @@ struct VehicleAIScannerSheet: View {
     let onUseResult: (VehicleIdentification) -> Void
 
     @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject private var networkMonitor: NetworkMonitor
     @StateObject private var vm = VehicleAIScannerViewModel()
     @State private var capturedImage: UIImage? = nil
     @State private var showPicker: Bool = true
+    @State private var showPlateOCRFallback: Bool = false
+    @State private var showHistory: Bool = false
 
     var body: some View {
         NavigationStack {
@@ -28,18 +31,49 @@ struct VehicleAIScannerSheet: View {
                     ToolbarItem(placement: .cancellationAction) {
                         Button("Cancel") { dismiss() }
                     }
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button {
+                            showHistory = true
+                        } label: {
+                            Image(systemName: "clock.arrow.circlepath")
+                        }
+                    }
+                }
+                .sheet(isPresented: $showHistory) {
+                    ScanHistorySheet()
                 }
                 .sheet(isPresented: $showPicker) {
                     CameraImagePicker { image in
                         capturedImage = image
                         showPicker = false
-                        if let image {
+                        guard let image else {
+                            dismiss()
+                            return
+                        }
+                        if networkMonitor.isConnected {
                             vm.analyze(image: image)
                         } else {
-                            dismiss()
+                            showPlateOCRFallback = true
                         }
                     }
                     .ignoresSafeArea()
+                }
+                .sheet(isPresented: $showPlateOCRFallback) {
+                    PlateOCRSheet { plate, _ in
+                        let identification = VehicleIdentification(
+                            plate: plate,
+                            plateVisible: true,
+                            color: "unknown",
+                            brand: "unknown",
+                            model: "unknown"
+                        )
+                        onUseResult(identification)
+                        // Symmetric cleanup before dismiss — keeps the
+                        // showPlateOCRFallback state from reactivating if
+                        // the parent re-presents this sheet later.
+                        showPlateOCRFallback = false
+                        dismiss()
+                    }
                 }
         }
     }
@@ -59,6 +93,10 @@ struct VehicleAIScannerSheet: View {
 
                 switch vm.state {
                 case .idle:
+                    if !networkMonitor.isConnected {
+                        OfflineNoticeBadge(message: "Sin conexión — usaremos OCR local")
+                            .padding(.top, 12)
+                    }
                     Text("Take a photo of the vehicle to analyze it.")
                         .foregroundColor(.secondary)
                         .padding(.top, 40)
@@ -158,6 +196,10 @@ struct VehicleAIScannerSheet: View {
 
     private func errorView(_ message: String) -> some View {
         VStack(spacing: 12) {
+            if !networkMonitor.isConnected {
+                OfflineNoticeBadge(message: "Sin conexión — usa el OCR local")
+            }
+
             Image(systemName: "exclamationmark.triangle.fill")
                 .font(.system(size: 40))
                 .foregroundColor(.red)
@@ -165,12 +207,23 @@ struct VehicleAIScannerSheet: View {
                 .font(.subheadline)
                 .foregroundColor(.red)
                 .multilineTextAlignment(.center)
-            Button("Try Again") {
-                capturedImage = nil
-                vm.reset()
-                showPicker = true
+
+            HStack(spacing: 12) {
+                Button("Try Again") {
+                    capturedImage = nil
+                    vm.reset()
+                    showPicker = true
+                }
+                .buttonStyle(.bordered)
+
+                if !networkMonitor.isConnected {
+                    Button("Use local OCR") {
+                        showPlateOCRFallback = true
+                    }
+                    .buttonStyle(.borderedProminent)
+                }
             }
-            .buttonStyle(.borderedProminent)
+            .controlSize(.large)
         }
         .padding(.vertical, 20)
     }

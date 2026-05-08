@@ -15,9 +15,21 @@ struct ParkingDemandInsightsView: View {
     let closingHour: Int
     /// Day type the sheet should open on — defaults to the one matching today.
     let initialBucket: Bucket
+    /// Timestamp of the most recent record at presentation time. Used to
+    /// surface freshness info when the device is offline. Optional to keep
+    /// existing call sites backward-compatible.
+    let lastSyncedAt: Date?
 
     @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject private var networkMonitor: NetworkMonitor
     @State private var bucket: Bucket
+
+    /// Read-side mirror of the EditProfile toggle that the user owns. When off
+    /// the sheet collapses to a `ContentUnavailableView` so the dashboard's
+    /// banner trigger remains intact (Mateo's territory) without breaking
+    /// the user's stated preference.
+    @AppStorage("diego.profile.showDemandBadgeOnDashboard")
+    private var showDemandBadge: Bool = true
 
     enum Bucket: String, CaseIterable, Identifiable {
         case weekday = "Weekdays"
@@ -30,14 +42,23 @@ struct ParkingDemandInsightsView: View {
         records: [VehicleRecord],
         openingHour: Int,
         closingHour: Int,
-        initialBucket: Bucket = Self.defaultBucket(for: Date())
+        initialBucket: Bucket = Self.defaultBucket(for: Date()),
+        lastSyncedAt: Date? = nil
     ) {
         self.records = records
         self.openingHour = openingHour
         self.closingHour = closingHour
         self.initialBucket = initialBucket
+        self.lastSyncedAt = lastSyncedAt
         self._bucket = State(initialValue: initialBucket)
     }
+
+    private static let lastSyncedFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateStyle = .short
+        f.timeStyle = .short
+        return f
+    }()
 
     private static func defaultBucket(for date: Date) -> Bucket {
         let weekday = Calendar.current.component(.weekday, from: date)
@@ -80,48 +101,16 @@ struct ParkingDemandInsightsView: View {
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 20) {
-                    Picker("Day type", selection: $bucket) {
-                        ForEach(Bucket.allCases) { b in Text(b.rawValue).tag(b) }
-                    }
-                    .pickerStyle(.segmented)
-                    .padding(.horizontal, 16)
-                    .padding(.top, 8)
-
-                    sampleSizeCaption
-
-                    chartCard(
-                        title: "Arrivals per hour",
-                        caption: "How many cars enter each hour historically",
-                        data: entryCounts,
-                        color: .blue
-                    )
-
-                    chartCard(
-                        title: "Departures per hour",
-                        caption: "How many cars leave each hour historically",
-                        data: exitCounts,
-                        color: .purple
-                    )
-
-                    recommendationCard(
-                        title: "Best times to arrive",
-                        subtitle: "Hours with the fewest recorded arrivals — easiest to find a spot",
-                        icon: "arrow.down.circle.fill",
-                        tint: .green,
-                        hours: bestEntryHours
-                    )
-
-                    recommendationCard(
-                        title: "Best times to leave",
-                        subtitle: "Hours with the fewest recorded departures — avoid the exit rush",
-                        icon: "arrow.up.circle.fill",
-                        tint: .indigo,
-                        hours: bestExitHours
+            Group {
+                if showDemandBadge {
+                    insightsScroll
+                } else {
+                    ContentUnavailableView(
+                        "Insights hidden",
+                        systemImage: "eye.slash",
+                        description: Text("Re-enable from Profile → Edit Profile.")
                     )
                 }
-                .padding(.bottom, 24)
             }
             .background(Color(.systemGroupedBackground))
             .navigationTitle("Parking Insights")
@@ -134,6 +123,52 @@ struct ParkingDemandInsightsView: View {
         }
     }
 
+    private var insightsScroll: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 20) {
+                Picker("Day type", selection: $bucket) {
+                    ForEach(Bucket.allCases) { b in Text(b.rawValue).tag(b) }
+                }
+                .pickerStyle(.segmented)
+                .padding(.horizontal, 16)
+                .padding(.top, 8)
+
+                sampleSizeCaption
+
+                chartCard(
+                    title: "Arrivals per hour",
+                    caption: "How many cars enter each hour historically",
+                    data: entryCounts,
+                    color: .blue
+                )
+
+                chartCard(
+                    title: "Departures per hour",
+                    caption: "How many cars leave each hour historically",
+                    data: exitCounts,
+                    color: .purple
+                )
+
+                recommendationCard(
+                    title: "Best times to arrive",
+                    subtitle: "Hours with the fewest recorded arrivals — easiest to find a spot",
+                    icon: "arrow.down.circle.fill",
+                    tint: .green,
+                    hours: bestEntryHours
+                )
+
+                recommendationCard(
+                    title: "Best times to leave",
+                    subtitle: "Hours with the fewest recorded departures — avoid the exit rush",
+                    icon: "arrow.up.circle.fill",
+                    tint: .indigo,
+                    hours: bestExitHours
+                )
+            }
+            .padding(.bottom, 24)
+        }
+    }
+
     // MARK: - Pieces
 
     @ViewBuilder
@@ -142,10 +177,23 @@ struct ParkingDemandInsightsView: View {
         let captionText = totals.entries + totals.exits == 0
             ? "No historic records for \(bucket.rawValue.lowercased()) yet. Come back after a few days of activity."
             : "Based on \(totals.entries) arrivals and \(totals.exits) departures recorded on \(bucket.rawValue.lowercased())."
-        Text(captionText)
-            .font(.footnote)
-            .foregroundColor(.secondary)
-            .padding(.horizontal, 16)
+        VStack(alignment: .leading, spacing: 6) {
+            // TODO: replace `lastSyncedAt` source with a dedicated
+            // `ParkingViewModel.lastFetchedAt: Date?`. Today the dashboard call
+            // site passes `vehicleRecords.first?.timestamp`, which only works
+            // while that array is sorted DESC and non-empty.
+            if !networkMonitor.isConnected && lastSyncedAt == nil {
+                OfflineNoticeBadge(message: "Sin conexión — sin datos sincronizados")
+            } else if !networkMonitor.isConnected, let synced = lastSyncedAt {
+                Text("Sin conexión — mostrando datos al \(Self.lastSyncedFormatter.string(from: synced)).")
+                    .font(.footnote.weight(.semibold))
+                    .foregroundColor(.orange)
+            }
+            Text(captionText)
+                .font(.footnote)
+                .foregroundColor(.secondary)
+        }
+        .padding(.horizontal, 16)
     }
 
     private func chartCard(
@@ -276,8 +324,10 @@ struct ParkingDemandInsightsView: View {
         )
     }
     return ParkingDemandInsightsView(records: records, openingHour: 6, closingHour: 22)
+        .environmentObject(NetworkMonitor())
 }
 
 #Preview("Empty") {
     ParkingDemandInsightsView(records: [], openingHour: 6, closingHour: 22)
+        .environmentObject(NetworkMonitor())
 }

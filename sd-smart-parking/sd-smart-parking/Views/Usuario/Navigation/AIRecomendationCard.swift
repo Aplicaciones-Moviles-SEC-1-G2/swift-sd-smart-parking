@@ -14,100 +14,106 @@ struct AIRecommendationCard: View {
     @State private var aiResponse: String = "Press generate to have an AI preview of your trip to Uniandes"
     @State private var isLoading: Bool = false
     @EnvironmentObject var vm: ParkingViewModel
-        let myKey = Secrets.apiKey
-        
-        
-        private let model: GenerativeModel
-        
-        init() {
-            let safetySettings = [
-                SafetySetting(harmCategory: .harassment, threshold: .blockNone),
-                SafetySetting(harmCategory: .hateSpeech, threshold: .blockNone),
-                SafetySetting(harmCategory: .sexuallyExplicit, threshold: .blockNone),
-                SafetySetting(harmCategory: .dangerousContent, threshold: .blockNone)
-            ]
-            
-            self.model = GenerativeModel(
-                name: "gemini-2.5-flash-lite", // Cambiado a flash estable para evitar errores
-                apiKey: myKey,
-                safetySettings: safetySettings
-            )
-        }
+    @EnvironmentObject var userRepo: UserRepository // 👈 Detector de conexión
+    
+    let myKey = Secrets.apiKey
+    private let model: GenerativeModel
+    
+    init() {
+        // ... (Tu init se mantiene igual)
+        self.model = GenerativeModel(name: "gemini-2.5-flash-lite", apiKey: myKey)
+    }
 
-        var body: some View {
-            VStack(alignment: .leading, spacing: 16) {
-                // Header con Sparkles
-                HStack(spacing: 8) {
-                    Image(systemName: "sparkles")
-                        .font(.subheadline.bold())
-                        .foregroundColor(.blue)
-                    Text("AI Suggestions")
-                        .font(.headline)
-                    Spacer()
-                    if isLoading {
-                        ProgressView()
-                            .scaleEffect(0.8)
-                    }
-                }
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            // MARK: - HEADER
+            HStack(spacing: 8) {
+                Image(systemName: userRepo.isOffline ? "wifi.slash" : "sparkles")
+                    .font(.subheadline.bold())
+                    .foregroundColor(userRepo.isOffline ? .orange : .blue)
                 
-                // Área de texto dinámica
-                VStack(alignment: .leading, spacing: 12) {
+                Text(userRepo.isOffline ? "AI Suggestions (Offline)" : "AI Suggestions")
+                    .font(.headline)
+                
+                Spacer()
+                
+                if isLoading {
+                    ProgressView().scaleEffect(0.8)
+                }
+            }
+            
+            // MARK: - ÁREA DE TEXTO DINÁMICA
+            VStack(alignment: .leading, spacing: 12) {
+                // Lógica de Mensaje Offline
+                if userRepo.isOffline {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Connection lost. We can't generate new AI recommendations right now.")
+                            .font(.system(.caption, design: .rounded))
+                            .foregroundColor(.orange)
+                            .bold()
+                        
+                        Text("Pro-tip: We recommend leaving early to avoid potential delays and securing your parking spot before peak hours.")
+                            .font(.system(.subheadline, design: .rounded))
+                            .foregroundColor(.primary.opacity(0.8))
+                    }
+                } else {
                     Text(aiResponse)
                         .font(.system(.subheadline, design: .rounded))
                         .foregroundColor(.primary.opacity(0.8))
-                        .lineSpacing(4)
-                        .fixedSize(horizontal: false, vertical: true)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .multilineTextAlignment(.leading)
                 }
-                .padding(16)
-                .background(Color(.systemGray6).opacity(0.6))
-                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-                
-                // Botón de acción unificado
-                Button(action: {
-                    let free = vm.totalAvailable
-                    let occupied = vm.totalOccupied
-                    
-
-                    //print("La hora actual es: \(hora):\(minutos)")
-                    fetchAIRecommendation(free: free, occupied: occupied)
-                }) {
-                    HStack {
-                        if isLoading {
-                            Text("Analyzing Data...")
-                        } else {
-                            Image(systemName: "bolt.fill")
-                            Text("Generate Suggestion")
-                        }
-                    }
-                    .font(.subheadline.bold())
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 12)
-                    .background(isLoading ? Color.gray : Color.blue)
-                    .foregroundColor(.white)
-                    .clipShape(Capsule())
-                }
-                .disabled(isLoading)
             }
-            .padding(20) // Igual que la LiveCapacityCard
-            .frame(maxWidth: .infinity) // 👈 CLAVE: Se expande para llenar el ancho
-            .background(Color.white)
-            .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous)) // Igual que la otra card
-            .shadow(color: .black.opacity(0.04), radius: 12, x: 0, y: 6)
+            .padding(16)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(userRepo.isOffline ? Color.orange.opacity(0.05) : Color(.systemGray6).opacity(0.6))
+            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 16)
+                    .stroke(.orange.opacity(userRepo.isOffline ? 0.3 : 0), lineWidth: 1)
+            )
+            
+            // MARK: - BOTÓN DE ACCIÓN
+            Button(action: {
+                fetchAIRecommendation(free: vm.totalAvailable, occupied: vm.totalOccupied)
+            }) {
+                HStack {
+                    if isLoading {
+                        Text("Analyzing Data...")
+                    } else {
+                        Image(systemName: userRepo.isOffline ? "clock.fill" : "bolt.fill")
+                        Text(userRepo.isOffline ? "Offline Mode" : "Generate Suggestion")
+                    }
+                }
+                .font(.subheadline.bold())
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 12)
+                .background(userRepo.isOffline || isLoading ? Color.gray.gradient : Color.blue.gradient)
+                .foregroundColor(.white)
+                .clipShape(Capsule())
+            }
+            .disabled(userRepo.isOffline || isLoading) // Deshabilitado si offline
         }
+        .padding(20)
+        .frame(maxWidth: .infinity)
+        .background(Color.white)
+        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .shadow(color: .black.opacity(0.04), radius: 12, x: 0, y: 6)
+    }
     
-    // FUNCIÓN ACTUALIZADA CON PARÁMETROS
+    
+
+    
+    // MARK: - FETCH LOGIC
     func fetchAIRecommendation(free: Int, occupied: Int) {
+        // Doble validación de seguridad
+        guard !userRepo.isOffline else { return }
+        
         isLoading = true
         let total = free + occupied
-        
         let peak = vm.peakHour
-        print("DEBUG: La hora pico actual es \(String(describing: peak))");        let calendar = Calendar.current
+        let calendar = Calendar.current
         let hora = calendar.component(.hour, from: Date())
         let minutos = calendar.component(.minute, from: Date())
-        //print ("Hora pico:", \(String(describing: peak)))
-        // Construimos el prompt con los datos del ParkingViewModel
+
         let prompt = """
         Make a short suggestion (max 2 sentences) for someone traveling to Uniandes SD building in Bogota. 
         Current parking status: \(free) spots available and \(occupied) occupied and \(total) total. 
@@ -118,7 +124,6 @@ struct AIRecommendationCard: View {
         """
 
         Task {
-            print("📡 Iniciando llamada a Gemini con \(free) cupos...")
             do {
                 let response = try await model.generateContent(prompt)
                 await MainActor.run {
@@ -127,8 +132,7 @@ struct AIRecommendationCard: View {
                 }
             } catch {
                 await MainActor.run {
-                    print("Error detallado: \(error)")
-                    self.aiResponse = "Error: Could not get recommendation."
+                    self.aiResponse = "Recommendation unavailable at the moment."
                     self.isLoading = false
                 }
             }

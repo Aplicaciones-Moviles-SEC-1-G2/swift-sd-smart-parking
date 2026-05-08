@@ -3,6 +3,7 @@
 //  sd-smart-parkingTests
 //
 
+import Combine
 import EventKit
 import Foundation
 import Testing
@@ -189,5 +190,33 @@ struct TripPlannerExportTests {
 
         #expect(mock.savedEvent == nil)
         #expect(vm.alertTitle == "Calendar Access Denied")
+    }
+
+    @Test func consecutiveExports_dipDidExportThroughFalse() async {
+        // Regression guard: TripPlannerSheetView listens via
+        // `.onChange(of: tripVM.didExport)` and only inserts a SavedTripPlan
+        // when the flag transitions false → true. If `exportTrip` does not
+        // reset the flag at the top, the second consecutive Add-to-Calendar
+        // tap silently drops the SwiftData write.
+        let mock = MockCalendarStore()
+        mock.statusToReturn = .writeOnly
+        let vm = TripPlannerViewModel(store: mock)
+        vm.arrivalDate = makeDate(hour: 10)
+        vm.leaveDate = makeDate(hour: 12)
+
+        await vm.exportTrip(parkingName: "X", closingHour: 22)
+        #expect(vm.didExport)
+
+        var emissions: [Bool] = []
+        let cancellable = vm.$didExport.sink { emissions.append($0) }
+
+        await vm.exportTrip(parkingName: "X", closingHour: 22)
+        cancellable.cancel()
+
+        // Initial replay of `true`, then `false` from the reset at the top
+        // of exportTrip, then `true` again when saveTrip completes.
+        #expect(emissions.first == true)
+        #expect(emissions.contains(false))
+        #expect(emissions.last == true)
     }
 }

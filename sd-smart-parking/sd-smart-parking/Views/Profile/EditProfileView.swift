@@ -19,6 +19,10 @@ struct EditProfileView: View {
     @State private var hasMobilityLimitation: Bool = false
     @State private var preferredFloor: Int? = nil
 
+    /// Local-only display toggle persisted via UserDefaults. `diego.` prefix
+    /// keeps the namespace separate from teammate keys (e.g. biometricsEnabled).
+    @AppStorage("diego.profile.showDemandBadgeOnDashboard") private var showDemandBadge: Bool = true
+
     var body: some View {
         NavigationStack {
             Form {
@@ -34,6 +38,10 @@ struct EditProfileView: View {
                     preferredFloor: $preferredFloor,
                     availableFloors: availableFloors
                 )
+
+                Section("Display preferences") {
+                    Toggle("Mostrar badge de demanda en Dashboard", isOn: $showDemandBadge)
+                }
             }
             .navigationTitle("Edit Profile")
             .onAppear {
