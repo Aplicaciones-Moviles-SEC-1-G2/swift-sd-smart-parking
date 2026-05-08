@@ -200,8 +200,6 @@
     </select>
     <input type="date" id="datePicker">
     <button onclick="load()">Apply</button>
-    <a class="header-link" href="https://htmlpreview.github.io/?https://github.com/Aplicaciones-Moviles-SEC-1-G2/swift-sd-smart-parking/blob/develop/analytics-dashboard.html" target="_blank">🔗 Live Preview</a>
-    <a class="header-link" href="https://github.com/Aplicaciones-Moviles-SEC-1-G2/swift-sd-smart-parking/blob/develop/analytics-dashboard.html" target="_blank">GitHub</a>
   </div>
 </header>
 
@@ -209,7 +207,7 @@
   <div id="status">Loading data…</div>
 
   <div id="content" style="display:none">
-    <details class="collapsible" open>
+    <details class="collapsible">
       <summary style="background:white;border-radius:10px;padding:12px 16px;box-shadow:0 1px 4px rgba(0,0,0,.08);margin-bottom:14px;font-size:0.85rem;font-weight:600;color:#444;">
         📊 Live Overview — KPIs &amp; Charts
         <span class="author-badge author-juanes">Juanes</span>
@@ -240,7 +238,7 @@
     </details>
 
     <!-- AI Insights -->
-    <details class="insights collapsible" open>
+    <details class="insights collapsible">
       <summary class="insights-header">
         <span class="insights-badge">AI Insights</span>
         <span class="author-badge author-juanes">Juanes</span>
@@ -249,7 +247,7 @@
       <div class="insights-grid" id="insightsGrid"></div>
     </details>
 
-    <details class="collapsible" open>
+    <details class="collapsible">
       <summary style="background:white;border-radius:10px;padding:12px 16px;box-shadow:0 1px 4px rgba(0,0,0,.08);margin-bottom:6px;display:flex;align-items:center;gap:8px;">
         <span style="font-size:0.72rem;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.5px;">Quick BQ Answers</span>
         <span class="author-badge author-juanes">Juanes</span>
@@ -258,7 +256,7 @@
     </details>
 
     <!-- BQ-ORG: Organization Clients -->
-    <details class="org-section collapsible" open>
+    <details class="org-section collapsible">
       <summary class="org-header">
         <span class="org-badge">BQ-ORG</span>
         <span class="author-badge author-juanes">Juanes</span>
@@ -291,7 +289,7 @@
     </details>
 
     <!-- BQ-HOUR: Peak Demand Hours -->
-    <details class="bq-hour collapsible" open>
+    <details class="bq-hour collapsible">
       <summary class="bq-hour-header">
         <span class="bq-hour-badge">BQ-HOUR</span>
         <span class="author-badge author-juanes">Juanes</span>
@@ -314,7 +312,7 @@
     </details>
 
     <!-- BQ-FLOOR: Floor Demand & Dwell Time -->
-    <details class="bq-floor collapsible" open>
+    <details class="bq-floor collapsible">
       <summary class="bq-floor-header">
         <span class="bq-floor-badge">BQ-FLOOR</span>
         <span class="author-badge author-juanes">Juanes</span>
@@ -337,7 +335,7 @@
     </details>
 
     <!-- BQ-COST: Mateo BQ5 & BQ6 — Cost Cap & Average Payment -->
-    <details class="bq-cost collapsible" open>
+    <details class="bq-cost collapsible">
       <summary class="bq-cost-header">
         <span class="bq-cost-badge">BQ-5 &amp; BQ-6</span>
         <span class="author-badge author-mateo">Mateo</span>
@@ -380,7 +378,7 @@
     </details>
 
     <!-- BQ-DIEGO: BQ8, BQ9, BQ10 -->
-    <details class="bq-diego collapsible" open>
+    <details class="bq-diego collapsible">
       <summary class="bq-diego-header">
         <span class="bq-diego-badge">BQ-8 · BQ-9 · BQ-10</span>
         <span class="author-badge author-diego">Diego</span>
@@ -449,7 +447,7 @@
     </details>
 
     <!-- BQ-RELIABILITY: OCR & Data Reliability -->
-    <details class="bq-rel collapsible" open>
+    <details class="bq-rel collapsible">
       <summary class="bq-rel-header">
         <span class="bq-rel-badge">BQ-RELIABILITY</span>
         <span class="author-badge author-juanes">Juanes</span>
@@ -474,7 +472,7 @@
     </details>
 
     <!-- BQ-13 dedicated accuracy section -->
-    <details class="bq13 collapsible" open>
+    <details class="bq13 collapsible">
       <summary class="bq13-header">
         <span class="bq13-badge">BQ-13</span>
         <span class="author-badge author-juanes">Juanes</span>
@@ -582,24 +580,27 @@ async function load() {
     `Entry / Exit Activity — ${rangeType.charAt(0).toUpperCase()+rangeType.slice(1)}`;
 
   try {
-    const [spotsSnap, configSnap, recordsSnap, recentSnap] = await Promise.all([
-      db.collection('parkingSpots').get(),
-      db.collection('config').doc('parking').get(),
-      db.collection('vehicleRecords')
-        .where('timestamp', '>=', firebase.firestore.Timestamp.fromDate(start))
-        .where('timestamp', '<', firebase.firestore.Timestamp.fromDate(end))
-        .orderBy('timestamp')
-        .get(),
-      db.collection('vehicleRecords')
-        .orderBy('timestamp', 'desc')
-        .limit(10)
-        .get()
-    ]);
-
-    // Diego BQs — fetched separately so a permission error never kills the main dashboard
-    const [usersResult, allRecordsResult] = await Promise.allSettled([
-      db.collection('users').get(),
-      db.collection('vehicleRecords').orderBy('timestamp', 'desc').limit(500).get()
+    const [
+      [spotsSnap, configSnap, recordsSnap, recentSnap],
+      [usersResult, allRecordsResult]
+    ] = await Promise.all([
+      Promise.all([
+        db.collection('parkingSpots').get(),
+        db.collection('config').doc('parking').get(),
+        db.collection('vehicleRecords')
+          .where('timestamp', '>=', firebase.firestore.Timestamp.fromDate(start))
+          .where('timestamp', '<', firebase.firestore.Timestamp.fromDate(end))
+          .orderBy('timestamp')
+          .get(),
+        db.collection('vehicleRecords')
+          .orderBy('timestamp', 'desc')
+          .limit(10)
+          .get()
+      ]),
+      Promise.allSettled([
+        db.collection('users').get(),
+        db.collection('vehicleRecords').orderBy('timestamp', 'desc').limit(500).get()
+      ])
     ]);
     const usersSnap      = usersResult.status      === 'fulfilled' ? usersResult.value      : { docs: [] };
     const allRecordsSnap = allRecordsResult.status === 'fulfilled' ? allRecordsResult.value : { docs: [] };
@@ -1519,7 +1520,6 @@ async function load() {
     ];
 
     let totalBuckets = 0, correctLabels = 0, mismatches = [];
-    const hourLabels = Array.from({length:24},(_,i)=>`${String(i).padStart(2,'0')}:00`);
 
     bq10Types.forEach(({ label, sched, chartId }) => {
       if (!sched) { Chart.getChart(chartId)?.destroy(); return; }
