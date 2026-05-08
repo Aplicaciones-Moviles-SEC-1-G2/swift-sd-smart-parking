@@ -1170,11 +1170,13 @@ async function load() {
       }
     });
 
-    // Cap reach by registration status
-    const regCapHit   = costExits.filter(r => r.hitDailyCap &&  r.isRegistered).length;
-    const unregCapHit = costExits.filter(r => r.hitDailyCap && !r.isRegistered).length;
-    const regTotal    = costExits.filter(r =>  r.isRegistered).length || 1;
-    const unregTotal  = costExits.filter(r => !r.isRegistered).length || 1;
+    // Cap reach by registration status — unique plates only, consistent with donut & KPIs
+    const regPlatesAll   = Object.entries(exitsByPlate).filter(([,car]) =>  car.isRegistered);
+    const unregPlatesAll = Object.entries(exitsByPlate).filter(([,car]) => !car.isRegistered);
+    const regCapHit   = regPlatesAll.filter(([plate])   => hitCapPlates.has(plate)).length;
+    const unregCapHit = unregPlatesAll.filter(([plate]) => hitCapPlates.has(plate)).length;
+    const regTotal    = regPlatesAll.length   || 1;
+    const unregTotal  = unregPlatesAll.length || 1;
 
     let capRegInst = Chart.getChart('capRegBar');
     if (capRegInst) capRegInst.destroy();
