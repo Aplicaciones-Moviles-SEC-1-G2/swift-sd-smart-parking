@@ -53,6 +53,9 @@ struct CarsView: View {
             }
         }
         .navigationTitle("My Vehicles")
+        .onAppear {
+            userRepo.refreshPendingStatus()
+        }
         .background(Color(.systemGroupedBackground))
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
