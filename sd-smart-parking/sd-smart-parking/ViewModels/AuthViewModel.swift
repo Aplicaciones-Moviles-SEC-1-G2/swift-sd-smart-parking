@@ -49,10 +49,15 @@ class AuthViewModel: ObservableObject {
     
     private let db = Firestore.firestore()
     private let microsoftOAuth: MicrosoftOAuthProviding
+    private let keychain: KeychainStoring
     private var authStateListener: AuthStateDidChangeListenerHandle?
-    
-    init(microsoftOAuth: MicrosoftOAuthProviding = FirebaseMicrosoftOAuth()) {
+
+    init(
+        microsoftOAuth: MicrosoftOAuthProviding = FirebaseMicrosoftOAuth(),
+        keychain: KeychainStoring = KeychainHelper.live
+    ) {
         self.microsoftOAuth = microsoftOAuth
+        self.keychain = keychain
         authStateListener = Auth.auth().addStateDidChangeListener { [weak self] _, firebaseUser in
             guard let self else { return }
             if let firebaseUser = firebaseUser {
@@ -358,11 +363,15 @@ class AuthViewModel: ObservableObject {
             // 1. Limpiamos Firebase y Google
             try? Auth.auth().signOut()
             GIDSignIn.sharedInstance.signOut()
-            
+
             // 2. Limpiamos el caché físico y la memoria del Repo
             userRepo.clearUserData()
-            
-            // 3. Limpiamos el estado del AuthViewModel
+
+            // 3. Limpiamos las credenciales de Microsoft del Keychain — la
+            //    sesión Microsoft no debe sobrevivir a un logout explícito.
+            MicrosoftKeychain.clearCredentials(store: keychain)
+
+            // 4. Limpiamos el estado del AuthViewModel
             isLoggedIn = false
             isGerente = false
             currentUser = nil
