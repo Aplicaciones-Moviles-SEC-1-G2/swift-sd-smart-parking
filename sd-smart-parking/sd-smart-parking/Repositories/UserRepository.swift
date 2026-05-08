@@ -12,6 +12,7 @@ import Combine
 import Firebase
 
 import SwiftUI
+
 class UserRepository: ObservableObject {
     @Published var currentUser: User?
     @Published var isOffline: Bool = false
@@ -28,6 +29,7 @@ class UserRepository: ObservableObject {
     init() {
         loadUser()
         setupNetworkObserver()
+        refreshPendingStatus()
     }
     
     private func setupNetworkObserver() {
@@ -56,38 +58,34 @@ class UserRepository: ObservableObject {
 
     // MARK: - Core Actions
     func addCar(name: String, plate: String) {
-        // Obtenemos el UID de Firebase directamente para evitar inconsistencias
         guard let firebaseUID = Auth.auth().currentUser?.uid else { return }
         
-        let newCar = Car(
-            id: UUID(),
-            plate: plate,
-            UserID: firebaseUID,
-            name: name
-        )
+        let newCar = Car(id: UUID(), plate: plate, UserID: firebaseUID, name: name)
         
-        // 1. Update UI (ArrayMap) & Disk Cache
+        // Actualizamos localmente el modelo
         self.currentUser?.cars.put(newCar, for: newCar.normalizedPlate)
         saveUserLocally()
         
-        // 2. Sync Logic
+        // IMPORTANTE: Agregamos a pendientes SIEMPRE al inicio de la acción
+        addToPending(plate)
+        
         if isOffline {
             saveActionToQueue(action: .addCar, data: newCar)
         } else {
             Task {
-                addToPending(plate)
                 await uploadCarToFirestore(newCar)
             }
         }
-        
-        self.objectWillChange.send()
     }
     
     // Crea estas dos funciones de ayuda en UserRepository para no repetir código:
 
     private func addToPending(_ plate: String) {
-        DispatchQueue.main.async {
-            self.pendingPlates.insert(plate)
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+            withAnimation(.spring()) {
+                _ = self.pendingPlates.insert(plate) // El '_' ayuda a veces si el compilador espera un retorno
+            }
         }
     }
 
