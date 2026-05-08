@@ -87,4 +87,18 @@ struct AIScanCacheTests {
         #expect(key1 == key2)
         #expect((key1 as String).count == 64) // SHA256 hex = 32 bytes * 2 chars
     }
+
+    @Test func evictsBeyondCountLimit() async throws {
+        // countLimit = 2 with high cost limit isolates the count-based
+        // eviction path. Insert three entries and assert the first one is
+        // dropped — proves the limit fires, not just that it's configured.
+        let cache = AIScanCache(countLimit: 2, totalCostLimit: .max)
+
+        cache.put(sampleIdentification(plate: "AAA001"), for: "k1" as NSString, cost: 1)
+        cache.put(sampleIdentification(plate: "BBB002"), for: "k2" as NSString, cost: 1)
+        cache.put(sampleIdentification(plate: "CCC003"), for: "k3" as NSString, cost: 1)
+
+        #expect(cache.get("k1" as NSString) == nil) // first inserted got evicted
+        #expect(cache.get("k3" as NSString) != nil)
+    }
 }

@@ -23,7 +23,10 @@ struct TripCacheKey: Hashable {
     static let durationBucketsPerHour: Double = 12.0
 
     init(arrivalDate: Date, durationHours: Double) {
+        // Floor on both axes so the bucketing policy is symmetric — arrival
+        // already truncates via the `Int(...)` cast, and explicit `.rounded(.down)`
+        // makes the duration side line up rather than rounding to nearest.
         self.arrivalBucket = Int(arrivalDate.timeIntervalSince1970 / Self.arrivalBucketSeconds)
-        self.durationBucket = Int((durationHours * Self.durationBucketsPerHour).rounded())
+        self.durationBucket = Int((durationHours * Self.durationBucketsPerHour).rounded(.down))
     }
 }
