@@ -582,7 +582,7 @@ async function load() {
     `Entry / Exit Activity — ${rangeType.charAt(0).toUpperCase()+rangeType.slice(1)}`;
 
   try {
-    const [spotsSnap, configSnap, recordsSnap, recentSnap, usersSnap, allRecordsSnap] = await Promise.all([
+    const [spotsSnap, configSnap, recordsSnap, recentSnap] = await Promise.all([
       db.collection('parkingSpots').get(),
       db.collection('config').doc('parking').get(),
       db.collection('vehicleRecords')
@@ -593,13 +593,16 @@ async function load() {
       db.collection('vehicleRecords')
         .orderBy('timestamp', 'desc')
         .limit(10)
-        .get(),
-      db.collection('users').get(),
-      db.collection('vehicleRecords')
-        .orderBy('timestamp', 'desc')
-        .limit(500)
         .get()
     ]);
+
+    // Diego BQs — fetched separately so a permission error never kills the main dashboard
+    const [usersResult, allRecordsResult] = await Promise.allSettled([
+      db.collection('users').get(),
+      db.collection('vehicleRecords').orderBy('timestamp', 'desc').limit(500).get()
+    ]);
+    const usersSnap      = usersResult.status      === 'fulfilled' ? usersResult.value      : { docs: [] };
+    const allRecordsSnap = allRecordsResult.status === 'fulfilled' ? allRecordsResult.value : { docs: [] };
 
     const cfg = configSnap.exists ? configSnap.data() : {};
     const spots = spotsSnap.docs.map(d => d.data());
