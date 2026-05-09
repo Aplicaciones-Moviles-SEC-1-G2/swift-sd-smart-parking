@@ -25,6 +25,25 @@ struct LoginView: View {
         authVM.biometricType == .touchID ? "Continue with Touch ID" : "Continue with Face ID"
     }
 
+    /// Microsoft button switches into a "Continue as <email>" affordance when
+    /// a cached Firebase session is gated on launch (pendingMicrosoftAutoLogin).
+    /// The cached path needs a network connection to fetch Firestore data.
+    private var microsoftButtonLabel: String {
+        if authVM.pendingMicrosoftAutoLogin,
+           let email = authVM.currentUserEmail ?? lastMicrosoftEmail {
+            return "Continue as \(email)"
+        }
+        return "Continue with Microsoft"
+    }
+
+    private var microsoftButtonDisabled: Bool {
+        !networkMonitor.isConnected || authVM.isLoading
+    }
+
+    private var microsoftButtonOpacity: Double {
+        networkMonitor.isConnected ? 1.0 : 0.45
+    }
+
     var body: some View {
         NavigationStack {
             ScrollView {
@@ -133,21 +152,38 @@ struct LoginView: View {
                 .padding(.horizontal, 24)
 
                 // MARK: - Microsoft Button
-                if let lastEmail = lastMicrosoftEmail {
+                if authVM.pendingMicrosoftAutoLogin,
+                   let pendingEmail = authVM.currentUserEmail ?? lastMicrosoftEmail {
+                    // Cached Microsoft session present — explicit confirmation
+                    // required before we route into the app, so the user can
+                    // choose another method instead.
+                    Text("Microsoft session ready for \(pendingEmail). Tap to continue, or pick another method below.")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .padding(.horizontal, 24)
+                } else if let lastEmail = lastMicrosoftEmail {
                     Text("Last Microsoft user: \(lastEmail)")
                         .font(.caption)
                         .foregroundColor(.secondary)
                         .padding(.horizontal, 24)
                 }
                 Button {
-                    Task { await authVM.signInWithMicrosoft() }
+                    Task {
+                        if authVM.pendingMicrosoftAutoLogin {
+                            // Reuse the cached Firebase credential — no OAuth
+                            // re-prompt, just acknowledgement of the session.
+                            await authVM.continueWithCachedMicrosoftSession()
+                        } else {
+                            await authVM.signInWithMicrosoft()
+                        }
+                    }
                 } label: {
                     HStack(spacing: 12) {
                         Image("Microsoft_Logo")
                             .resizable()
                             .scaledToFit()
                             .frame(width: 20, height: 20)
-                        Text("Continue with Microsoft")
+                        Text(microsoftButtonLabel)
                             .font(.body)
                             .fontWeight(.semibold)
                             .foregroundColor(.primary)
@@ -161,10 +197,10 @@ struct LoginView: View {
                             .stroke(Color.gray.opacity(0.2), lineWidth: 1)
                     )
                     .shadow(color: Color.black.opacity(0.05), radius: 3, x: 0, y: 2)
-                    .opacity(networkMonitor.isConnected ? 1.0 : 0.45)
+                    .opacity(microsoftButtonOpacity)
                 }
                 .contentShape(Rectangle())
-                .disabled(!networkMonitor.isConnected || authVM.isLoading)
+                .disabled(microsoftButtonDisabled)
                 .padding(.horizontal, 24)
 
                 if !networkMonitor.isConnected {
