@@ -34,7 +34,20 @@ class AuthViewModel: ObservableObject {
     @Published var isGerente: Bool = false
     @Published var currentUserEmail: String? = nil
     @Published var requiresBiometricUnlock: Bool = false
-    
+
+    /// True when a Microsoft session is cached in Firebase but the user has
+    /// NOT yet explicitly tapped the Microsoft button in this app launch.
+    /// LoginView observes this to swap the button into a "Continue as <email>"
+    /// confirmation, instead of letting the auth-state listener auto-route
+    /// straight into the app.
+    @Published var pendingMicrosoftAutoLogin: Bool = false
+
+    /// Gate consumed by the auth-state listener: only after the user has
+    /// explicitly chosen to proceed with the cached Microsoft session (or
+    /// completed a fresh sign-in) do we let the listener route into the app.
+    /// Resets each app launch because it lives in instance state.
+    private var allowMicrosoftAutoEntry: Bool = false
+
     @AppStorage("biometricsEnabled") var biometricsEnabled: Bool = false
     
     // The biometric type available on this device (.faceID, .touchID, or .none)
@@ -61,6 +74,22 @@ class AuthViewModel: ObservableObject {
         authStateListener = Auth.auth().addStateDidChangeListener { [weak self] _, firebaseUser in
             guard let self else { return }
             if let firebaseUser = firebaseUser {
+                // Gate cached Microsoft sessions: even though Firebase has a
+                // valid persisted credential, we keep the user on LoginView
+                // until they explicitly tap the Microsoft button. This gives
+                // them the option to switch to another provider on every
+                // launch instead of being silently auto-routed into the app.
+                let isMicrosoftSession = firebaseUser.providerData
+                    .contains { $0.providerID == "microsoft.com" }
+                if isMicrosoftSession && !self.allowMicrosoftAutoEntry {
+                    DispatchQueue.main.async {
+                        self.pendingMicrosoftAutoLogin = true
+                        self.currentUserEmail = firebaseUser.email
+                        self.isLoggedIn = false
+                        self.isLoading = false
+                    }
+                    return
+                }
                 self.currentUserEmail = firebaseUser.email
                 Task { await self.fetchUserData(uid: firebaseUser.uid) }
             } else {
@@ -69,6 +98,7 @@ class AuthViewModel: ObservableObject {
                     self.isGerente = false
                     self.currentUser = nil
                     self.currentUserEmail = nil
+                    self.pendingMicrosoftAutoLogin = false
                     // Don't touch requiresBiometricUnlock here — signOut() sets it directly
                 }
             }
@@ -203,6 +233,11 @@ class AuthViewModel: ObservableObject {
         await MainActor.run {
             isLoading = true
             errorMessage = nil
+            // The user is explicitly choosing Microsoft now — release the gate
+            // so the auth-state listener routes the resulting session into the
+            // app instead of bouncing back to "pending Microsoft auto login".
+            allowMicrosoftAutoEntry = true
+            pendingMicrosoftAutoLogin = false
         }
 
         do {
@@ -218,8 +253,29 @@ class AuthViewModel: ObservableObject {
             await MainActor.run {
                 self.errorMessage = "Microsoft Sign-In was cancelled or failed."
                 self.isLoading = false
+                // OAuth failed — re-arm the gate so a still-cached Firebase
+                // session won't sneak the user in on the next listener fire.
+                self.allowMicrosoftAutoEntry = false
             }
         }
+    }
+
+    /// Acknowledges a cached Microsoft session that was gated on app launch.
+    /// Reuses the existing Firebase credential — no OAuth re-prompt — and
+    /// runs the normal `fetchUserData` flow that sets `isLoggedIn = true`.
+    func continueWithCachedMicrosoftSession() async {
+        guard let firebaseUser = Auth.auth().currentUser else {
+            await MainActor.run { self.pendingMicrosoftAutoLogin = false }
+            return
+        }
+        await MainActor.run {
+            self.allowMicrosoftAutoEntry = true
+            self.pendingMicrosoftAutoLogin = false
+            self.isLoading = true
+            self.errorMessage = nil
+            self.currentUserEmail = firebaseUser.email
+        }
+        await fetchUserData(uid: firebaseUser.uid)
     }
     
     // MARK: - Biometric Sign In (from login screen)
@@ -378,6 +434,8 @@ class AuthViewModel: ObservableObject {
             currentUserEmail = nil
             requiresBiometricUnlock = false
             errorMessage = nil
+            pendingMicrosoftAutoLogin = false
+            allowMicrosoftAutoEntry = false
         }
     }
     // Stores the last role so biometric re-login can restore it in dev mode
