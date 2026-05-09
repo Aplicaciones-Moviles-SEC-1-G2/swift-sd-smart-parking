@@ -49,7 +49,7 @@ struct EditProfileView: View {
                 )
 
                 Section("Display preferences") {
-                    Toggle("Mostrar badge de demanda en Dashboard", isOn: $showDemandBadge)
+                    Toggle("Show demand badge on Dashboard", isOn: $showDemandBadge)
                 }
             }
             .navigationTitle("Edit Profile")

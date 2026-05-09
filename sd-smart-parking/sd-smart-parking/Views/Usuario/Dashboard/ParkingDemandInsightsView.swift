@@ -183,9 +183,9 @@ struct ParkingDemandInsightsView: View {
             // site passes `vehicleRecords.first?.timestamp`, which only works
             // while that array is sorted DESC and non-empty.
             if !networkMonitor.isConnected && lastSyncedAt == nil {
-                OfflineNoticeBadge(message: "Sin conexión — sin datos sincronizados")
+                OfflineNoticeBadge(message: "Offline — no synced data")
             } else if !networkMonitor.isConnected, let synced = lastSyncedAt {
-                Text("Sin conexión — mostrando datos al \(Self.lastSyncedFormatter.string(from: synced)).")
+                Text("Offline — showing data as of \(Self.lastSyncedFormatter.string(from: synced)).")
                     .font(.footnote.weight(.semibold))
                     .foregroundColor(.orange)
             }
