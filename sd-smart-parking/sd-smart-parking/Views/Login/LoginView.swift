@@ -204,7 +204,7 @@ struct LoginView: View {
                 .padding(.horizontal, 24)
 
                 if !networkMonitor.isConnected {
-                    Text("Sin conexión — los métodos online están deshabilitados. Usa Face ID si tienes sesión guardada.")
+                    Text("Offline — online methods are disabled. Use Face ID if you have a saved session.")
                         .font(.caption)
                         .foregroundColor(.secondary)
                         .padding(.horizontal, 24)

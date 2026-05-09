@@ -26,7 +26,7 @@ struct ScanHistorySheet: View {
                         Image(systemName: "tray")
                             .font(.system(size: 36))
                             .foregroundColor(.secondary)
-                        Text("Aún no hay scans guardados.")
+                        Text("No scans saved yet.")
                             .foregroundColor(.secondary)
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -52,7 +52,7 @@ struct ScanHistorySheet: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cerrar") { dismiss() }
+                    Button("Close") { dismiss() }
                 }
             }
             .onAppear {
