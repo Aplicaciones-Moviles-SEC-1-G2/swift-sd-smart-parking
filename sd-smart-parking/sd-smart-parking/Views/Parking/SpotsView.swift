@@ -19,6 +19,14 @@ struct SpotsView: View {
     @State private var showPreferencesSheet     = false
     @State private var showFloorMonitor         = false
 
+    /// Mirror of the preferences persisted by EditProfileView. Reading these
+    /// here lets the banner render even when `UserRepository.currentUser` is
+    /// still nil (the repo's `loadUser` only succeeds once a profile JSON has
+    /// been written to disk, so a fresh sign-in race could otherwise hide the
+    /// banner indefinitely).
+    @AppStorage("diego.userPrefs.hasMobilityLimitation") private var storedHasMobility: Bool = false
+    @AppStorage("diego.userPrefs.preferredFloorRaw") private var storedPreferredFloorRaw: Int = -1
+
     let columns = [
         GridItem(.flexible(), spacing: 15),
         GridItem(.flexible(), spacing: 15),
@@ -29,11 +37,23 @@ struct SpotsView: View {
         Dictionary(grouping: vm.spots, by: { $0.floor }).keys.sorted()
     }
 
+    /// Effective driver preferences: prefer the server-backed value the
+    /// repository fetched from Firestore, fall back to the UserDefaults
+    /// snapshot written by EditProfileView so the banner survives any case
+    /// where `currentUser` is momentarily nil (e.g. cold start before the
+    /// disk cache is populated).
+    private var effectivePreferences: UserPreferences? {
+        if let repoPrefs = userRepo.currentUser?.preferences { return repoPrefs }
+        let floor = storedPreferredFloorRaw == -1 ? nil : storedPreferredFloorRaw
+        if !storedHasMobility && floor == nil { return nil }
+        return UserPreferences(hasMobilityLimitation: storedHasMobility, preferredFloor: floor)
+    }
+
     /// Personalized recommendation for the current driver. `nil` for managers
     /// or when no recommendation is possible (e.g. all spots full / suppressed tie).
     private var personalized: PersonalizedRecommendation? {
         guard !authVM.isGerente else { return nil }
-        return vm.personalizedRecommendation(for: userRepo.currentUser?.preferences)
+        return vm.personalizedRecommendation(for: effectivePreferences)
     }
 
     var body: some View {
@@ -63,7 +83,7 @@ struct SpotsView: View {
 
                     // Recommendation banner (driver only)
                     if !authVM.isGerente,
-                       userRepo.currentUser?.preferences == nil {
+                       effectivePreferences == nil {
                         preferencesHeroBanner()
                     }
 
@@ -72,6 +92,12 @@ struct SpotsView: View {
                     // so a driver who already has preferences can tweak them.
                     if let rec = personalized {
                         recommendationBanner(rec)
+                    } else if !authVM.isGerente, effectivePreferences != nil {
+                        // Preferences are saved but no personalized
+                        // recommendation can be computed right now (e.g. all
+                        // spots full / data still loading). Surface a compact
+                        // status row so the driver can still tweak prefs.
+                        savedPreferencesPill()
                     }
 
                     ForEach(sortedFloors, id: \.self) { floor in
@@ -148,7 +174,7 @@ struct SpotsView: View {
             .filter { $0.floor == rec.floor && $0.isAvailable }
             .sorted { $0.number < $1.number }
             .prefix(3)
-        let mobility = userRepo.currentUser?.preferences?.hasMobilityLimitation ?? false
+        let mobility = effectivePreferences?.hasMobilityLimitation ?? false
 
         VStack(alignment: .leading, spacing: 12) {
             HStack(spacing: 8) {
@@ -175,7 +201,7 @@ struct SpotsView: View {
             // recommendation banner so the driver can tweak prefs in-context.
             // Hidden only when the driver has no prefs yet (the prominent
             // standalone hero above is doing that job).
-            if userRepo.currentUser?.preferences != nil {
+            if effectivePreferences != nil {
                 Button {
                     showPreferencesSheet = true
                 } label: {
@@ -197,8 +223,68 @@ struct SpotsView: View {
         .padding(.horizontal)
     }
 
+    /// Compact card surfaced when preferences exist but a personalized
+    /// recommendation cannot be computed (parking full, data still loading,
+    /// suppressed tie). Keeps the "Edit preferences" affordance reachable
+    /// without scrolling so the driver can always tweak prefs.
+    @ViewBuilder
+    private func savedPreferencesPill() -> some View {
+        let prefs = effectivePreferences
+        let summary = preferencesSummary(prefs)
+
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(alignment: .top, spacing: 12) {
+                Image(systemName: prefs?.hasMobilityLimitation == true
+                      ? "figure.roll"
+                      : "slider.horizontal.3")
+                    .font(.title3)
+                    .foregroundColor(.blue)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Your parking preferences")
+                        .font(.subheadline.weight(.semibold))
+                    Text(summary)
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                Spacer()
+            }
+
+            Button {
+                showPreferencesSheet = true
+            } label: {
+                Label("Update preferences", systemImage: "slider.horizontal.3")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 8)
+                    .frame(maxWidth: .infinity)
+                    .background(Color.blue)
+                    .clipShape(Capsule())
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(14)
+        .background(Color.blue.opacity(0.06))
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .strokeBorder(Color.blue.opacity(0.18), lineWidth: 1)
+        )
+        .cornerRadius(14)
+        .padding(.horizontal)
+    }
+
+    private func preferencesSummary(_ prefs: UserPreferences?) -> String {
+        guard let prefs else { return "No preferences set." }
+        var parts: [String] = []
+        if prefs.hasMobilityLimitation { parts.append("Mobility-friendly") }
+        if let floor = prefs.preferredFloor { parts.append("Preferred floor: \(floor)") }
+        if parts.isEmpty { parts.append("No preferences set") }
+        return parts.joined(separator: " · ")
+    }
+
     /// Standalone hero shown to drivers with no preferences set. Always renders
-    /// when `currentUser?.preferences == nil`, regardless of whether a generic
+    /// when `effectivePreferences == nil`, regardless of whether a generic
     /// recommendation exists below it — the goal is to make personalization
     /// the first thing a fresh driver notices on the Spots tab.
     @ViewBuilder

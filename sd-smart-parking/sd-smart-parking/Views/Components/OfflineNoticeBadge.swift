@@ -33,8 +33,8 @@ struct OfflineNoticeBadge: View {
 
 #Preview {
     VStack(spacing: 12) {
-        OfflineNoticeBadge(message: "Sin conexión — modo limitado")
-        OfflineNoticeBadge(message: "Sin conexión — usaremos OCR local")
+        OfflineNoticeBadge(message: "Offline — limited mode")
+        OfflineNoticeBadge(message: "Offline — falling back to on-device OCR")
     }
     .padding()
 }

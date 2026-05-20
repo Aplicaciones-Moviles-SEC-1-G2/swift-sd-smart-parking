@@ -61,7 +61,7 @@
   .insight-card .ic-text { font-size: 0.82rem; color: #333; line-height: 1.45; }
   .insight-card .ic-action { font-size: 0.75rem; color: #8b5cf6; font-weight: 600; margin-top: 5px; }
 
-  /* BQ-ORG — Organization Clients */
+  /* BQ-ORG */
   .org-section { background: white; border-radius: 10px; padding: 20px; box-shadow: 0 1px 4px rgba(0,0,0,.08); margin-bottom: 20px; border-top: 4px solid #22c55e; }
   .org-header { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
   .org-badge { background: #22c55e; color: white; font-size: 0.7rem; font-weight: 700; padding: 3px 8px; border-radius: 4px; }
@@ -134,7 +134,7 @@
   .tag-entry { background: #dbeafe; color: #1d4ed8; padding: 1px 7px; border-radius: 10px; font-size: 0.7rem; font-weight: 600; }
   .tag-exit  { background: #fee2e2; color: #b91c1c; padding: 1px 7px; border-radius: 10px; font-size: 0.7rem; font-weight: 600; }
 
-  /* BQ-COST (Mateo — BQ5 & BQ6) */
+  /* BQ-COST */
   .bq-cost { background: white; border-radius: 10px; padding: 20px; box-shadow: 0 1px 4px rgba(0,0,0,.08); margin-bottom: 20px; border-top: 4px solid #10b981; }
   .bq-cost-header { display: flex; align-items: center; gap: 12px; margin-bottom: 6px; }
   .bq-cost-badge { background: #10b981; color: white; font-size: 0.7rem; font-weight: 700; padding: 3px 8px; border-radius: 4px; }
@@ -186,6 +186,55 @@
   details.collapsible > summary::-webkit-details-marker { display: none; }
   details.collapsible > summary::after { content: '▾'; margin-left: auto; font-size: 0.85rem; color: #aaa; transition: transform 0.2s; flex-shrink: 0; }
   details.collapsible:not([open]) > summary::after { transform: rotate(-90deg); }
+
+  /* BQ-PLATES */
+  .bq-plates { background: white; border-radius: 10px; padding: 20px; box-shadow: 0 1px 4px rgba(0,0,0,.08); margin-bottom: 20px; border-top: 4px solid #6366f1; }
+  .bq-plates-header { display: flex; align-items: center; gap: 12px; margin-bottom: 6px; }
+  .bq-plates-badge { background: #6366f1; color: white; font-size: 0.7rem; font-weight: 700; padding: 3px 8px; border-radius: 4px; }
+  .bq-plates-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px,1fr)); gap: 10px; margin-bottom: 16px; }
+  .bq-plates-kpi { background: #f8f9fa; border-radius: 8px; padding: 10px 12px; }
+  .bq-plates-kpi .label { font-size: 0.68rem; text-transform: uppercase; color: #888; letter-spacing:.4px; margin-bottom: 4px; }
+  .bq-plates-kpi .value { font-size: 1.1rem; font-weight: 700; color: #1a1a2e; }
+  .bq-plates-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  @media(max-width:700px) { .bq-plates-cols { grid-template-columns: 1fr; } }
+  .plate-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; font-size: 0.82rem; }
+  .plate-label { width: 80px; font-weight: 700; color: #555; font-family: monospace; flex-shrink: 0; }
+  .plate-bar-bg { flex: 1; background: #f0f2f5; border-radius: 4px; height: 14px; overflow: hidden; }
+  .plate-bar { height: 100%; border-radius: 4px; background: #6366f1; transition: width .4s; }
+  .plate-val { width: 80px; text-align: right; font-size: 0.75rem; font-weight: 700; color: #444; flex-shrink: 0; }
+
+  /* BQ-OCCUPANCY */
+  .bq-occ { background: white; border-radius: 10px; padding: 20px; box-shadow: 0 1px 4px rgba(0,0,0,.08); margin-bottom: 20px; border-top: 4px solid #0ea5e9; }
+  .bq-occ-header { display: flex; align-items: center; gap: 12px; margin-bottom: 6px; }
+  .bq-occ-badge { background: #0ea5e9; color: white; font-size: 0.7rem; font-weight: 700; padding: 3px 8px; border-radius: 4px; }
+  .bq-occ-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px,1fr)); gap: 10px; margin-bottom: 16px; }
+  .bq-occ-kpi { background: #f8f9fa; border-radius: 8px; padding: 10px 12px; }
+  .bq-occ-kpi .label { font-size: 0.68rem; text-transform: uppercase; color: #888; letter-spacing:.4px; margin-bottom: 4px; }
+  .bq-occ-kpi .value { font-size: 1.1rem; font-weight: 700; color: #1a1a2e; }
+  .bq-occ-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  @media(max-width:700px) { .bq-occ-cols { grid-template-columns: 1fr; } }
+
+  /* BQ-DURATION */
+  .bq-dur { background: white; border-radius: 10px; padding: 20px; box-shadow: 0 1px 4px rgba(0,0,0,.08); margin-bottom: 20px; border-top: 4px solid #d946ef; }
+  .bq-dur-header { display: flex; align-items: center; gap: 12px; margin-bottom: 6px; }
+  .bq-dur-badge { background: #d946ef; color: white; font-size: 0.7rem; font-weight: 700; padding: 3px 8px; border-radius: 4px; }
+  .bq-dur-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px,1fr)); gap: 10px; margin-bottom: 16px; }
+  .bq-dur-kpi { background: #f8f9fa; border-radius: 8px; padding: 10px 12px; }
+  .bq-dur-kpi .label { font-size: 0.68rem; text-transform: uppercase; color: #888; letter-spacing:.4px; margin-bottom: 4px; }
+  .bq-dur-kpi .value { font-size: 1.1rem; font-weight: 700; color: #1a1a2e; }
+  .bq-dur-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  @media(max-width:700px) { .bq-dur-cols { grid-template-columns: 1fr; } }
+
+  /* BQ-USERS */
+  .bq-users { background: white; border-radius: 10px; padding: 20px; box-shadow: 0 1px 4px rgba(0,0,0,.08); margin-bottom: 20px; border-top: 4px solid #14b8a6; }
+  .bq-users-header { display: flex; align-items: center; gap: 12px; margin-bottom: 6px; }
+  .bq-users-badge { background: #14b8a6; color: white; font-size: 0.7rem; font-weight: 700; padding: 3px 8px; border-radius: 4px; }
+  .bq-users-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px,1fr)); gap: 10px; margin-bottom: 16px; }
+  .bq-users-kpi { background: #f8f9fa; border-radius: 8px; padding: 10px 12px; }
+  .bq-users-kpi .label { font-size: 0.68rem; text-transform: uppercase; color: #888; letter-spacing:.4px; margin-bottom: 4px; }
+  .bq-users-kpi .value { font-size: 1.1rem; font-weight: 700; color: #1a1a2e; }
+  .bq-users-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  @media(max-width:700px) { .bq-users-cols { grid-template-columns: 1fr; } }
 </style>
 </head>
 <body>
@@ -266,19 +315,11 @@
         SD Smart Parking is a facility for <strong>Universidad de los Andes students and professors</strong>
         (<code>@uniandes.edu.co</code>). Any user with a different email domain is considered a
         <span style="background:#fef3c7;color:#92400e;font-weight:700;padding:1px 7px;border-radius:6px;font-size:.75rem;">Visitor / Guest</span>.
-        This breakdown helps identify how much of the parking demand comes from the university community
-        vs. external visitors.
       </p>
       <div class="org-kpi-grid" id="orgKpis"></div>
       <div class="org-cols">
         <div>
           <div class="section-title">Events by Organization (top 8)</div>
-          <p style="font-size:.75rem;color:#888;margin:2px 0 10px;">
-            <span style="background:#dcfce7;color:#15803d;font-weight:700;padding:1px 6px;border-radius:4px;font-size:.7rem;">Uniandes</span>
-            = university community &nbsp;·&nbsp;
-            <span style="background:#fef3c7;color:#92400e;font-weight:700;padding:1px 6px;border-radius:4px;font-size:.7rem;">Visitor</span>
-            = external / guest
-          </p>
           <div id="orgBars"></div>
         </div>
         <div>
@@ -296,7 +337,7 @@
         <h2 style="font-size:.95rem;color:#1a1a2e;font-weight:600">Peak Demand Hours — At what hours of the day is parking demand highest?</h2>
       </summary>
       <p style="font-size:.82rem;color:#555;margin:0 0 14px;line-height:1.6;">
-        Understanding when demand peaks lets us know when the <strong>NSCache pre-warm</strong> (loaded on app launch via <code>withTaskGroup</code>) is most valuable — the app must have fresh spot data ready <em>before</em> the rush, not during it.
+        Understanding when demand peaks lets us know when the <strong>NSCache pre-warm</strong> is most valuable.
       </p>
       <div class="bq-hour-kpis" id="hourKpis"></div>
       <div class="bq-hour-cols">
@@ -319,7 +360,7 @@
         <h2 style="font-size:.95rem;color:#1a1a2e;font-weight:600">Floor Demand — Which floor concentrates the most parking events and longest average stay?</h2>
       </summary>
       <p style="font-size:.82rem;color:#555;margin:0 0 14px;line-height:1.6;">
-        <code>SpotCacheManager</code> stores spots keyed by floor. Knowing which floor is busiest justifies keeping that floor's cache entry in memory longest — and informs which floor the <strong>eventual connectivity</strong> offline banner matters most for.
+        <code>SpotCacheManager</code> stores spots keyed by floor. Knowing which floor is busiest justifies keeping that floor's cache entry in memory longest.
       </p>
       <div class="bq-floor-kpis" id="floorKpis"></div>
       <div class="bq-floor-cols">
@@ -342,11 +383,8 @@
         <h2 style="font-size:.95rem;color:#1a1a2e;font-weight:600">Cost Analytics — Cap reach rate &amp; average payment per car</h2>
       </summary>
       <p style="font-size:.82rem;color:#555;margin:0 0 14px;line-height:1.6;">
-        Derived from <code>vehicleRecords</code> in Firestore. The daily cap is <strong>COP $16,000</strong> (hourly rate × hours, capped).
-        <code>hitDailyCap</code> is written directly on each exit record by the iOS app.
+        Derived from <code>vehicleRecords</code> in Firestore. The daily cap is <strong>COP $16,000</strong>.
       </p>
-
-      <!-- BQ5 KPIs -->
       <div class="section-title">BQ-5 — What share of cars in the SD Building reach the daily cost cap?</div>
       <div class="bq-cost-kpis" id="costCapKpis"></div>
       <div class="bq-cost-cols" style="margin-bottom:0">
@@ -359,10 +397,7 @@
           <canvas id="capRegBar" height="220"></canvas>
         </div>
       </div>
-
       <hr class="cost-divider">
-
-      <!-- BQ6 KPIs -->
       <div class="section-title">BQ-6 — What is the average total payment per car?</div>
       <div class="bq-cost-kpis" id="avgPayKpis"></div>
       <div class="bq-cost-cols">
@@ -451,12 +486,10 @@
       <summary class="bq-rel-header">
         <span class="bq-rel-badge">BQ-RELIABILITY</span>
         <span class="author-badge author-juanes">Juanes</span>
-        <h2 style="font-size:.95rem;color:#1a1a2e;font-weight:600">System Reliability — What percentage of plate readings require admin review due to low OCR confidence?</h2>
+        <h2 style="font-size:.95rem;color:#1a1a2e;font-weight:600">System Reliability — What percentage of plate readings require admin review?</h2>
       </summary>
       <p style="font-size:.82rem;color:#555;margin:0 0 14px;line-height:1.6;">
         Every parking record stores an <code>ocrConfidence</code> score (0–1). Readings below <strong>0.75</strong> are flagged for manual admin review.
-        Thanks to <strong>eventual connectivity</strong>, entries captured offline in the basement (no signal) are still saved with their OCR score and synced back to Firestore automatically —
-        so this reliability view is always complete, even after a connectivity gap.
       </p>
       <div class="bq-rel-kpis" id="relKpis"></div>
       <div class="bq-rel-cols">
@@ -479,35 +512,126 @@
         <h2>Real-Time Accuracy Validation — Are spot counts and queue estimates accurate?</h2>
       </summary>
       <div class="bq13-cols">
-
         <div class="gauge-wrap">
           <div class="gauge-circle" id="gaugeCircle">—%</div>
           <div class="gauge-label" id="gaugeLabel">Data completeness score</div>
         </div>
-
         <div>
           <div class="section-title">Snapshot vs. Event Log Comparison</div>
           <div class="accuracy-rows" id="accRows"></div>
         </div>
-
         <div>
           <div class="section-title">How Real-Time Sync Works</div>
           <ul class="method-list">
             <li><span class="method-dot"></span><div><strong>iOS:</strong> Firestore <code>addSnapshotListener</code> on <code>parkingSpots</code> fires on every document write — no polling, sub-second latency.</div></li>
             <li><span class="method-dot"></span><div><strong>State transitions</strong> written to <code>vehicleRecords</code> with plate, floor, spot, and timestamp on every entry and exit event.</div></li>
-            <li><span class="method-dot"></span><div><strong>Validation method:</strong> occupied count from <code>parkingSpots</code> (isAvailable=false) is cross-checked against the net event-log delta. Drift indicates missed events or stale writes.</div></li>
-            <li><span class="method-dot"></span><div><strong>Queue:</strong> <code>config/parking.queueLength</code> is updated live by the admin app; estimated wait = queueLength × 5 min avg service time.</div></li>
+            <li><span class="method-dot"></span><div><strong>Validation method:</strong> occupied count from <code>parkingSpots</code> is cross-checked against the net event-log delta.</div></li>
+            <li><span class="method-dot"></span><div><strong>Queue:</strong> <code>config/parking.queueLength</code> is updated live by the admin app.</div></li>
           </ul>
         </div>
-
       </div>
-
       <div style="margin-top:20px">
         <div class="section-title">Recent Vehicle Events (last 10)</div>
         <table class="recent-table">
           <thead><tr><th>Time</th><th>Type</th><th>Plate</th><th>Floor</th><th>Spot</th><th>Registered</th><th>Duration</th></tr></thead>
           <tbody id="recentRows"></tbody>
         </table>
+      </div>
+    </details>
+
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <!-- NEW BQs — Juan                                                      -->
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+
+    <!-- BQ-PLATES -->
+    <details class="bq-plates collapsible" open>
+      <summary class="bq-plates-header">
+        <span class="bq-plates-badge">BQ-PLATES</span>
+        <span class="author-badge author-juanes">Juan</span>
+        <h2 style="font-size:.95rem;color:#1a1a2e;font-weight:600">Frequent Visitors — Which vehicle plates visit most often and what is their average parking duration?</h2>
+      </summary>
+      <p style="font-size:.82rem;color:#555;margin:0 0 14px;line-height:1.6;">
+        Queried from <code>vehicleRecords</code> filtering <code>type = "exit"</code> records. Groups by <code>plate</code>, counts total visits, and calculates average <code>durationHours</code> per plate. Top 10 most frequent plates are shown alongside their average stay duration — useful for identifying loyal users and potential premium membership candidates.
+      </p>
+      <div class="bq-plates-kpis" id="platesKpis"></div>
+      <div class="bq-plates-cols">
+        <div>
+          <div class="section-title">Top 10 Plates — Visit Frequency</div>
+          <div id="platesBars"></div>
+        </div>
+        <div>
+          <div class="section-title">Top 10 Plates — Avg Duration per Visit (hrs)</div>
+          <canvas id="platesAvgDurChart" height="280"></canvas>
+        </div>
+      </div>
+    </details>
+
+    <!-- BQ-OCCUPANCY -->
+    <details class="bq-occ collapsible" open>
+      <summary class="bq-occ-header">
+        <span class="bq-occ-badge">BQ-OCCUPANCY</span>
+        <span class="author-badge author-juanes">Juan</span>
+        <h2 style="font-size:.95rem;color:#1a1a2e;font-weight:600">Hourly Occupancy Profile — What is the average parking occupancy percentage for each hour of the day?</h2>
+      </summary>
+      <p style="font-size:.82rem;color:#555;margin:0 0 14px;line-height:1.6;">
+        Queried from <code>parking_occupancy_history</code> collection using the <code>hour</code> and <code>occupancyPercentage</code> attributes. Groups all records by <code>hour</code> and calculates the average <code>occupancyPercentage</code> for each hour. This profile directly feeds the <strong>AI Occupancy Predictor</strong> feature, which uses these historical averages to forecast availability and recommend the best parking time to users.
+      </p>
+      <div class="bq-occ-kpis" id="occKpis"></div>
+      <div class="bq-occ-cols">
+        <div>
+          <div class="section-title">Average Occupancy % by Hour of Day</div>
+          <canvas id="occHourChart" height="220"></canvas>
+        </div>
+        <div>
+          <div class="section-title">Occupancy Heatmap — Low / Medium / High</div>
+          <canvas id="occHeatChart" height="220"></canvas>
+        </div>
+      </div>
+    </details>
+
+    <!-- BQ-DURATION -->
+    <details class="bq-dur collapsible" open>
+      <summary class="bq-dur-header">
+        <span class="bq-dur-badge">BQ-DURATION</span>
+        <span class="author-badge author-juanes">Juan</span>
+        <h2 style="font-size:.95rem;color:#1a1a2e;font-weight:600">Duration by Floor — What is the average parking duration per floor?</h2>
+      </summary>
+      <p style="font-size:.82rem;color:#555;margin:0 0 14px;line-height:1.6;">
+        Queried from <code>vehicleRecords</code> filtering only <code>type = "exit"</code> records, using the <code>floor</code> and <code>durationHours</code> attributes. Groups by <code>floor</code> and calculates the average <code>durationHours</code> per floor. This data informs the <strong>Floor Recommendation</strong> feature — floors with shorter average durations have higher spot turnover and are prioritized in recommendations.
+      </p>
+      <div class="bq-dur-kpis" id="durKpis"></div>
+      <div class="bq-dur-cols">
+        <div>
+          <div class="section-title">Average Duration per Floor (hrs)</div>
+          <canvas id="durFloorChart" height="220"></canvas>
+        </div>
+        <div>
+          <div class="section-title">Duration Distribution — Short / Medium / Long stays</div>
+          <canvas id="durDistChart" height="220"></canvas>
+        </div>
+      </div>
+    </details>
+
+    <!-- BQ-USERS -->
+    <details class="bq-users collapsible" open>
+      <summary class="bq-users-header">
+        <span class="bq-users-badge">BQ-USERS</span>
+        <span class="author-badge author-juanes">Juan</span>
+        <h2 style="font-size:.95rem;color:#1a1a2e;font-weight:600">User Engagement — What percentage of registered users have at least one entry record in the parking lot?</h2>
+      </summary>
+      <p style="font-size:.82rem;color:#555;margin:0 0 14px;line-height:1.6;">
+        Cross-references the <code>vehicleRecords</code> collection (filtering <code>type = "entry"</code>, using <code>ownerEmail</code> to count unique active users) against the <code>users</code> collection (total registered users). This metric measures <strong>platform adoption</strong> — how many registered users have actually used the parking lot vs. those who signed up but never visited.
+      </p>
+      <div class="bq-users-kpis" id="usersKpis"></div>
+      <div class="bq-users-cols">
+        <div>
+          <div class="section-title">Registered Users — Active vs Never Visited</div>
+          <canvas id="usersDonut" height="260"></canvas>
+        </div>
+        <div>
+          <div class="section-title">Active Users — Visits per User Distribution</div>
+          <canvas id="usersVisitsChart" height="260"></canvas>
+        </div>
       </div>
     </details>
 
@@ -610,7 +734,6 @@ async function load() {
     const totalSpots = spots.length;
     const configuredSpots = (cfg.numberOfFloors || 0) * (cfg.spotsPerFloor || 0);
 
-    // Available = isAvailable true; Occupied = isAvailable false
     const avail    = spots.filter(s => s.isAvailable === true).length;
     const occupied = spots.filter(s => s.isAvailable === false).length;
     const occupancyPct = totalSpots ? Math.round((occupied / totalSpots) * 100) : 0;
@@ -654,7 +777,7 @@ async function load() {
       options: { responsive: true, plugins: { legend: { position: 'top' } }, scales: { x: { ticks: { maxTicksLimit: 20 } } } }
     });
 
-    // Peak hours
+    // Peak hours chart
     const peakHours = [7, 8, 9, 10, 11];
     const peakEntries = Array(peakHours.length).fill(0);
     entries.forEach(r => {
@@ -672,7 +795,7 @@ async function load() {
       options: { responsive: true, plugins: { legend: { display: false } } }
     });
 
-    // Floor bars — show available vs occupied clearly
+    // Floor bars
     const floors = {};
     spots.forEach(s => {
       const key = s.floor != null ? s.floor : '?';
@@ -688,9 +811,7 @@ async function load() {
       return `<div class="floor-row">
         <div class="name">${name}</div>
         <div class="floor-stack">
-          <div class="floor-bar-bg">
-            <div class="floor-bar" style="width:${pct}%;background:${color}"></div>
-          </div>
+          <div class="floor-bar-bg"><div class="floor-bar" style="width:${pct}%;background:${color}"></div></div>
           <div class="floor-labels">
             <span style="color:${color};font-weight:600">${d.occ} occupied</span>
             <span style="color:#22c55e;font-weight:600">${d.avail} available</span>
@@ -706,27 +827,16 @@ async function load() {
     const bestHour = peakHours[peakEntries.lastIndexOf(minPeak)];
     const queueLen = cfg.queueLength || 0;
     const estWaitMin = queueLen * 5;
-
     const bqs = [
-      { id: 'BQ-3',  q: 'Probability of finding a spot within 10 min?',
-        answer: prob + '%', note: `${avail} of ${totalSpots} spots currently free` },
-      { id: 'BQ-4',  q: 'Optimal departure window (7–9 AM) to maximize parking success?',
-        answer: bestHour + ':00', note: 'Hour with lowest entry volume = least competition' },
-      { id: 'BQ-5',  q: 'Queue threshold to recommend desisting (> 15 min wait)?',
-        answer: estWaitMin > 15 ? 'Desist recommended' : 'OK to proceed',
-        note: `Queue: ${queueLen} cars — approx. ${estWaitMin} min wait` },
-      { id: 'BQ-6',  q: 'Distance for dynamic queue alerts to en-route users?',
-        answer: '500 m – 1 km', note: 'Geofence radius based on avg approach speed & reaction time' },
+      { id: 'BQ-3',  q: 'Probability of finding a spot within 10 min?', answer: prob + '%', note: `${avail} of ${totalSpots} spots currently free` },
+      { id: 'BQ-4',  q: 'Optimal departure window (7–9 AM) to maximize parking success?', answer: bestHour + ':00', note: 'Hour with lowest entry volume = least competition' },
+      { id: 'BQ-5',  q: 'Queue threshold to recommend desisting (> 15 min wait)?', answer: estWaitMin > 15 ? 'Desist recommended' : 'OK to proceed', note: `Queue: ${queueLen} cars — approx. ${estWaitMin} min wait` },
+      { id: 'BQ-6',  q: 'Distance for dynamic queue alerts to en-route users?', answer: '500 m – 1 km', note: 'Geofence radius based on avg approach speed & reaction time' },
     ];
     document.getElementById('bqGrid').innerHTML = bqs.map(b => `
-      <div class="bq">
-        <div class="id">${b.id}</div>
-        <div class="q">${b.q}</div>
-        <div class="answer">${b.answer}</div>
-        <div class="note">${b.note}</div>
-      </div>`).join('');
+      <div class="bq"><div class="id">${b.id}</div><div class="q">${b.q}</div><div class="answer">${b.answer}</div><div class="note">${b.note}</div></div>`).join('');
 
-    // AI Insights — period-aware, all derived from live Firestore data
+    // AI Insights
     const bestFloor  = Object.entries(floors).sort((a,b) => (a[1].occ/a[1].total) - (b[1].occ/b[1].total))[0];
     const worstFloor = Object.entries(floors).sort((a,b) => (b[1].occ/b[1].total) - (a[1].occ/a[1].total))[0];
     const netFlow        = entries.length - exits.length;
@@ -735,8 +845,6 @@ async function load() {
     const peakHourLabel  = peakHours[peakHourIdx] + ':00';
     const quietHourLabel = peakHours[peakEntries.lastIndexOf(Math.min(...peakEntries))] + ':00';
     const avgDurNum      = durations.length ? (durations.reduce((a,b)=>a+b,0)/durations.length) : 0;
-
-    // Day-of-week breakdown (for weekly view)
     const dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
     const byDay = {};
     dayNames.forEach(d => { byDay[d] = { entries: 0, exits: 0 }; });
@@ -744,162 +852,38 @@ async function load() {
     exits.forEach(r =>   { const d = dayNames[r.ts.getDay()]; if (byDay[d]) byDay[d].exits++;   });
     const busiestDay = dayNames.reduce((a,b) => byDay[a].entries >= byDay[b].entries ? a : b);
     const quietestDay = dayNames.reduce((a,b) => byDay[a].entries <= byDay[b].entries ? a : b);
-
-    // Days with activity (for monthly avg)
     const activeDays = new Set(records.map(r => r.ts.toDateString())).size || 1;
     const avgEntriesPerDay = (entries.length / activeDays).toFixed(1);
 
     let insights;
-
     if (rangeType === 'day') {
       insights = [
-        {
-          label: 'Live Occupancy',
-          text: occupancyPct >= 90
-            ? `Critical — only ${avail} spots left (${occupancyPct}% full). High risk of arriving users finding no space.`
-            : occupancyPct >= 60
-            ? `${occupancyPct}% occupied today. ${avail} spots available — moderate wait times likely.`
-            : `Favorable conditions today. ${avail} of ${totalSpots} spots are free (${100-occupancyPct}% availability).`,
-          action: occupancyPct >= 90 ? 'Desist alerts should be active for en-route users.' : null
-        },
-        {
-          label: 'Best Arrival Window',
-          text: entries.length
-            ? `Today's quietest arrival hour is ${quietHourLabel} with the lowest recorded entries. Arriving then maximizes spot availability.`
-            : 'No entry data recorded yet today to identify the optimal arrival window.',
-          action: entries.length ? `Peak congestion today is at ${peakHourLabel} — users should avoid this window.` : null
-        },
-        {
-          label: 'Today\'s Traffic Flow',
-          text: records.length === 0
-            ? 'No vehicle events recorded for today yet.'
-            : `${entries.length} arrivals and ${exits.length} departures so far today. Net: ${netFlow > 0 ? '+' : ''}${netFlow} vehicles currently parked from today's activity.`,
-          action: avgDurNum > 0 ? `Average session length today is ${avgDurNum.toFixed(1)}h — spot turnover is ${avgDurNum < 2 ? 'fast' : avgDurNum < 4 ? 'moderate' : 'slow'}.` : null
-        },
-        {
-          label: 'Queue Pressure',
-          text: queueLen === 0
-            ? 'No queue at the entrance right now. Users arriving today face no additional wait.'
-            : `Active queue of ${queueLen} vehicles today — estimated ${estWaitMin} min wait at current rate.`,
-          action: estWaitMin > 15 ? 'Recommend users within 1 km reconsider their route (BQ-5 threshold exceeded).' : null
-        },
-        {
-          label: 'Best Floor Right Now',
-          text: bestFloor
-            ? `${bestFloor[0]} is today's best option with ${bestFloor[1].avail} free spots (${Math.round((bestFloor[1].avail/bestFloor[1].total)*100)}% availability).`
-            : 'No floor data available.',
-          action: worstFloor && worstFloor[0] !== bestFloor[0]
-            ? `${worstFloor[0]} is the most congested at ${Math.round((worstFloor[1].occ/worstFloor[1].total)*100)}% occupied — route users away.`
-            : null
-        },
-        {
-          label: 'User Registration',
-          text: registeredPct !== null
-            ? `${registeredPct}% of today's vehicle events are from registered users. ${100-registeredPct}% are unregistered walk-ins.`
-            : 'No vehicle events today to assess user registration.',
-          action: registeredPct !== null && registeredPct < 40 ? 'High unregistered rate today may reduce spot reservation reliability.' : null
-        },
+        { label: 'Live Occupancy', text: occupancyPct >= 90 ? `Critical — only ${avail} spots left (${occupancyPct}% full).` : occupancyPct >= 60 ? `${occupancyPct}% occupied today. ${avail} spots available.` : `Favorable conditions today. ${avail} of ${totalSpots} spots are free.`, action: occupancyPct >= 90 ? 'Desist alerts should be active for en-route users.' : null },
+        { label: 'Best Arrival Window', text: entries.length ? `Today's quietest arrival hour is ${quietHourLabel}.` : 'No entry data recorded yet today.', action: entries.length ? `Peak congestion today is at ${peakHourLabel}.` : null },
+        { label: 'Today\'s Traffic Flow', text: records.length === 0 ? 'No vehicle events recorded for today yet.' : `${entries.length} arrivals and ${exits.length} departures so far today.`, action: avgDurNum > 0 ? `Average session length today is ${avgDurNum.toFixed(1)}h.` : null },
+        { label: 'Queue Pressure', text: queueLen === 0 ? 'No queue at the entrance right now.' : `Active queue of ${queueLen} vehicles — estimated ${estWaitMin} min wait.`, action: estWaitMin > 15 ? 'Recommend users within 1 km reconsider their route.' : null },
+        { label: 'Best Floor Right Now', text: bestFloor ? `${bestFloor[0]} is today's best option with ${bestFloor[1].avail} free spots.` : 'No floor data available.', action: worstFloor && worstFloor[0] !== bestFloor?.[0] ? `${worstFloor[0]} is most congested.` : null },
+        { label: 'User Registration', text: registeredPct !== null ? `${registeredPct}% of today's vehicle events are from registered users.` : 'No vehicle events today.', action: null },
       ];
-
     } else if (rangeType === 'week') {
       insights = [
-        {
-          label: 'Weekly Occupancy',
-          text: occupancyPct >= 90
-            ? `Parking is critically full this week at ${occupancyPct}%. Only ${avail} spots remain across all floors.`
-            : `Current occupancy stands at ${occupancyPct}% this week. ${avail} spots available across ${totalSpots} total.`,
-          action: occupancyPct >= 75 ? 'High weekly occupancy — consider reviewing capacity or expanding notifications.' : null
-        },
-        {
-          label: 'Busiest Day This Week',
-          text: entries.length
-            ? `${busiestDay} recorded the highest arrivals this week (${byDay[busiestDay].entries} entries). ${quietestDay} was the quietest (${byDay[quietestDay].entries} entries).`
-            : 'No entry records this week to determine the busiest day.',
-          action: entries.length ? `Users planning to visit should prefer ${quietestDay} for the best availability.` : null
-        },
-        {
-          label: 'Weekly Peak Hour',
-          text: entries.length
-            ? `The busiest arrival hour across this week is ${peakHourLabel} with ${Math.max(...peakEntries)} entries. The quietest morning window is ${quietHourLabel}.`
-            : 'Insufficient data this week to identify a peak arrival hour.',
-          action: `Departing before ${peakHourLabel} significantly improves the chance of securing a spot.`
-        },
-        {
-          label: 'Queue Status',
-          text: queueLen === 0
-            ? 'No active queue this week. Arrival experience is smooth with no reported wait.'
-            : `Queue at ${queueLen} vehicles this week — approx. ${estWaitMin} min estimated wait. ${estWaitMin > 15 ? 'Above the 15-min desist threshold.' : 'Within acceptable range.'}`,
-          action: estWaitMin > 15 ? 'Desist alerts should trigger for users beyond the 1 km geofence radius.' : null
-        },
-        {
-          label: 'Weekly Traffic Volume',
-          text: records.length === 0
-            ? 'No vehicle records found for this week.'
-            : `${entries.length} total arrivals and ${exits.length} departures this week. Net flow: ${netFlow > 0 ? '+' : ''}${netFlow}. ${netFlow > 10 ? 'Occupancy grew through the week.' : netFlow < -5 ? 'More vehicles left than arrived.' : 'Balanced inflow and outflow.'}`,
-          action: avgDurNum > 0 ? `Average stay duration this week: ${avgDurNum.toFixed(1)}h per session.` : null
-        },
-        {
-          label: 'Floor Efficiency',
-          text: bestFloor && worstFloor
-            ? `Best floor this week: ${bestFloor[0]} (${Math.round((bestFloor[1].avail/bestFloor[1].total)*100)}% free). Worst: ${worstFloor[0]} (${Math.round((worstFloor[1].occ/worstFloor[1].total)*100)}% occupied).`
-            : 'Insufficient floor data this week.',
-          action: registeredPct !== null ? `${registeredPct}% of this week's events came from registered users.` : null
-        },
+        { label: 'Weekly Occupancy', text: `Current occupancy stands at ${occupancyPct}% this week. ${avail} spots available across ${totalSpots} total.`, action: occupancyPct >= 75 ? 'High weekly occupancy — consider reviewing capacity.' : null },
+        { label: 'Busiest Day This Week', text: entries.length ? `${busiestDay} recorded the highest arrivals (${byDay[busiestDay].entries} entries). ${quietestDay} was the quietest.` : 'No entry records this week.', action: entries.length ? `Users should prefer ${quietestDay} for the best availability.` : null },
+        { label: 'Weekly Peak Hour', text: entries.length ? `The busiest arrival hour this week is ${peakHourLabel}. The quietest morning window is ${quietHourLabel}.` : 'Insufficient data this week.', action: `Departing before ${peakHourLabel} significantly improves spot chances.` },
+        { label: 'Queue Status', text: queueLen === 0 ? 'No active queue this week.' : `Queue at ${queueLen} vehicles — approx. ${estWaitMin} min estimated wait.`, action: estWaitMin > 15 ? 'Desist alerts should trigger for users beyond the 1 km geofence.' : null },
+        { label: 'Weekly Traffic Volume', text: records.length === 0 ? 'No vehicle records found for this week.' : `${entries.length} total arrivals and ${exits.length} departures this week.`, action: avgDurNum > 0 ? `Average stay duration this week: ${avgDurNum.toFixed(1)}h per session.` : null },
+        { label: 'Floor Efficiency', text: bestFloor && worstFloor ? `Best floor this week: ${bestFloor[0]}. Worst: ${worstFloor[0]}.` : 'Insufficient floor data.', action: registeredPct !== null ? `${registeredPct}% of this week's events came from registered users.` : null },
       ];
-
-    } else { // month
+    } else {
       insights = [
-        {
-          label: 'Monthly Volume',
-          text: records.length === 0
-            ? 'No vehicle records found for this month.'
-            : `${entries.length} arrivals and ${exits.length} departures logged this month across ${activeDays} active days. Average of ${avgEntriesPerDay} arrivals per day.`,
-          action: avgEntriesPerDay > 10 ? 'High daily volume — system is under consistent demand this month.' : null
-        },
-        {
-          label: 'Monthly Occupancy',
-          text: `Current occupancy is ${occupancyPct}% (${occupied} occupied, ${avail} available). ${
-            occupancyPct >= 80 ? 'The facility has been running near capacity.' :
-            occupancyPct >= 50 ? 'Occupancy has been moderate throughout the month.' :
-            'The facility has had comfortable availability this month.'
-          }`,
-          action: occupancyPct >= 80 ? 'Consider reviewing floor configuration or user caps for next month.' : null
-        },
-        {
-          label: 'Peak Arrival Pattern',
-          text: entries.length
-            ? `Over this month, arrivals peak at ${peakHourLabel} in the morning window. The lowest-traffic hour is ${quietHourLabel} — optimal for users wanting a guaranteed spot.`
-            : 'No arrival data available for this month to determine patterns.',
-          action: 'Monthly pattern confirms: arriving at ' + quietHourLabel + ' consistently offers the highest availability.'
-        },
-        {
-          label: 'Session Duration Trend',
-          text: avgDurNum > 0
-            ? `Average parking session this month is ${avgDurNum.toFixed(1)}h. ${avgDurNum < 2 ? 'Short stays dominate — high spot turnover.' : avgDurNum < 5 ? 'Mid-length stays are typical — moderate turnover.' : 'Long stays are common — spots are held for extended periods, reducing availability.'}`
-            : 'No duration data available for this month.',
-          action: avgDurNum >= 5 ? 'Long average sessions may warrant time-limit policies to improve spot availability.' : null
-        },
-        {
-          label: 'Floor Demand',
-          text: bestFloor && worstFloor
-            ? `This month ${worstFloor[0]} has seen the highest sustained demand (${Math.round((worstFloor[1].occ/worstFloor[1].total)*100)}% occupied). ${bestFloor[0]} remains the most accessible at ${Math.round((bestFloor[1].avail/bestFloor[1].total)*100)}% free.`
-            : 'No floor breakdown available for this month.',
-          action: 'Route users to ' + (bestFloor ? bestFloor[0] : 'the least occupied floor') + ' first to reduce search time.'
-        },
-        {
-          label: 'Registration Coverage',
-          text: registeredPct !== null
-            ? `${registeredPct}% of this month's vehicle events are from registered users (${records.filter(r=>r.isRegistered).length} of ${records.length} events). ${
-                registeredPct >= 70 ? 'Strong registration coverage this month.' :
-                registeredPct >= 40 ? 'Mixed registration — a significant portion are walk-in or unregistered.' :
-                'Low registration rate this month — most activity is from unregistered vehicles.'
-              }`
-            : 'No vehicle records this month to assess registration.',
-          action: registeredPct !== null && registeredPct < 50 ? 'Promote app registration to improve data accuracy and reservation reliability.' : null
-        },
+        { label: 'Monthly Volume', text: records.length === 0 ? 'No vehicle records found for this month.' : `${entries.length} arrivals and ${exits.length} departures across ${activeDays} active days. Average of ${avgEntriesPerDay} arrivals per day.`, action: avgEntriesPerDay > 10 ? 'High daily volume — system is under consistent demand.' : null },
+        { label: 'Monthly Occupancy', text: `Current occupancy is ${occupancyPct}% (${occupied} occupied, ${avail} available).`, action: occupancyPct >= 80 ? 'Consider reviewing floor configuration.' : null },
+        { label: 'Peak Arrival Pattern', text: entries.length ? `Over this month, arrivals peak at ${peakHourLabel}. Lowest-traffic hour is ${quietHourLabel}.` : 'No arrival data available for this month.', action: 'Monthly pattern confirms: arriving at ' + quietHourLabel + ' consistently offers the highest availability.' },
+        { label: 'Session Duration Trend', text: avgDurNum > 0 ? `Average parking session this month is ${avgDurNum.toFixed(1)}h.` : 'No duration data available for this month.', action: avgDurNum >= 5 ? 'Long average sessions may warrant time-limit policies.' : null },
+        { label: 'Floor Demand', text: bestFloor && worstFloor ? `This month ${worstFloor[0]} has seen the highest demand. ${bestFloor[0]} remains the most accessible.` : 'No floor breakdown available.', action: 'Route users to ' + (bestFloor ? bestFloor[0] : 'the least occupied floor') + ' first.' },
+        { label: 'Registration Coverage', text: registeredPct !== null ? `${registeredPct}% of this month's vehicle events are from registered users.` : 'No vehicle records this month.', action: registeredPct !== null && registeredPct < 50 ? 'Promote app registration to improve data accuracy.' : null },
       ];
     }
-
     document.getElementById('insightsGrid').innerHTML = insights.map(i => `
       <div class="insight-card">
         <div class="ic-label">${i.label}</div>
@@ -907,438 +891,413 @@ async function load() {
         ${i.action ? `<div class="ic-action">${i.action}</div>` : ''}
       </div>`).join('');
 
-    // BQ-13 Accuracy gauge — measures data completeness of records in period
+    // BQ-13
     const completeRecords = records.filter(r => r.plate && r.floor != null && r.spotNumber != null).length;
     const completeness = records.length ? Math.round((completeRecords / records.length) * 100) : 100;
     const gaugeColor = completeness >= 85 ? '#22c55e' : completeness >= 60 ? '#f59e0b' : '#ef4444';
     const gaugeVerdict = completeness >= 85 ? 'Complete event data' : completeness >= 60 ? 'Partial data gaps' : 'Significant data gaps';
-
     document.getElementById('gaugeCircle').textContent = completeness + '%';
     document.getElementById('gaugeCircle').style.background = gaugeColor;
     document.getElementById('gaugeLabel').textContent = `${gaugeVerdict} — ${completeRecords} of ${records.length} records have plate + floor + spot`;
-
     const logNet = entries.length - exits.length;
     document.getElementById('accRows').innerHTML = [
-      { label: 'Occupied spots (parkingSpots snapshot)',         val: occupied,                  badge: null },
-      { label: 'Available spots (parkingSpots snapshot)',        val: avail,                     badge: null },
-      { label: 'Net inflow this period (entries – exits)',       val: (logNet >= 0 ? '+' : '') + logNet, badge: null },
-      { label: 'Directional consistency',
-        val: (logNet >= 0 && occupied >= avail) || (logNet < 0 && avail > occupied) ? 'Consistent' : 'Check data',
-        badge: (logNet >= 0 && occupied >= avail) || (logNet <= 0 && avail >= occupied) ? 'badge-green' : 'badge-yellow',
-        btext: (logNet >= 0 && occupied >= avail) || (logNet <= 0 && avail >= occupied) ? 'OK' : 'Review' },
-      { label: 'Records with complete data (plate+floor+spot)', val: `${completeRecords} / ${records.length}`,
-        badge: completeness >= 85 ? 'badge-green' : completeness >= 60 ? 'badge-yellow' : 'badge-red',
-        btext: completeness + '%' },
-      { label: 'Queue length (config/parking)',                  val: queueLen + ' cars',        badge: null },
-      { label: 'Estimated wait time',                            val: estWaitMin + ' min',
-        badge: estWaitMin > 15 ? 'badge-red' : 'badge-green',
-        btext: estWaitMin > 15 ? 'Desist zone' : 'Acceptable' },
-    ].map(r => `
-      <div class="acc-row">
-        <span class="acc-label">${r.label}</span>
-        <span style="display:flex;gap:6px;align-items:center">
-          <span class="acc-val">${r.val}</span>
-          ${r.badge ? `<span class="acc-badge ${r.badge}">${r.btext}</span>` : ''}
-        </span>
-      </div>`).join('');
+      { label: 'Occupied spots (parkingSpots snapshot)', val: occupied, badge: null },
+      { label: 'Available spots (parkingSpots snapshot)', val: avail, badge: null },
+      { label: 'Net inflow this period (entries – exits)', val: (logNet >= 0 ? '+' : '') + logNet, badge: null },
+      { label: 'Directional consistency', val: (logNet >= 0 && occupied >= avail) || (logNet < 0 && avail > occupied) ? 'Consistent' : 'Check data', badge: (logNet >= 0 && occupied >= avail) || (logNet <= 0 && avail >= occupied) ? 'badge-green' : 'badge-yellow', btext: (logNet >= 0 && occupied >= avail) || (logNet <= 0 && avail >= occupied) ? 'OK' : 'Review' },
+      { label: 'Records with complete data (plate+floor+spot)', val: `${completeRecords} / ${records.length}`, badge: completeness >= 85 ? 'badge-green' : completeness >= 60 ? 'badge-yellow' : 'badge-red', btext: completeness + '%' },
+      { label: 'Queue length (config/parking)', val: queueLen + ' cars', badge: null },
+      { label: 'Estimated wait time', val: estWaitMin + ' min', badge: estWaitMin > 15 ? 'badge-red' : 'badge-green', btext: estWaitMin > 15 ? 'Desist zone' : 'Acceptable' },
+    ].map(r => `<div class="acc-row"><span class="acc-label">${r.label}</span><span style="display:flex;gap:6px;align-items:center"><span class="acc-val">${r.val}</span>${r.badge ? `<span class="acc-badge ${r.badge}">${r.btext}</span>` : ''}</span></div>`).join('');
 
-    // BQ-ORG: Organization Clients
-    // Extracts the email domain from ownerEmail to derive the organization.
-    // Unregistered vehicles (no ownerEmail) are grouped as "Unregistered".
-    const domainLabels = {
-      // Universidad de los Andes
-      'uniandes.edu.co': 'Uniandes',
-      // Google
-      'gmail.com': 'Gmail',
-      'googlemail.com': 'Gmail',
-      // Microsoft
-      'hotmail.com': 'Hotmail',
-      'hotmail.es': 'Hotmail',
-      'outlook.com': 'Outlook',
-      'outlook.es': 'Outlook',
-      'live.com': 'Outlook',
-      'msn.com': 'Outlook',
-      // Yahoo
-      'yahoo.com': 'Yahoo',
-      'yahoo.es': 'Yahoo',
-      'ymail.com': 'Yahoo',
-      // Colombian universities
-      'javeriana.edu.co': 'Javeriana',
-      'unal.edu.co': 'Unal',
-      'udea.edu.co': 'U. de Antioquia',
-      'eafit.edu.co': 'EAFIT',
-      'rosario.edu.co': 'U. del Rosario',
-      'uan.edu.co': 'U. Antonio Nariño',
-      'upb.edu.co': 'UPB',
-      'externado.edu.co': 'U. Externado',
-      'sabana.edu.co': 'U. de La Sabana',
-      'uninorte.edu.co': 'Uninorte',
-      // Corporate / Other
-      'icloud.com': 'Apple iCloud',
-      'me.com': 'Apple iCloud',
-      'protonmail.com': 'ProtonMail',
-      'proton.me': 'ProtonMail',
-    };
-
-    // Group unknown .edu.co domains under "Other University"
+    // BQ-ORG
+    const domainLabels = { 'uniandes.edu.co':'Uniandes','gmail.com':'Gmail','googlemail.com':'Gmail','hotmail.com':'Hotmail','hotmail.es':'Hotmail','outlook.com':'Outlook','outlook.es':'Outlook','live.com':'Outlook','msn.com':'Outlook','yahoo.com':'Yahoo','yahoo.es':'Yahoo','ymail.com':'Yahoo','javeriana.edu.co':'Javeriana','unal.edu.co':'Unal','udea.edu.co':'U. de Antioquia','eafit.edu.co':'EAFIT','rosario.edu.co':'U. del Rosario','icloud.com':'Apple iCloud','me.com':'Apple iCloud','protonmail.com':'ProtonMail','proton.me':'ProtonMail' };
     function resolveOrg(email) {
       if (!email || !email.includes('@')) return 'Unregistered';
       const domain = email.split('@')[1].toLowerCase();
       if (domainLabels[domain]) return domainLabels[domain];
       if (domain.endsWith('.edu.co') || domain.endsWith('.edu')) return 'Other University';
       if (domain.endsWith('.gov.co') || domain.endsWith('.gov')) return 'Government';
-      if (domain.endsWith('.com.co') || domain.endsWith('.co')) return 'Other (Colombia)';
       return 'Other';
     }
-
-    const orgCounts = {};   // { orgName: { total, registered } }
-    const allPeriodRecords = records; // already filtered by period
-    allPeriodRecords.forEach(r => {
+    const orgCounts = {};
+    records.forEach(r => {
       const org = resolveOrg(r.ownerEmail);
       if (!orgCounts[org]) orgCounts[org] = { total: 0, registered: 0 };
       orgCounts[org].total++;
       if (r.isRegistered) orgCounts[org].registered++;
     });
-
     const orgEntries = Object.entries(orgCounts).sort((a,b) => b[1].total - a[1].total);
     const topOrgs = orgEntries.slice(0, 8);
     const maxOrgCount = topOrgs[0]?.[1].total || 1;
-    const totalOrgEvents = allPeriodRecords.length || 1;
+    const totalOrgEvents = records.length || 1;
     const uniqueOrgs = orgEntries.length;
     const topOrg = topOrgs[0]?.[0] || '—';
-
     const uniandesTotal = (orgCounts['Uniandes'] || {}).total || 0;
     const visitorTotal  = totalOrgEvents - uniandesTotal;
     const visitorPct    = totalOrgEvents > 0 ? Math.round((visitorTotal / totalOrgEvents) * 100) : 0;
     const uniPct        = totalOrgEvents > 0 ? Math.round((uniandesTotal / totalOrgEvents) * 100) : 0;
-
-    // KPI cards
     document.getElementById('orgKpis').innerHTML = [
       { label: 'Unique Organizations', value: uniqueOrgs },
-      { label: 'Top Organization',     value: topOrg },
-      { label: 'Uniandes Community',   value: `${uniandesTotal} (${uniPct}%)`, color: '#15803d' },
-      { label: 'Visitors / Guests',    value: `${visitorTotal} (${visitorPct}%)`, color: '#92400e' },
+      { label: 'Top Organization', value: topOrg },
+      { label: 'Uniandes Community', value: `${uniandesTotal} (${uniPct}%)`, color: '#15803d' },
+      { label: 'Visitors / Guests', value: `${visitorTotal} (${visitorPct}%)`, color: '#92400e' },
     ].map(k => `<div class="org-kpi"><div class="label">${k.label}</div><div class="value" style="color:${k.color||'#1a1a2e'}">${k.value}</div></div>`).join('');
-
-    // Bar chart — tag each row as Uniandes or Visitor
     const orgColors = ['#22c55e','#4f8ef7','#f59e0b','#8b5cf6','#ef4444','#14b8a6','#f97316','#64748b'];
     document.getElementById('orgBars').innerHTML = topOrgs.map(([name, d], i) => {
-      const pct      = Math.round((d.total / maxOrgCount) * 100);
+      const pct = Math.round((d.total / maxOrgCount) * 100);
       const sharePct = Math.round((d.total / totalOrgEvents) * 100);
-      const isUni    = name === 'Uniandes';
-      const tag      = isUni
-        ? `<span style="font-size:.65rem;font-weight:700;background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;margin-left:6px;">Uniandes</span>`
-        : `<span style="font-size:.65rem;font-weight:700;background:#fef3c7;color:#92400e;padding:1px 6px;border-radius:4px;margin-left:6px;">Visitor</span>`;
-      return `<div class="org-row">
-        <div class="org-name" title="${name}">${name}${tag}</div>
-        <div class="org-bar-bg"><div class="org-bar" style="width:${pct}%;background:${isUni ? '#22c55e' : orgColors[i % orgColors.length]}"></div></div>
-        <div class="org-count">${d.total}</div>
-        <div class="org-pct">${sharePct}%</div>
-      </div>`;
-    }).join('') || '<p style="color:#888;font-size:.8rem">No organization data in this period</p>';
-
-    // Doughnut: Uniandes vs Visitors split
+      const isUni = name === 'Uniandes';
+      const tag = isUni ? `<span style="font-size:.65rem;font-weight:700;background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;margin-left:6px;">Uniandes</span>` : `<span style="font-size:.65rem;font-weight:700;background:#fef3c7;color:#92400e;padding:1px 6px;border-radius:4px;margin-left:6px;">Visitor</span>`;
+      return `<div class="org-row"><div class="org-name" title="${name}">${name}${tag}</div><div class="org-bar-bg"><div class="org-bar" style="width:${pct}%;background:${isUni ? '#22c55e' : orgColors[i % orgColors.length]}"></div></div><div class="org-count">${d.total}</div><div class="org-pct">${sharePct}%</div></div>`;
+    }).join('') || '<p style="color:#888;font-size:.8rem">No data</p>';
     let orgChartInst = Chart.getChart('orgChart');
     if (orgChartInst) orgChartInst.destroy();
-    new Chart(document.getElementById('orgChart'), {
-      type: 'doughnut',
-      data: {
-        labels: ['Uniandes (Community)', 'Visitors / Guests'],
-        datasets: [{
-          data: [uniandesTotal, visitorTotal],
-          backgroundColor: ['#22c55e', '#f59e0b'],
-          borderWidth: 2
-        }]
-      },
-      options: {
-        responsive: true,
-        plugins: {
-          legend: { position: 'bottom', labels: { font: { size: 11 } } },
-          tooltip: {
-            callbacks: {
-              label: ctx => {
-                const [,v] = topOrgs[ctx.dataIndex];
-                return ` ${ctx.label}: ${v.total} events (${v.registered} registered)`;
-              }
-            }
-          }
-        }
-      }
-    });
+    new Chart(document.getElementById('orgChart'), { type: 'doughnut', data: { labels: ['Uniandes (Community)', 'Visitors / Guests'], datasets: [{ data: [uniandesTotal, visitorTotal], backgroundColor: ['#22c55e', '#f59e0b'], borderWidth: 2 }] }, options: { responsive: true, plugins: { legend: { position: 'bottom' } } } });
 
-    // ── BQ-HOUR: Peak Demand Hours ──────────────────────────────────────────
+    // BQ-HOUR
     const entriesByHour = Array(24).fill(0);
     const exitsByHour   = Array(24).fill(0);
     records.forEach(r => {
       const ts = r.timestamp?.toDate ? r.timestamp.toDate() : new Date(r.timestamp);
-      const h  = ts.getHours();
+      const h = ts.getHours();
       if (r.type === 'entry') entriesByHour[h]++;
-      else                    exitsByHour[h]++;
+      else exitsByHour[h]++;
     });
-
-    const peakHour     = entriesByHour.indexOf(Math.max(...entriesByHour));
-    const quietHour    = entriesByHour.indexOf(Math.min(...entriesByHour.filter(v => v > 0)));
-    const peakCount    = entriesByHour[peakHour];
-    const hourLabels   = Array.from({length:24}, (_,i) => `${String(i).padStart(2,'0')}:00`);
+    const peakHour  = entriesByHour.indexOf(Math.max(...entriesByHour));
+    const quietHour = entriesByHour.indexOf(Math.min(...entriesByHour.filter(v => v > 0)));
+    const peakCount = entriesByHour[peakHour];
+    const hourLabels = Array.from({length:24}, (_,i) => `${String(i).padStart(2,'0')}:00`);
     const morningTotal = entriesByHour.slice(6,12).reduce((a,b)=>a+b,0);
     const afterTotal   = entriesByHour.slice(12,20).reduce((a,b)=>a+b,0);
-
     document.getElementById('hourKpis').innerHTML = [
-      { label: 'Peak Entry Hour',   value: `${hourLabels[peakHour]}`, sub: `${peakCount} events` },
-      { label: 'Quietest Hour',     value: quietHour >= 0 ? hourLabels[quietHour] : '—' },
-      { label: 'Morning (6–12h)',   value: morningTotal, sub: 'entries' },
-      { label: 'Afternoon (12–20h)',value: afterTotal,   sub: 'entries' },
+      { label: 'Peak Entry Hour', value: hourLabels[peakHour], sub: `${peakCount} events` },
+      { label: 'Quietest Hour', value: quietHour >= 0 ? hourLabels[quietHour] : '—' },
+      { label: 'Morning (6–12h)', value: morningTotal, sub: 'entries' },
+      { label: 'Afternoon (12–20h)', value: afterTotal, sub: 'entries' },
     ].map(k => `<div class="bq-hour-kpi"><div class="label">${k.label}</div><div class="value">${k.value}</div>${k.sub?`<div style="font-size:.68rem;color:#888">${k.sub}</div>`:''}</div>`).join('');
-
     const hourBarColors = hourLabels.map((_,i) => i === peakHour ? '#8b5cf6' : '#c4b5fd');
     let hourChartInst = Chart.getChart('hourChart');
     if (hourChartInst) hourChartInst.destroy();
-    new Chart(document.getElementById('hourChart'), {
-      type: 'bar',
-      data: {
-        labels: hourLabels,
-        datasets: [{ label: 'Entries', data: entriesByHour, backgroundColor: hourBarColors, borderRadius: 3 }]
-      },
-      options: {
-        responsive: true,
-        plugins: { legend: { display: false } },
-        scales: {
-          x: { ticks: { font: { size: 9 }, maxRotation: 45 } },
-          y: { beginAtZero: true, ticks: { stepSize: 1 } }
-        }
-      }
-    });
-
+    new Chart(document.getElementById('hourChart'), { type: 'bar', data: { labels: hourLabels, datasets: [{ label: 'Entries', data: entriesByHour, backgroundColor: hourBarColors, borderRadius: 3 }] }, options: { responsive: true, plugins: { legend: { display: false } }, scales: { x: { ticks: { font: { size: 9 }, maxRotation: 45 } }, y: { beginAtZero: true, ticks: { stepSize: 1 } } } } });
     let hourExitInst = Chart.getChart('hourExitChart');
     if (hourExitInst) hourExitInst.destroy();
-    new Chart(document.getElementById('hourExitChart'), {
-      type: 'bar',
-      data: {
-        labels: hourLabels,
-        datasets: [
-          { label: 'Entries', data: entriesByHour, backgroundColor: '#8b5cf6', borderRadius: 3 },
-          { label: 'Exits',   data: exitsByHour,   backgroundColor: '#f59e0b', borderRadius: 3 }
-        ]
-      },
-      options: {
-        responsive: true,
-        plugins: { legend: { position: 'bottom', labels: { font: { size: 10 } } } },
-        scales: {
-          x: { stacked: false, ticks: { font: { size: 9 }, maxRotation: 45 } },
-          y: { beginAtZero: true, ticks: { stepSize: 1 } }
-        }
-      }
-    });
+    new Chart(document.getElementById('hourExitChart'), { type: 'bar', data: { labels: hourLabels, datasets: [{ label: 'Entries', data: entriesByHour, backgroundColor: '#8b5cf6', borderRadius: 3 }, { label: 'Exits', data: exitsByHour, backgroundColor: '#f59e0b', borderRadius: 3 }] }, options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { font: { size: 10 } } } }, scales: { x: { stacked: false, ticks: { font: { size: 9 }, maxRotation: 45 } }, y: { beginAtZero: true } } } });
 
-    // ── BQ-FLOOR: Floor Demand & Dwell Time ─────────────────────────────────
-    const floorData = {}; // { floor: { entries, totalDur, durCount } }
+    // BQ-FLOOR (existing)
+    const floorData = {};
     records.forEach(r => {
       const f = r.floor ?? 'Unknown';
       if (!floorData[f]) floorData[f] = { entries: 0, totalDur: 0, durCount: 0 };
       floorData[f].entries++;
-      if (r.durationHours != null && r.durationHours > 0) {
-        floorData[f].totalDur  += r.durationHours;
-        floorData[f].durCount  += 1;
-      }
+      if (r.durationHours != null && r.durationHours > 0) { floorData[f].totalDur += r.durationHours; floorData[f].durCount += 1; }
     });
-
-    const floorEntries = Object.entries(floorData)
-      .filter(([f]) => f !== 'Unknown')
-      .sort((a,b) => b[1].entries - a[1].entries);
-
-    const busiestFloor  = floorEntries[0]?.[0] ?? '—';
-    const busiestCount  = floorEntries[0]?.[1].entries ?? 0;
+    const floorEntries = Object.entries(floorData).filter(([f]) => f !== 'Unknown').sort((a,b) => b[1].entries - a[1].entries);
+    const busiestFloor = floorEntries[0]?.[0] ?? '—';
+    const busiestCount = floorEntries[0]?.[1].entries ?? 0;
     const allDurRecords = floorEntries.reduce((s,[,v])=>s+v.durCount,0);
-    const allDurSum     = floorEntries.reduce((s,[,v])=>s+v.totalDur,0);
+    const allDurSum = floorEntries.reduce((s,[,v])=>s+v.totalDur,0);
     const overallAvgDur = allDurRecords > 0 ? (allDurSum / allDurRecords).toFixed(1) : '—';
-    const maxDur        = Math.max(...floorEntries.map(([,v])=> v.durCount>0 ? v.totalDur/v.durCount : 0), 1);
-
+    const maxDur = Math.max(...floorEntries.map(([,v])=> v.durCount>0 ? v.totalDur/v.durCount : 0), 1);
     document.getElementById('floorKpis').innerHTML = [
-      { label: 'Busiest Floor',      value: `Floor ${busiestFloor}`, sub: `${busiestCount} events` },
-      { label: 'Overall Avg Stay',   value: overallAvgDur !== '—' ? `${overallAvgDur} hrs` : '—' },
-      { label: 'Floors with Data',   value: floorEntries.length },
+      { label: 'Busiest Floor', value: `Floor ${busiestFloor}`, sub: `${busiestCount} events` },
+      { label: 'Overall Avg Stay', value: overallAvgDur !== '—' ? `${overallAvgDur} hrs` : '—' },
+      { label: 'Floors with Data', value: floorEntries.length },
     ].map(k => `<div class="bq-floor-kpi"><div class="label">${k.label}</div><div class="value">${k.value}</div>${k.sub?`<div style="font-size:.68rem;color:#888">${k.sub}</div>`:''}</div>`).join('');
-
     const floorColors = ['#f59e0b','#fbbf24','#fcd34d','#fde68a','#fef3c7'];
     let floorEventInst = Chart.getChart('floorEventChart');
     if (floorEventInst) floorEventInst.destroy();
-    new Chart(document.getElementById('floorEventChart'), {
+    new Chart(document.getElementById('floorEventChart'), { type: 'bar', data: { labels: floorEntries.map(([f]) => `Floor ${f}`), datasets: [{ label: 'Events', data: floorEntries.map(([,v])=>v.entries), backgroundColor: floorColors, borderRadius: 4 }] }, options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } } });
+    document.getElementById('floorDurBars').innerHTML = floorEntries.map(([f, v]) => {
+      const avg = v.durCount > 0 ? (v.totalDur / v.durCount).toFixed(1) : null;
+      const barPct = avg ? Math.round((avg / maxDur) * 100) : 0;
+      return `<div class="floor-dur-row"><div class="floor-dur-label">Floor ${f}</div><div class="floor-dur-bar-bg"><div class="floor-dur-bar" style="width:${barPct}%"></div></div><div class="floor-dur-val">${avg ? avg + ' hrs' : 'No data'}</div></div>`;
+    }).join('') || '<p style="color:#888;font-size:.8rem">No duration data available</p>';
+
+    // BQ-COST
+    const HOURLY_RATE = 2000, DAILY_CAP = 16000;
+    const calcFee = hours => Math.min(hours * HOURLY_RATE, DAILY_CAP);
+    const costExits = records.filter(r => r.type === 'exit');
+    const allCapPlates = new Set(costExits.map(r => r.plate).filter(Boolean));
+    const hitCapPlates = new Set(costExits.filter(r => r.hitDailyCap).map(r => r.plate).filter(Boolean));
+    const capTotal = allCapPlates.size, capHit = hitCapPlates.size, capBelow = capTotal - capHit;
+    const capPct = capTotal > 0 ? Math.round((capHit / capTotal) * 100) : 0;
+    const exitsByPlate = {};
+    costExits.forEach(r => { if (!r.plate) return; if (!exitsByPlate[r.plate]) exitsByPlate[r.plate] = { records: [], isRegistered: r.isRegistered }; exitsByPlate[r.plate].records.push(r); });
+    const perCarData = Object.values(exitsByPlate).map(car => ({ total: car.records.filter(r => r.durationHours > 0).reduce((s,r) => s + calcFee(r.durationHours), 0), isRegistered: car.isRegistered }));
+    const totalCars = perCarData.length;
+    const avgPayment = totalCars > 0 ? perCarData.reduce((s,c) => s + c.total, 0) / totalCars : 0;
+    const maxPayment = totalCars > 0 ? Math.max(...perCarData.map(c => c.total)) : 0;
+    const medianPayment = (() => { if (!totalCars) return 0; const sorted = [...perCarData].sort((a,b) => a.total - b.total); const mid = Math.floor(sorted.length / 2); return sorted.length % 2 ? sorted[mid].total : (sorted[mid-1].total + sorted[mid].total) / 2; })();
+    const regCars = perCarData.filter(c => c.isRegistered), unregCars = perCarData.filter(c => !c.isRegistered);
+    const avgReg = regCars.length ? regCars.reduce((s,c)=>s+c.total,0)/regCars.length : 0;
+    const avgUnreg = unregCars.length ? unregCars.reduce((s,c)=>s+c.total,0)/unregCars.length : 0;
+    const payBuckets = [0,0,0,0,0];
+    perCarData.forEach(c => { if (c.total >= DAILY_CAP) payBuckets[4]++; else if (c.total >= 12000) payBuckets[3]++; else if (c.total >= 8000) payBuckets[2]++; else if (c.total >= 4000) payBuckets[1]++; else payBuckets[0]++; });
+    const formatCOP = v => v === 0 ? '$0' : '$' + Math.round(v).toLocaleString('es-CO');
+    document.getElementById('costCapKpis').innerHTML = [
+      { label: 'Unique Cars (exits)', value: capTotal },
+      { label: 'Reached Daily Cap', value: `${capHit} (${capPct}%)`, color: capPct > 30 ? '#dc2626' : '#f59e0b' },
+      { label: 'Below Cap', value: `${capBelow} (${100-capPct}%)`, color: '#15803d' },
+      { label: 'Daily Cap (COP)', value: formatCOP(DAILY_CAP) },
+    ].map(k => `<div class="bq-cost-kpi"><div class="label">${k.label}</div><div class="value" style="color:${k.color||'#1a1a2e'}">${k.value}</div></div>`).join('');
+    let capDonutInst = Chart.getChart('capDonut'); if (capDonutInst) capDonutInst.destroy();
+    new Chart(document.getElementById('capDonut'), { type: 'doughnut', data: { labels: ['Reached cap', 'Below cap'], datasets: [{ data: [capHit, capBelow], backgroundColor: ['#f59e0b','#10b981'], borderWidth: 2 }] }, options: { responsive: true, plugins: { legend: { position: 'bottom' } } } });
+    const regPlatesAll = Object.entries(exitsByPlate).filter(([,car]) => car.isRegistered);
+    const unregPlatesAll = Object.entries(exitsByPlate).filter(([,car]) => !car.isRegistered);
+    const regCapHit = regPlatesAll.filter(([plate]) => hitCapPlates.has(plate)).length;
+    const unregCapHit = unregPlatesAll.filter(([plate]) => hitCapPlates.has(plate)).length;
+    const regTotal = regPlatesAll.length || 1, unregTotal = unregPlatesAll.length || 1;
+    let capRegInst = Chart.getChart('capRegBar'); if (capRegInst) capRegInst.destroy();
+    new Chart(document.getElementById('capRegBar'), { type: 'bar', data: { labels: ['Registered', 'Unregistered'], datasets: [{ label: 'Reached cap', data: [regCapHit, unregCapHit], backgroundColor: '#f59e0b', borderRadius: 4 }, { label: 'Below cap', data: [regTotal - regCapHit, unregTotal - unregCapHit], backgroundColor: '#10b981', borderRadius: 4 }] }, options: { responsive: true, plugins: { legend: { position: 'bottom' } }, scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true } } } });
+    document.getElementById('avgPayKpis').innerHTML = [
+      { label: 'Avg Payment / Car', value: formatCOP(avgPayment) },
+      { label: 'Median Payment / Car', value: formatCOP(medianPayment) },
+      { label: 'Highest Single Total', value: formatCOP(maxPayment), color: '#dc2626' },
+      { label: 'Avg — Registered', value: formatCOP(avgReg), color: '#1d4ed8' },
+      { label: 'Avg — Unregistered', value: formatCOP(avgUnreg), color: '#7c3aed' },
+    ].map(k => `<div class="bq-cost-kpi"><div class="label">${k.label}</div><div class="value" style="color:${k.color||'#1a1a2e'}">${k.value}</div></div>`).join('');
+    let payDistInst = Chart.getChart('payDistChart'); if (payDistInst) payDistInst.destroy();
+    new Chart(document.getElementById('payDistChart'), { type: 'bar', data: { labels: ['< $4K', '$4–8K', '$8–12K', '$12–16K', 'At cap ($16K)'], datasets: [{ label: 'Cars', data: payBuckets, backgroundColor: ['#10b981','#4f8ef7','#8b5cf6','#f59e0b','#ef4444'], borderRadius: 4 }] }, options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } } });
+    let payRegInst = Chart.getChart('payRegChart'); if (payRegInst) payRegInst.destroy();
+    new Chart(document.getElementById('payRegChart'), { type: 'bar', data: { labels: ['Registered', 'Unregistered'], datasets: [{ label: 'Avg payment (COP)', data: [Math.round(avgReg), Math.round(avgUnreg)], backgroundColor: ['#1d4ed8','#7c3aed'], borderRadius: 4 }] }, options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } } });
+
+    // BQ-RELIABILITY
+    const OCR_THRESHOLD = 0.75;
+    const relByFloor = {};
+    records.forEach(r => {
+      const conf = r.ocrConfidence ?? 1.0;
+      const floor = r.floor ?? 'Unknown';
+      if (!relByFloor[floor]) relByFloor[floor] = { total: 0, needsReview: 0, sumConf: 0 };
+      relByFloor[floor].total++; relByFloor[floor].sumConf += conf;
+      if (conf < OCR_THRESHOLD) relByFloor[floor].needsReview++;
+    });
+    const relTotal = records.length || 1;
+    const relNeedsReview = records.filter(r => (r.ocrConfidence ?? 1.0) < OCR_THRESHOLD).length;
+    const relHighConf = relTotal - relNeedsReview;
+    const relAvgConf = records.length > 0 ? (records.reduce((s,r) => s + (r.ocrConfidence ?? 1.0), 0) / records.length * 100).toFixed(1) : '—';
+    const reviewPct = Math.round((relNeedsReview / relTotal) * 100);
+    document.getElementById('relKpis').innerHTML = [
+      { label: 'Avg OCR Confidence', value: relAvgConf !== '—' ? `${relAvgConf}%` : '—' },
+      { label: 'High Confidence (≥75%)', value: relHighConf, color: '#15803d' },
+      { label: 'Needs Admin Review', value: `${relNeedsReview} (${reviewPct}%)`, color: '#dc2626' },
+      { label: 'Total Records Scanned', value: relTotal },
+    ].map(k => `<div class="bq-rel-kpi"><div class="label">${k.label}</div><div class="value" style="color:${k.color||'#1a1a2e'}">${k.value}</div></div>`).join('');
+    let relDoughnutInst = Chart.getChart('relDoughnut'); if (relDoughnutInst) relDoughnutInst.destroy();
+    new Chart(document.getElementById('relDoughnut'), { type: 'doughnut', data: { labels: ['High Confidence (≥75%)', 'Needs Review (<75%)'], datasets: [{ data: [relHighConf, relNeedsReview], backgroundColor: ['#22c55e', '#ef4444'], borderWidth: 2 }] }, options: { responsive: true, plugins: { legend: { position: 'bottom' } } } });
+    const relFloorEntriesArr = Object.entries(relByFloor).filter(([f]) => f !== 'Unknown').sort((a,b) => a[0] - b[0]);
+    const maxReview = Math.max(...relFloorEntriesArr.map(([,v]) => v.needsReview), 1);
+    document.getElementById('relFloorBars').innerHTML = relFloorEntriesArr.map(([f, v]) => {
+      const avgConf = v.total > 0 ? (v.sumConf / v.total * 100).toFixed(0) : 0;
+      const revPct = Math.round((v.needsReview / (v.total || 1)) * 100);
+      const barPct = Math.round((v.needsReview / maxReview) * 100);
+      const barColor = revPct > 30 ? '#ef4444' : revPct > 10 ? '#f59e0b' : '#22c55e';
+      return `<div class="review-row"><div class="review-label">Floor ${f}</div><div class="review-bar-bg"><div class="review-bar" style="width:${barPct}%;background:${barColor}"></div></div><div class="review-val">${v.needsReview} (${revPct}%)</div></div><div style="font-size:.68rem;color:#888;margin:-6px 0 10px 100px">avg confidence: ${avgConf}%</div>`;
+    }).join('') || '<p style="color:#888;font-size:.8rem">No floor data available</p>';
+
+    // Recent events
+    const recentRecords = recentSnap.docs.map(d => ({ ...d.data(), ts: d.data().timestamp?.toDate?.() || new Date(d.data().timestamp) }));
+    document.getElementById('recentRows').innerHTML = recentRecords.map(r => `<tr><td>${fmt(r.ts)}</td><td><span class="${r.type === 'entry' ? 'tag-entry' : 'tag-exit'}">${r.type}</span></td><td>${r.plate || '—'}</td><td>${r.floor ?? '—'}</td><td>${r.spotNumber ?? '—'}</td><td>${r.isRegistered ? 'Yes' : 'No'}</td><td>${r.durationHours > 0 ? r.durationHours.toFixed(1) + 'h' : '—'}</td></tr>`).join('') || '<tr><td colspan="7" style="color:#888;text-align:center;padding:12px">No records found</td></tr>';
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // BQ-PLATES: Top 10 most frequent plates + avg duration
+    // ═══════════════════════════════════════════════════════════════════════
+    const allExits = allExitsSnap.docs.map(d => d.data());
+    const plateCounts = {};
+    allExits.forEach(r => {
+      if (!r.plate) return;
+      if (!plateCounts[r.plate]) plateCounts[r.plate] = { visits: 0, totalDur: 0, durCount: 0 };
+      plateCounts[r.plate].visits++;
+      if (r.durationHours > 0) { plateCounts[r.plate].totalDur += r.durationHours; plateCounts[r.plate].durCount++; }
+    });
+    const topPlates = Object.entries(plateCounts).sort((a,b) => b[1].visits - a[1].visits).slice(0, 10);
+    const maxVisits = topPlates[0]?.[1].visits || 1;
+    const totalUniquePlates = Object.keys(plateCounts).length;
+    const topPlateName = topPlates[0]?.[0] || '—';
+    const topPlateVisits = topPlates[0]?.[1].visits || 0;
+    const allAvgDurs = topPlates.map(([,v]) => v.durCount > 0 ? v.totalDur / v.durCount : 0);
+    const overallAvgDurPlates = allAvgDurs.length > 0 ? (allAvgDurs.reduce((a,b)=>a+b,0)/allAvgDurs.length).toFixed(1) : '—';
+
+    document.getElementById('platesKpis').innerHTML = [
+      { label: 'Unique Plates (exits)', value: totalUniquePlates },
+      { label: 'Most Frequent Plate', value: topPlateName, color: '#6366f1' },
+      { label: 'Top Plate Visits', value: topPlateVisits },
+      { label: 'Avg Duration (Top 10)', value: overallAvgDurPlates !== '—' ? `${overallAvgDurPlates} hrs` : '—' },
+    ].map(k => `<div class="bq-plates-kpi"><div class="label">${k.label}</div><div class="value" style="color:${k.color||'#1a1a2e'}">${k.value}</div></div>`).join('');
+
+    document.getElementById('platesBars').innerHTML = topPlates.length > 0 ? topPlates.map(([plate, d]) => {
+      const pct = Math.round((d.visits / maxVisits) * 100);
+      const avgDurP = d.durCount > 0 ? (d.totalDur / d.durCount).toFixed(1) + 'h avg' : 'no dur';
+      return `<div class="plate-row">
+        <div class="plate-label">${plate}</div>
+        <div class="plate-bar-bg"><div class="plate-bar" style="width:${pct}%"></div></div>
+        <div class="plate-val">${d.visits} visits · ${avgDurP}</div>
+      </div>`;
+    }).join('') : '<p style="color:#888;font-size:.8rem">No exit records found</p>';
+
+    let platesAvgInst = Chart.getChart('platesAvgDurChart');
+    if (platesAvgInst) platesAvgInst.destroy();
+    new Chart(document.getElementById('platesAvgDurChart'), {
       type: 'bar',
       data: {
-        labels: floorEntries.map(([f]) => `Floor ${f}`),
-        datasets: [{ label: 'Events', data: floorEntries.map(([,v])=>v.entries), backgroundColor: floorColors, borderRadius: 4 }]
+        labels: topPlates.map(([p]) => p),
+        datasets: [{
+          label: 'Avg Duration (hrs)',
+          data: topPlates.map(([,v]) => v.durCount > 0 ? parseFloat((v.totalDur/v.durCount).toFixed(2)) : 0),
+          backgroundColor: '#a5b4fc',
+          borderColor: '#6366f1',
+          borderWidth: 1,
+          borderRadius: 4
+        }]
       },
       options: {
+        indexAxis: 'y',
         responsive: true,
-        plugins: { legend: { display: false } },
-        scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ` ${ctx.parsed.x.toFixed(1)} hrs avg` } } },
+        scales: { x: { beginAtZero: true, title: { display: true, text: 'Hours' } } }
       }
     });
 
-    const maxFloorEvents = floorEntries[0]?.[1].entries || 1;
-    document.getElementById('floorDurBars').innerHTML = floorEntries.map(([f, v]) => {
-      const avg    = v.durCount > 0 ? (v.totalDur / v.durCount).toFixed(1) : null;
-      const barPct = avg ? Math.round((avg / maxDur) * 100) : 0;
-      return `<div class="floor-dur-row">
-        <div class="floor-dur-label">Floor ${f}</div>
-        <div class="floor-dur-bar-bg"><div class="floor-dur-bar" style="width:${barPct}%"></div></div>
-        <div class="floor-dur-val">${avg ? avg + ' hrs' : 'No data'}</div>
-      </div>`;
-    }).join('') || '<p style="color:#888;font-size:.8rem">No duration data available</p>';
-
-    // ── BQ-COST: Mateo BQ5 & BQ6 ────────────────────────────────────────────
-    const HOURLY_RATE = 2000;
-    const DAILY_CAP   = 16000;
-    const calcFee = hours => Math.min(hours * HOURLY_RATE, DAILY_CAP);
-
-    // BQ5 — cap reach rate
-    const costExits     = records.filter(r => r.type === 'exit');
-    const allCapPlates  = new Set(costExits.map(r => r.plate).filter(Boolean));
-    const hitCapPlates  = new Set(costExits.filter(r => r.hitDailyCap).map(r => r.plate).filter(Boolean));
-    const capTotal      = allCapPlates.size;
-    const capHit        = hitCapPlates.size;
-    const capBelow      = capTotal - capHit;
-    const capPct        = capTotal > 0 ? Math.round((capHit / capTotal) * 100) : 0;
-
-    // BQ6 — average payment per car
-    const exitsByPlate  = {};
-    costExits.forEach(r => {
-      if (!r.plate) return;
-      if (!exitsByPlate[r.plate]) exitsByPlate[r.plate] = { records: [], isRegistered: r.isRegistered };
-      exitsByPlate[r.plate].records.push(r);
+    // ═══════════════════════════════════════════════════════════════════════
+    // BQ-OCCUPANCY: Average occupancy % per hour from parking_occupancy_history
+    // ═══════════════════════════════════════════════════════════════════════
+    const occHistory = occHistSnap.docs.map(d => d.data());
+    const occByHour = {};
+    occHistory.forEach(r => {
+      const h = r.hour;
+      if (h == null) return;
+      if (!occByHour[h]) occByHour[h] = { sum: 0, count: 0 };
+      occByHour[h].sum += (r.occupancyPercentage || 0);
+      occByHour[h].count++;
     });
-    const perCarData = Object.values(exitsByPlate).map(car => ({
-      total:        car.records.filter(r => r.durationHours > 0).reduce((s,r) => s + calcFee(r.durationHours), 0),
-      isRegistered: car.isRegistered
-    }));
-    const totalCars    = perCarData.length;
-    const avgPayment   = totalCars > 0 ? perCarData.reduce((s,c) => s + c.total, 0) / totalCars : 0;
-    const maxPayment   = totalCars > 0 ? Math.max(...perCarData.map(c => c.total)) : 0;
-    const medianPayment = (() => {
-      if (!totalCars) return 0;
-      const sorted = [...perCarData].sort((a,b) => a.total - b.total);
-      const mid = Math.floor(sorted.length / 2);
-      return sorted.length % 2 ? sorted[mid].total : (sorted[mid-1].total + sorted[mid].total) / 2;
-    })();
+    const occHourLabels = Array.from({length:24}, (_,i) => `${String(i).padStart(2,'0')}:00`);
+    const occAvgByHour = occHourLabels.map((_, i) => occByHour[i] ? parseFloat((occByHour[i].sum / occByHour[i].count).toFixed(1)) : null);
+    const occPeakHour = occAvgByHour.reduce((iMax, x, i, arr) => (x !== null && (arr[iMax] === null || x > arr[iMax])) ? i : iMax, 0);
+    const occQuietHour = occAvgByHour.reduce((iMin, x, i, arr) => (x !== null && (arr[iMin] === null || x < arr[iMin])) ? i : iMin, 0);
+    const occValidVals = occAvgByHour.filter(v => v !== null);
+    const overallAvgOcc = occValidVals.length > 0 ? (occValidVals.reduce((a,b)=>a+b,0)/occValidVals.length).toFixed(1) : '—';
+    const totalOccRecords = occHistory.length;
 
-    const regCars   = perCarData.filter(c =>  c.isRegistered);
-    const unregCars = perCarData.filter(c => !c.isRegistered);
-    const avgReg    = regCars.length   ? regCars.reduce((s,c)=>s+c.total,0)/regCars.length   : 0;
-    const avgUnreg  = unregCars.length ? unregCars.reduce((s,c)=>s+c.total,0)/unregCars.length : 0;
+    document.getElementById('occKpis').innerHTML = [
+      { label: 'Total History Records', value: totalOccRecords },
+      { label: 'Peak Occupancy Hour', value: occHourLabels[occPeakHour], sub: `avg ${occAvgByHour[occPeakHour] ?? '—'}%`, color: '#ef4444' },
+      { label: 'Quietest Hour', value: occHourLabels[occQuietHour], sub: `avg ${occAvgByHour[occQuietHour] ?? '—'}%`, color: '#22c55e' },
+      { label: 'Overall Avg Occupancy', value: overallAvgOcc !== '—' ? `${overallAvgOcc}%` : '—' },
+    ].map(k => `<div class="bq-occ-kpi"><div class="label">${k.label}</div><div class="value" style="color:${k.color||'#1a1a2e'}">${k.value}</div>${k.sub?`<div style="font-size:.68rem;color:#888">${k.sub}</div>`:''}</div>`).join('');
 
-    // Payment distribution buckets
-    const payBuckets = [0,0,0,0,0]; // <4K | 4–8K | 8–12K | 12–16K | =cap
-    perCarData.forEach(c => {
-      if      (c.total >= DAILY_CAP) payBuckets[4]++;
-      else if (c.total >= 12000)     payBuckets[3]++;
-      else if (c.total >= 8000)      payBuckets[2]++;
-      else if (c.total >= 4000)      payBuckets[1]++;
-      else                           payBuckets[0]++;
+    const occBarColors = occAvgByHour.map(v => v === null ? '#e5e7eb' : v >= 70 ? '#ef4444' : v >= 40 ? '#f59e0b' : '#22c55e');
+    let occHourInst = Chart.getChart('occHourChart');
+    if (occHourInst) occHourInst.destroy();
+    new Chart(document.getElementById('occHourChart'), {
+      type: 'bar',
+      data: {
+        labels: occHourLabels,
+        datasets: [{
+          label: 'Avg Occupancy %',
+          data: occAvgByHour.map(v => v ?? 0),
+          backgroundColor: occBarColors,
+          borderRadius: 3
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { display: false },
+          tooltip: { callbacks: { label: ctx => ` ${ctx.parsed.y.toFixed(1)}% avg occupancy` } }
+        },
+        scales: {
+          x: { ticks: { font: { size: 9 }, maxRotation: 45 } },
+          y: { beginAtZero: true, max: 100, title: { display: true, text: 'Occupancy %' } }
+        }
+      }
     });
 
-    const formatCOP = v => v === 0 ? '$0' : '$' + Math.round(v).toLocaleString('es-CO');
-
-    // BQ5 KPIs
-    document.getElementById('costCapKpis').innerHTML = [
-      { label: 'Unique Cars (exits)',  value: capTotal },
-      { label: 'Reached Daily Cap',    value: `${capHit} (${capPct}%)`,  color: capPct > 30 ? '#dc2626' : '#f59e0b' },
-      { label: 'Below Cap',            value: `${capBelow} (${100-capPct}%)`, color: '#15803d' },
-      { label: 'Daily Cap (COP)',       value: formatCOP(DAILY_CAP) },
-    ].map(k => `<div class="bq-cost-kpi"><div class="label">${k.label}</div><div class="value" style="color:${k.color||'#1a1a2e'}">${k.value}</div></div>`).join('');
-
-    let capDonutInst = Chart.getChart('capDonut');
-    if (capDonutInst) capDonutInst.destroy();
-    new Chart(document.getElementById('capDonut'), {
+    // Heatmap-style doughnut for low/medium/high
+    const occLow    = occValidVals.filter(v => v < 40).length;
+    const occMedium = occValidVals.filter(v => v >= 40 && v < 70).length;
+    const occHigh   = occValidVals.filter(v => v >= 70).length;
+    let occHeatInst = Chart.getChart('occHeatChart');
+    if (occHeatInst) occHeatInst.destroy();
+    new Chart(document.getElementById('occHeatChart'), {
       type: 'doughnut',
       data: {
-        labels: ['Reached cap', 'Below cap'],
-        datasets: [{ data: [capHit, capBelow], backgroundColor: ['#f59e0b','#10b981'], borderWidth: 2 }]
+        labels: ['Low (<40%)', 'Medium (40–70%)', 'High (≥70%)'],
+        datasets: [{ data: [occLow, occMedium, occHigh], backgroundColor: ['#22c55e', '#f59e0b', '#ef4444'], borderWidth: 2 }]
       },
       options: {
         responsive: true,
         plugins: {
           legend: { position: 'bottom', labels: { font: { size: 11 } } },
-          tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${ctx.parsed} cars (${capTotal ? Math.round(ctx.parsed/capTotal*100) : 0}%)` } }
+          tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${ctx.parsed} hours` } }
         }
       }
     });
 
-    // Cap reach by registration status — unique plates only, consistent with donut & KPIs
-    const regPlatesAll   = Object.entries(exitsByPlate).filter(([,car]) =>  car.isRegistered);
-    const unregPlatesAll = Object.entries(exitsByPlate).filter(([,car]) => !car.isRegistered);
-    const regCapHit   = regPlatesAll.filter(([plate])   => hitCapPlates.has(plate)).length;
-    const unregCapHit = unregPlatesAll.filter(([plate]) => hitCapPlates.has(plate)).length;
-    const regTotal    = regPlatesAll.length   || 1;
-    const unregTotal  = unregPlatesAll.length || 1;
-
-    let capRegInst = Chart.getChart('capRegBar');
-    if (capRegInst) capRegInst.destroy();
-    new Chart(document.getElementById('capRegBar'), {
-      type: 'bar',
-      data: {
-        labels: ['Registered', 'Unregistered'],
-        datasets: [
-          { label: 'Reached cap',  data: [regCapHit, unregCapHit], backgroundColor: '#f59e0b', borderRadius: 4 },
-          { label: 'Below cap',    data: [regTotal - regCapHit, unregTotal - unregCapHit], backgroundColor: '#10b981', borderRadius: 4 }
-        ]
-      },
-      options: {
-        responsive: true,
-        plugins: { legend: { position: 'bottom', labels: { font: { size: 10 } } } },
-        scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true, ticks: { stepSize: 1 } } }
-      }
+    // ═══════════════════════════════════════════════════════════════════════
+    // BQ-DURATION: Average parking duration per floor (from all exit records)
+    // ═══════════════════════════════════════════════════════════════════════
+    const durByFloor = {};
+    allExits.forEach(r => {
+      const f = r.floor;
+      if (f == null) return;
+      if (!durByFloor[f]) durByFloor[f] = { totalDur: 0, count: 0 };
+      if (r.durationHours > 0) { durByFloor[f].totalDur += r.durationHours; durByFloor[f].count++; }
     });
+    const durFloorEntries = Object.entries(durByFloor).filter(([,v]) => v.count > 0).sort((a,b) => Number(a[0]) - Number(b[0]));
+    const durAvgs = durFloorEntries.map(([,v]) => parseFloat((v.totalDur / v.count).toFixed(2)));
+    const maxDurFloor = durFloorEntries.reduce((max, curr) => (durByFloor[curr[0]].totalDur/durByFloor[curr[0]].count) > (durByFloor[max[0]]?.totalDur/durByFloor[max[0]]?.count || 0) ? curr : max, durFloorEntries[0]);
+    const minDurFloor = durFloorEntries.reduce((min, curr) => (durByFloor[curr[0]].totalDur/durByFloor[curr[0]].count) < (durByFloor[min[0]]?.totalDur/durByFloor[min[0]]?.count || 999) ? curr : min, durFloorEntries[0]);
+    const overallDurAvg = durAvgs.length > 0 ? (durAvgs.reduce((a,b)=>a+b,0)/durAvgs.length).toFixed(1) : '—';
 
-    // BQ6 KPIs
-    document.getElementById('avgPayKpis').innerHTML = [
-      { label: 'Avg Payment / Car',    value: formatCOP(avgPayment),    color: '#1a1a2e' },
-      { label: 'Median Payment / Car', value: formatCOP(medianPayment) },
-      { label: 'Highest Single Total', value: formatCOP(maxPayment),    color: '#dc2626' },
-      { label: 'Avg — Registered',     value: formatCOP(avgReg),        color: '#1d4ed8' },
-      { label: 'Avg — Unregistered',   value: formatCOP(avgUnreg),      color: '#7c3aed' },
-    ].map(k => `<div class="bq-cost-kpi"><div class="label">${k.label}</div><div class="value" style="color:${k.color||'#1a1a2e'}">${k.value}</div></div>`).join('');
+    document.getElementById('durKpis').innerHTML = [
+      { label: 'Floors with Exit Data', value: durFloorEntries.length },
+      { label: 'Longest Avg Stay', value: maxDurFloor ? `Floor ${maxDurFloor[0]}` : '—', sub: maxDurFloor ? `${(durByFloor[maxDurFloor[0]].totalDur/durByFloor[maxDurFloor[0]].count).toFixed(1)} hrs` : '', color: '#d946ef' },
+      { label: 'Shortest Avg Stay', value: minDurFloor ? `Floor ${minDurFloor[0]}` : '—', sub: minDurFloor ? `${(durByFloor[minDurFloor[0]].totalDur/durByFloor[minDurFloor[0]].count).toFixed(1)} hrs` : '', color: '#22c55e' },
+      { label: 'Overall Avg Duration', value: overallDurAvg !== '—' ? `${overallDurAvg} hrs` : '—' },
+    ].map(k => `<div class="bq-dur-kpi"><div class="label">${k.label}</div><div class="value" style="color:${k.color||'#1a1a2e'}">${k.value}</div>${k.sub?`<div style="font-size:.68rem;color:#888">${k.sub}</div>`:''}</div>`).join('');
 
-    let payDistInst = Chart.getChart('payDistChart');
-    if (payDistInst) payDistInst.destroy();
-    new Chart(document.getElementById('payDistChart'), {
+    const durFloorColors = durFloorEntries.map((_, i) => ['#d946ef','#c026d3','#a21caf','#86198f','#701a75'][i % 5]);
+    let durFloorInst = Chart.getChart('durFloorChart');
+    if (durFloorInst) durFloorInst.destroy();
+    new Chart(document.getElementById('durFloorChart'), {
       type: 'bar',
       data: {
-        labels: ['< $4K', '$4–8K', '$8–12K', '$12–16K', 'At cap ($16K)'],
+        labels: durFloorEntries.map(([f]) => `Floor ${f}`),
         datasets: [{
-          label: 'Cars',
-          data: payBuckets,
-          backgroundColor: ['#10b981','#4f8ef7','#8b5cf6','#f59e0b','#ef4444'],
+          label: 'Avg Duration (hrs)',
+          data: durAvgs,
+          backgroundColor: durFloorColors,
           borderRadius: 4
         }]
       },
       options: {
         responsive: true,
-        plugins: { legend: { display: false },
-          tooltip: { callbacks: { label: ctx => ` ${ctx.parsed.y} car${ctx.parsed.y !== 1 ? 's' : ''}` } }
+        plugins: {
+          legend: { display: false },
+          tooltip: { callbacks: { label: ctx => ` ${ctx.parsed.y.toFixed(1)} hrs avg stay` } }
         },
-        scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+        scales: { y: { beginAtZero: true, title: { display: true, text: 'Hours' } } }
       }
     });
 
-    let payRegInst = Chart.getChart('payRegChart');
-    if (payRegInst) payRegInst.destroy();
-    new Chart(document.getElementById('payRegChart'), {
-      type: 'bar',
+    // Duration distribution (all exits): short <2h, medium 2-6h, long >6h
+    const durShort  = allExits.filter(r => r.durationHours > 0 && r.durationHours < 2).length;
+    const durMedium = allExits.filter(r => r.durationHours >= 2 && r.durationHours <= 6).length;
+    const durLong   = allExits.filter(r => r.durationHours > 6).length;
+    let durDistInst = Chart.getChart('durDistChart');
+    if (durDistInst) durDistInst.destroy();
+    new Chart(document.getElementById('durDistChart'), {
+      type: 'doughnut',
       data: {
-        labels: ['Registered', 'Unregistered'],
-        datasets: [{
-          label: 'Avg payment (COP)',
-          data: [Math.round(avgReg), Math.round(avgUnreg)],
-          backgroundColor: ['#1d4ed8','#7c3aed'],
-          borderRadius: 4
-        }]
+        labels: ['Short (<2 hrs)', 'Medium (2–6 hrs)', 'Long (>6 hrs)'],
+        datasets: [{ data: [durShort, durMedium, durLong], backgroundColor: ['#22c55e','#d946ef','#7c3aed'], borderWidth: 2 }]
       },
       options: {
         responsive: true,
-        plugins: { legend: { display: false },
-          tooltip: { callbacks: { label: ctx => ` ${formatCOP(ctx.parsed.y)} COP avg` } }
-        },
-        scales: { y: { beginAtZero: true } }
+        plugins: {
+          legend: { position: 'bottom', labels: { font: { size: 11 } } },
+          tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${ctx.parsed} exits` } }
+        }
       }
     });
 
@@ -1579,69 +1538,69 @@ async function load() {
       relByFloor[floor].sumConf += conf;
       if (conf < OCR_THRESHOLD) relByFloor[floor].needsReview++;
     });
+    const visitCounts = Object.values(visitCountByEmail);
+    const visits1     = visitCounts.filter(v => v === 1).length;
+    const visits2to5  = visitCounts.filter(v => v >= 2 && v <= 5).length;
+    const visits6to10 = visitCounts.filter(v => v >= 6 && v <= 10).length;
+    const visits11plus = visitCounts.filter(v => v > 10).length;
+    const avgVisitsPerUser = visitCounts.length > 0 ? (visitCounts.reduce((a,b)=>a+b,0)/visitCounts.length).toFixed(1) : '—';
+    const maxVisitsUser = visitCounts.length > 0 ? Math.max(...visitCounts) : 0;
 
-    const relTotal       = records.length || 1;
-    const relNeedsReview = records.filter(r => (r.ocrConfidence ?? 1.0) < OCR_THRESHOLD).length;
-    const relHighConf    = relTotal - relNeedsReview;
-    const relAvgConf     = records.length > 0
-      ? (records.reduce((s,r) => s + (r.ocrConfidence ?? 1.0), 0) / records.length * 100).toFixed(1)
-      : '—';
-    const reviewPct      = Math.round((relNeedsReview / relTotal) * 100);
+    document.getElementById('usersKpis').innerHTML = [
+      { label: 'Total Registered Users', value: totalRegisteredUsers },
+      { label: 'Active (≥1 visit)', value: `${activeUsers} (${activeUsersPct}%)`, color: '#14b8a6' },
+      { label: 'Never Visited', value: `${neverVisited} (${neverVisitedPct}%)`, color: '#94a3b8' },
+      { label: 'Avg Visits / Active User', value: avgVisitsPerUser !== '—' ? avgVisitsPerUser : '—' },
+      { label: 'Most Visits (single user)', value: maxVisitsUser },
+    ].map(k => `<div class="bq-users-kpi"><div class="label">${k.label}</div><div class="value" style="color:${k.color||'#1a1a2e'}">${k.value}</div></div>`).join('');
 
-    document.getElementById('relKpis').innerHTML = [
-      { label: 'Avg OCR Confidence',   value: relAvgConf !== '—' ? `${relAvgConf}%` : '—' },
-      { label: 'High Confidence (≥75%)', value: relHighConf, color: '#15803d' },
-      { label: 'Needs Admin Review',   value: `${relNeedsReview} (${reviewPct}%)`, color: '#dc2626' },
-      { label: 'Total Records Scanned', value: relTotal },
-    ].map(k => `<div class="bq-rel-kpi"><div class="label">${k.label}</div><div class="value" style="color:${k.color||'#1a1a2e'}">${k.value}</div></div>`).join('');
-
-    let relDoughnutInst = Chart.getChart('relDoughnut');
-    if (relDoughnutInst) relDoughnutInst.destroy();
-    new Chart(document.getElementById('relDoughnut'), {
+    let usersDonutInst = Chart.getChart('usersDonut');
+    if (usersDonutInst) usersDonutInst.destroy();
+    new Chart(document.getElementById('usersDonut'), {
       type: 'doughnut',
       data: {
-        labels: ['High Confidence (≥75%)', 'Needs Review (<75%)'],
-        datasets: [{ data: [relHighConf, relNeedsReview], backgroundColor: ['#22c55e', '#ef4444'], borderWidth: 2 }]
+        labels: ['Active Users (visited)', 'Never Visited'],
+        datasets: [{ data: [activeUsers, neverVisited], backgroundColor: ['#14b8a6', '#e2e8f0'], borderWidth: 2 }]
       },
       options: {
         responsive: true,
         plugins: {
-          legend: { position: 'bottom', labels: { font: { size: 10 } } },
-          tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${ctx.parsed} records` } }
+          legend: { position: 'bottom', labels: { font: { size: 11 } } },
+          tooltip: {
+            callbacks: {
+              label: ctx => {
+                const total = activeUsers + neverVisited;
+                const pct = total > 0 ? Math.round(ctx.parsed / total * 100) : 0;
+                return ` ${ctx.label}: ${ctx.parsed} users (${pct}%)`;
+              }
+            }
+          }
         }
       }
     });
 
-    const relFloorEntries = Object.entries(relByFloor)
-      .filter(([f]) => f !== 'Unknown')
-      .sort((a,b) => a[0] - b[0]);
-    const maxReview = Math.max(...relFloorEntries.map(([,v]) => v.needsReview), 1);
-
-    document.getElementById('relFloorBars').innerHTML = relFloorEntries.map(([f, v]) => {
-      const avgConf  = v.total > 0 ? (v.sumConf / v.total * 100).toFixed(0) : 0;
-      const revPct   = Math.round((v.needsReview / (v.total || 1)) * 100);
-      const barPct   = Math.round((v.needsReview / maxReview) * 100);
-      const barColor = revPct > 30 ? '#ef4444' : revPct > 10 ? '#f59e0b' : '#22c55e';
-      return `<div class="review-row">
-        <div class="review-label">Floor ${f}</div>
-        <div class="review-bar-bg"><div class="review-bar" style="width:${barPct}%;background:${barColor}"></div></div>
-        <div class="review-val">${v.needsReview} (${revPct}%)</div>
-      </div>
-      <div style="font-size:.68rem;color:#888;margin:-6px 0 10px 100px">avg confidence: ${avgConf}%</div>`;
-    }).join('') || '<p style="color:#888;font-size:.8rem">No floor data available</p>';
-
-    // Recent events table
-    const recentRecords = recentSnap.docs.map(d => ({ ...d.data(), ts: d.data().timestamp?.toDate?.() || new Date(d.data().timestamp) }));
-    document.getElementById('recentRows').innerHTML = recentRecords.map(r => `
-      <tr>
-        <td>${fmt(r.ts)}</td>
-        <td><span class="${r.type === 'entry' ? 'tag-entry' : 'tag-exit'}">${r.type}</span></td>
-        <td>${r.plate || '—'}</td>
-        <td>${r.floor ?? '—'}</td>
-        <td>${r.spotNumber ?? '—'}</td>
-        <td>${r.isRegistered ? 'Yes' : 'No'}</td>
-        <td>${r.durationHours > 0 ? r.durationHours.toFixed(1) + 'h' : '—'}</td>
-      </tr>`).join('') || '<tr><td colspan="7" style="color:#888;text-align:center;padding:12px">No records found</td></tr>';
+    let usersVisitsInst = Chart.getChart('usersVisitsChart');
+    if (usersVisitsInst) usersVisitsInst.destroy();
+    new Chart(document.getElementById('usersVisitsChart'), {
+      type: 'bar',
+      data: {
+        labels: ['1 visit', '2–5 visits', '6–10 visits', '11+ visits'],
+        datasets: [{
+          label: 'Users',
+          data: [visits1, visits2to5, visits6to10, visits11plus],
+          backgroundColor: ['#99f6e4','#2dd4bf','#0d9488','#115e59'],
+          borderRadius: 4
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { display: false },
+          tooltip: { callbacks: { label: ctx => ` ${ctx.parsed.y} user${ctx.parsed.y !== 1 ? 's' : ''}` } }
+        },
+        scales: { y: { beginAtZero: true, ticks: { stepSize: 1 }, title: { display: true, text: 'Users' } } }
+      }
+    });
 
     document.getElementById('status').style.display = 'none';
     document.getElementById('content').style.display = 'block';

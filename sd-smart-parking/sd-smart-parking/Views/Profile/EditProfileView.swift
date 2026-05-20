@@ -15,13 +15,22 @@ struct EditProfileView: View {
     @State private var name: String = ""
     @State private var email: String = ""
 
-    // Parking preferences (mirrors UserPreferences)
+    // Parking preferences (mirrors UserPreferences). Form-bound @State so the
+    // user can Cancel without persisting; we flush to UserDefaults + Firestore
+    // only on Save.
     @State private var hasMobilityLimitation: Bool = false
     @State private var preferredFloor: Int? = nil
 
     /// Local-only display toggle persisted via UserDefaults. `diego.` prefix
     /// keeps the namespace separate from teammate keys (e.g. biometricsEnabled).
     @AppStorage("diego.profile.showDemandBadgeOnDashboard") private var showDemandBadge: Bool = true
+
+    /// Parking preferences mirrored to UserDefaults so they survive a cold
+    /// start without depending on the Firestore round-trip (criterion 4 —
+    /// UserDefaults strategy). `-1` is the sentinel for "no preference"
+    /// because `@AppStorage` does not natively support `Int?`.
+    @AppStorage("diego.userPrefs.hasMobilityLimitation") private var storedHasMobility: Bool = false
+    @AppStorage("diego.userPrefs.preferredFloorRaw") private var storedPreferredFloorRaw: Int = -1
 
     var body: some View {
         NavigationStack {
@@ -40,7 +49,7 @@ struct EditProfileView: View {
                 )
 
                 Section("Display preferences") {
-                    Toggle("Mostrar badge de demanda en Dashboard", isOn: $showDemandBadge)
+                    Toggle("Show demand badge on Dashboard", isOn: $showDemandBadge)
                 }
             }
             .navigationTitle("Edit Profile")
@@ -49,8 +58,16 @@ struct EditProfileView: View {
                 if let user = userRepo.currentUser {
                     name = user.name
                     email = user.email
-                    hasMobilityLimitation = user.preferences?.hasMobilityLimitation ?? false
-                    preferredFloor = user.preferences?.preferredFloor
+                }
+                // Server-stored prefs win when present (multi-device sync);
+                // otherwise fall back to the UserDefaults snapshot so a
+                // cold-start offline still shows the user's last choice.
+                if let prefs = userRepo.currentUser?.preferences {
+                    hasMobilityLimitation = prefs.hasMobilityLimitation
+                    preferredFloor = prefs.preferredFloor
+                } else {
+                    hasMobilityLimitation = storedHasMobility
+                    preferredFloor = storedPreferredFloorRaw == -1 ? nil : storedPreferredFloorRaw
                 }
             }
             .toolbar {
@@ -67,6 +84,10 @@ struct EditProfileView: View {
                                 preferredFloor: preferredFloor
                             )
                         )
+                        // Mirror to UserDefaults so the choice survives a cold
+                        // start even if Firestore sync is queued offline.
+                        storedHasMobility = hasMobilityLimitation
+                        storedPreferredFloorRaw = preferredFloor ?? -1
                         dismiss()
                     }
                     .bold()
