@@ -6,63 +6,39 @@
 import SwiftUI
 
 struct MyHistoryView: View {
-    @EnvironmentObject var vm: ParkingViewModel
-    @EnvironmentObject var authVM: AuthViewModel
+    @EnvironmentObject var vm:             ParkingViewModel
+    @EnvironmentObject var authVM:         AuthViewModel
     @EnvironmentObject var networkMonitor: NetworkMonitor
+    @StateObject private var historyVM = ParkingHistoryViewModel()
     @Environment(\.dismiss) private var dismiss
 
     private var userPlates: Set<String> {
-        // Si el usuario es nil, devolvemos un Set vacío.
-        // Si existe, usamos allValues() para obtener el array de Car.
         guard let cars = authVM.currentUser?.cars.allValues() else { return [] }
         return Set(cars.map { $0.plate.uppercased() })
-    }
-
-    private var userRecords: [VehicleRecord] {
-        vm.vehicleRecords
-            .filter { userPlates.contains($0.plate.uppercased()) }
-            .sorted { $0.timestamp > $1.timestamp }
-    }
-
-    private var completedSessions: [VehicleRecord] {
-        userRecords.filter { $0.type == .exit }
-    }
-
-    private var totalHours: Double {
-        completedSessions.compactMap { $0.durationHours }.reduce(0, +)
-    }
-
-    private var totalSpent: Double {
-        completedSessions.compactMap { $0.durationHours }.reduce(0) {
-            $0 + ParkingConfig.calculateFee(hours: $1, currentDayTotal: 0)
-        }
     }
 
     var body: some View {
         NavigationStack {
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 20) {
-                    if !networkMonitor.isConnected {
-                        HStack(spacing: 8) {
-                            Image(systemName: "clock.arrow.circlepath")
-                            Text("Showing cached history — live updates paused")
-                                .font(.caption.weight(.medium))
-                            Spacer()
-                        }
-                        .foregroundColor(.white)
-                        .padding(12)
-                        .background(Color.orange)
-                        .cornerRadius(10)
-                    }
-                    summaryCard
-                    if userRecords.isEmpty {
+                    if !networkMonitor.isConnected { offlineBanner }
+                    if historyVM.isLoading {
+                        loadingCard
+                    } else if historyVM.allSessions.isEmpty {
                         emptyState
                     } else {
-                        recordsList
+                        summaryCard
+                        filterPicker
+                        sessionGroups
+                        if historyVM.isOfflineCopy, let ts = historyVM.lastUpdated {
+                            Label("Cached \(ts, style: .date)", systemImage: "archivebox")
+                                .font(.caption).foregroundColor(.secondary)
+                                .frame(maxWidth: .infinity, alignment: .center)
+                        }
                     }
                 }
                 .padding()
-                .padding(.bottom, 20)
+                .padding(.bottom, 24)
             }
             .background(Color(.systemGroupedBackground))
             .navigationTitle("My History")
@@ -71,6 +47,20 @@ struct MyHistoryView: View {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Done") { dismiss() }
                 }
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button {
+                        Task { await historyVM.load(records: vm.vehicleRecords,
+                                                    userPlates: userPlates) }
+                    } label: { Image(systemName: "arrow.clockwise") }
+                    .disabled(historyVM.isLoading)
+                }
+            }
+            .task {
+                if !networkMonitor.isConnected {
+                    historyVM.loadCachedIfOffline(userPlates: userPlates)
+                } else {
+                    await historyVM.load(records: vm.vehicleRecords, userPlates: userPlates)
+                }
             }
         }
     }
@@ -78,12 +68,16 @@ struct MyHistoryView: View {
     // MARK: - Summary card
 
     private var summaryCard: some View {
-        HStack(spacing: 0) {
-            statItem(value: "\(completedSessions.count)", label: "Sessions")
+        let sessions = historyVM.filteredSessions
+        let total    = sessions.count
+        let hours    = sessions.reduce(0) { $0 + $1.durationHours }
+        let spent    = sessions.reduce(0) { $0 + $1.costCOP }
+        return HStack(spacing: 0) {
+            statItem(value: "\(total)",          label: "Sessions")
             Divider().frame(height: 36)
-            statItem(value: formatHours(totalHours), label: "Total Time")
+            statItem(value: formatHours(hours),  label: "Total Time")
             Divider().frame(height: 36)
-            statItem(value: formatCOP(totalSpent), label: "Total Paid")
+            statItem(value: formatCOP(spent),    label: "Total Paid")
         }
         .padding(.vertical, 20)
         .frame(maxWidth: .infinity)
@@ -94,80 +88,90 @@ struct MyHistoryView: View {
 
     private func statItem(value: String, label: String) -> some View {
         VStack(spacing: 4) {
-            Text(value)
-                .font(.system(size: 20, weight: .bold))
-            Text(label)
-                .font(.caption)
-                .foregroundColor(.secondary)
+            Text(value).font(.system(size: 20, weight: .bold))
+            Text(label).font(.caption).foregroundColor(.secondary)
         }
         .frame(maxWidth: .infinity)
     }
 
-    // MARK: - Records list
+    // MARK: - Filter picker
 
-    private var recordsList: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Recent Activity")
-                .font(.headline)
-                .padding(.horizontal, 4)
+    private var filterPicker: some View {
+        Picker("Filter", selection: $historyVM.filter) {
+            ForEach(HistoryFilter.allCases) { f in
+                Text(f.rawValue).tag(f)
+            }
+        }
+        .pickerStyle(.segmented)
+    }
 
-            ForEach(userRecords) { record in
-                recordRow(record)
+    // MARK: - Session groups
+
+    @ViewBuilder
+    private var sessionGroups: some View {
+        if historyVM.filteredSessions.isEmpty {
+            Text("No sessions in this period.")
+                .font(.subheadline).foregroundColor(.secondary)
+                .frame(maxWidth: .infinity, alignment: .center)
+                .padding(.vertical, 32)
+        } else {
+            VStack(alignment: .leading, spacing: 16) {
+                ForEach(historyVM.sessionsByMonth, id: \.0) { month, sessions in
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text(month)
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundColor(.secondary)
+                            .padding(.horizontal, 4)
+                        ForEach(sessions) { session in
+                            sessionRow(session)
+                        }
+                    }
+                }
             }
         }
     }
 
-    private func recordRow(_ record: VehicleRecord) -> some View {
+    private func sessionRow(_ session: ParkingSession) -> some View {
         HStack(spacing: 14) {
             ZStack {
                 Circle()
-                    .fill(record.type == .entry
-                          ? Color.green.opacity(0.12)
-                          : Color.blue.opacity(0.12))
+                    .fill(Color.blue.opacity(0.12))
                     .frame(width: 44, height: 44)
-                Image(systemName: record.type == .entry
-                      ? "arrow.down.circle.fill"
-                      : "arrow.up.circle.fill")
-                    .font(.system(size: 22))
-                    .foregroundColor(record.type == .entry ? .green : .blue)
+                VStack(spacing: 0) {
+                    Text("\(session.floor)")
+                        .font(.headline.bold()).foregroundColor(.blue)
+                    Text("F").font(.caption2).foregroundColor(.secondary)
+                }
             }
 
             VStack(alignment: .leading, spacing: 4) {
-                HStack {
-                    Text(record.type == .entry ? "Entered" : "Exited")
-                        .font(.subheadline.weight(.semibold))
-                    Spacer()
-                    Text(record.timestamp, style: .date)
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
-
                 HStack(spacing: 6) {
-                    if let floor = record.floor, let spot = record.spotNumber {
-                        Label("F\(floor) · \(spot)", systemImage: "parkingsign")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
+                    Text(session.plate)
+                        .font(.subheadline.weight(.semibold).monospaced())
+                    if session.hitCap {
+                        Text("CAP")
+                            .font(.caption2.bold())
+                            .padding(.horizontal, 5).padding(.vertical, 2)
+                            .background(Color.orange.opacity(0.18))
+                            .foregroundColor(.orange)
+                            .cornerRadius(4)
                     }
-                    Text(record.plate)
-                        .font(.caption.monospaced())
-                        .foregroundColor(.secondary)
-                    Text(record.timestamp, style: .time)
-                        .font(.caption)
-                        .foregroundColor(.secondary)
                 }
+                HStack(spacing: 4) {
+                    Text(session.date, style: .date)
+                    Text("·")
+                    Text(session.date, style: .time)
+                }
+                .font(.caption).foregroundColor(.secondary)
+            }
 
-                if record.type == .exit, let duration = record.durationHours {
-                    let fee = ParkingConfig.calculateFee(hours: duration, currentDayTotal: 0)
-                    HStack(spacing: 6) {
-                        Image(systemName: "clock")
-                        Text(formatHours(duration))
-                        Text("·")
-                        Text(formatCOP(fee))
-                            .foregroundColor(.green)
-                    }
-                    .font(.caption.weight(.medium))
-                    .foregroundColor(.secondary)
-                }
+            Spacer()
+
+            VStack(alignment: .trailing, spacing: 3) {
+                Text(formatHours(session.durationHours))
+                    .font(.subheadline.weight(.semibold))
+                Text(formatCOP(session.costCOP))
+                    .font(.caption).foregroundColor(.secondary)
             }
         }
         .padding(14)
@@ -176,23 +180,52 @@ struct MyHistoryView: View {
         .shadow(color: .black.opacity(0.04), radius: 6, x: 0, y: 2)
     }
 
-    // MARK: - Empty state
+    // MARK: - Offline banner
+
+    private var offlineBanner: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "clock.arrow.circlepath")
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Showing cached history — live updates paused")
+                    .font(.caption.weight(.medium))
+                if let ts = historyVM.lastUpdated {
+                    Text("Last updated \(ts, style: .relative) ago")
+                        .font(.caption2).foregroundColor(.white.opacity(0.85))
+                }
+            }
+            Spacer()
+        }
+        .foregroundColor(.white)
+        .padding(12)
+        .background(Color.orange)
+        .cornerRadius(10)
+    }
+
+    // MARK: - Loading / empty
+
+    private var loadingCard: some View {
+        VStack(spacing: 16) {
+            ProgressView()
+            Text("Loading history…")
+                .font(.subheadline).foregroundColor(.secondary)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(48)
+        .background(Color.white)
+        .cornerRadius(16)
+    }
 
     private var emptyState: some View {
         VStack(spacing: 16) {
             Image(systemName: "car.fill")
-                .font(.system(size: 52))
-                .foregroundColor(.gray.opacity(0.3))
+                .font(.system(size: 52)).foregroundColor(.gray.opacity(0.3))
             Text("No parking history yet")
-                .font(.headline)
-                .foregroundColor(.secondary)
+                .font(.headline).foregroundColor(.secondary)
             Text("Your sessions will appear here once you start parking.")
-                .font(.subheadline)
-                .foregroundColor(.secondary)
+                .font(.subheadline).foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
         }
-        .frame(maxWidth: .infinity)
-        .padding(48)
+        .frame(maxWidth: .infinity).padding(48)
     }
 
     // MARK: - Formatters
@@ -218,4 +251,5 @@ struct MyHistoryView: View {
     MyHistoryView()
         .environmentObject(ParkingViewModel())
         .environmentObject(AuthViewModel())
+        .environmentObject(NetworkMonitor.shared)
 }

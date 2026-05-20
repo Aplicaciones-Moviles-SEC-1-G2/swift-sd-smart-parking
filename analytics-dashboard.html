@@ -166,6 +166,21 @@
   .author-mateo  { background: #fce7f3; color: #9d174d; }
   .header-link { padding: 6px 14px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.35); background: rgba(255,255,255,0.1); color: white; font-size: 0.8rem; font-weight: 600; text-decoration: none; cursor: pointer; white-space: nowrap; }
   .header-link:hover { background: rgba(255,255,255,0.2); }
+  .author-diego { background: #ede9fe; color: #5b21b6; }
+  .bq-diego { background: white; border-radius: 10px; padding: 20px; box-shadow: 0 1px 4px rgba(0,0,0,.08); margin-bottom: 20px; border-top: 4px solid #6366f1; }
+  .bq-diego-header { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+  .bq-diego-badge { background: #6366f1; color: white; font-size: 0.7rem; font-weight: 700; padding: 3px 8px; border-radius: 4px; }
+  .bq-diego-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px,1fr)); gap: 10px; margin-bottom: 16px; }
+  .bq-diego-kpi { background: #f8f9fa; border-radius: 8px; padding: 10px 12px; }
+  .bq-diego-kpi .label { font-size: 0.68rem; text-transform: uppercase; color: #888; letter-spacing:.4px; margin-bottom: 4px; }
+  .bq-diego-kpi .value { font-size: 1.1rem; font-weight: 700; color: #1a1a2e; }
+  .bq-diego-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  @media(max-width:700px) { .bq-diego-cols { grid-template-columns: 1fr; } }
+  .pref-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; font-size: 0.8rem; }
+  .pref-name { width: 130px; color: #333; font-weight: 600; flex-shrink: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .pref-bar-bg { flex: 1; background: #f0f2f5; border-radius: 4px; height: 13px; overflow: hidden; }
+  .pref-bar { height: 100%; border-radius: 4px; transition: width .4s; }
+  .pref-val { width: 38px; text-align: right; font-size: 0.75rem; font-weight: 700; color: #444; flex-shrink: 0; }
   details.collapsible { margin-bottom: 14px; }
   details.collapsible > summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: 10px; }
   details.collapsible > summary::-webkit-details-marker { display: none; }
@@ -234,8 +249,6 @@
     </select>
     <input type="date" id="datePicker">
     <button onclick="load()">Apply</button>
-    <a class="header-link" href="https://htmlpreview.github.io/?https://github.com/Aplicaciones-Moviles-SEC-1-G2/swift-sd-smart-parking/blob/develop/analytics-dashboard.html" target="_blank">🔗 Live Preview</a>
-    <a class="header-link" href="https://github.com/Aplicaciones-Moviles-SEC-1-G2/swift-sd-smart-parking/blob/develop/analytics-dashboard.html" target="_blank">GitHub</a>
   </div>
 </header>
 
@@ -243,7 +256,7 @@
   <div id="status">Loading data…</div>
 
   <div id="content" style="display:none">
-    <details class="collapsible" open>
+    <details class="collapsible">
       <summary style="background:white;border-radius:10px;padding:12px 16px;box-shadow:0 1px 4px rgba(0,0,0,.08);margin-bottom:14px;font-size:0.85rem;font-weight:600;color:#444;">
         📊 Live Overview — KPIs &amp; Charts
         <span class="author-badge author-juanes">Juanes</span>
@@ -274,7 +287,7 @@
     </details>
 
     <!-- AI Insights -->
-    <details class="insights collapsible" open>
+    <details class="insights collapsible">
       <summary class="insights-header">
         <span class="insights-badge">AI Insights</span>
         <span class="author-badge author-juanes">Juanes</span>
@@ -283,7 +296,7 @@
       <div class="insights-grid" id="insightsGrid"></div>
     </details>
 
-    <details class="collapsible" open>
+    <details class="collapsible">
       <summary style="background:white;border-radius:10px;padding:12px 16px;box-shadow:0 1px 4px rgba(0,0,0,.08);margin-bottom:6px;display:flex;align-items:center;gap:8px;">
         <span style="font-size:0.72rem;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.5px;">Quick BQ Answers</span>
         <span class="author-badge author-juanes">Juanes</span>
@@ -291,8 +304,8 @@
       <div class="bq-grid" id="bqGrid"></div>
     </details>
 
-    <!-- BQ-ORG -->
-    <details class="org-section collapsible" open>
+    <!-- BQ-ORG: Organization Clients -->
+    <details class="org-section collapsible">
       <summary class="org-header">
         <span class="org-badge">BQ-ORG</span>
         <span class="author-badge author-juanes">Juanes</span>
@@ -316,8 +329,8 @@
       </div>
     </details>
 
-    <!-- BQ-HOUR -->
-    <details class="bq-hour collapsible" open>
+    <!-- BQ-HOUR: Peak Demand Hours -->
+    <details class="bq-hour collapsible">
       <summary class="bq-hour-header">
         <span class="bq-hour-badge">BQ-HOUR</span>
         <span class="author-badge author-juanes">Juanes</span>
@@ -339,8 +352,8 @@
       </div>
     </details>
 
-    <!-- BQ-FLOOR -->
-    <details class="bq-floor collapsible" open>
+    <!-- BQ-FLOOR: Floor Demand & Dwell Time -->
+    <details class="bq-floor collapsible">
       <summary class="bq-floor-header">
         <span class="bq-floor-badge">BQ-FLOOR</span>
         <span class="author-badge author-juanes">Juanes</span>
@@ -362,8 +375,8 @@
       </div>
     </details>
 
-    <!-- BQ-COST -->
-    <details class="bq-cost collapsible" open>
+    <!-- BQ-COST: Mateo BQ5 & BQ6 — Cost Cap & Average Payment -->
+    <details class="bq-cost collapsible">
       <summary class="bq-cost-header">
         <span class="bq-cost-badge">BQ-5 &amp; BQ-6</span>
         <span class="author-badge author-mateo">Mateo</span>
@@ -399,8 +412,77 @@
       </div>
     </details>
 
-    <!-- BQ-RELIABILITY -->
-    <details class="bq-rel collapsible" open>
+    <!-- BQ-DIEGO: BQ8, BQ9, BQ10 -->
+    <details class="bq-diego collapsible">
+      <summary class="bq-diego-header">
+        <span class="bq-diego-badge">BQ-8 · BQ-9 · BQ-10</span>
+        <span class="author-badge author-diego">Diego</span>
+        <h2 style="font-size:.95rem;color:#1a1a2e;font-weight:600">Floor Preference, Cap Clustering &amp; Banner Label Accuracy</h2>
+      </summary>
+
+      <!-- BQ8 -->
+      <div class="section-title" style="margin-top:4px">BQ-8 — Of drivers who set a preferred floor, what fraction actually park there?</div>
+      <p style="font-size:.82rem;color:#555;margin:2px 0 12px;line-height:1.6;">
+        Joins <code>users.preferences.preferredFloor</code> with <code>vehicleRecords.{plate, type=entry, floor}</code> via the user's car plates.
+        Validates the priority order inside <code>ParkingViewModel.personalizedRecommendation(for:)</code>.
+      </p>
+      <div class="bq-diego-kpis" id="bq8Kpis"></div>
+      <div class="bq-diego-cols">
+        <div>
+          <div class="section-title">Per-user preferred floor match rate</div>
+          <div id="bq8UserBars"></div>
+        </div>
+        <div>
+          <div class="section-title">Match rate distribution</div>
+          <canvas id="bq8DistChart" height="220"></canvas>
+        </div>
+      </div>
+
+      <hr class="cost-divider">
+
+      <!-- BQ9 -->
+      <div class="section-title">BQ-9 — Are hitDailyCap overstays clustered in peak hours?</div>
+      <p style="font-size:.82rem;color:#555;margin:2px 0 12px;line-height:1.6;">
+        Groups <code>vehicleRecords (type=exit, hitDailyCap=true)</code> by the demand level of the session's entry hour
+        using the same <code>PeakHoursSchedule</code> logic as the iOS app. Reports cap rate per bucket and flags concentration.
+      </p>
+      <div class="bq-diego-kpis" id="bq9Kpis"></div>
+      <div class="bq-diego-cols">
+        <div>
+          <div class="section-title">Cap rate by demand level (peak / normal / valley)</div>
+          <canvas id="bq9BucketChart" height="220"></canvas>
+        </div>
+        <div>
+          <div class="section-title">Entry hour demand classification</div>
+          <canvas id="bq9HourChart" height="220"></canvas>
+        </div>
+      </div>
+
+      <hr class="cost-divider">
+
+      <!-- BQ10 -->
+      <div class="section-title">BQ-10 — How well does the dashboard banner label match actual entry volume?</div>
+      <p style="font-size:.82rem;color:#555;margin:2px 0 12px;line-height:1.6;">
+        Re-buckets entries by <strong>(weekday/weekend, hour)</strong> and compares the runtime peak/valley/normal
+        label from <code>HistoricDemandSchedule.build(from:)</code> against the empirical Z-score of each bucket.
+        Surfaces label accuracy and flags mismatches between banner copy and observed volume.
+      </p>
+      <div class="bq-diego-kpis" id="bq10Kpis"></div>
+      <div class="bq-diego-cols">
+        <div>
+          <div class="section-title">Label accuracy by hour — weekdays</div>
+          <canvas id="bq10WeekdayChart" height="220"></canvas>
+        </div>
+        <div>
+          <div class="section-title">Label accuracy by hour — weekends</div>
+          <canvas id="bq10WeekendChart" height="220"></canvas>
+        </div>
+      </div>
+      <div style="margin-top:12px" id="bq10MismatchTable"></div>
+    </details>
+
+    <!-- BQ-RELIABILITY: OCR & Data Reliability -->
+    <details class="bq-rel collapsible">
       <summary class="bq-rel-header">
         <span class="bq-rel-badge">BQ-RELIABILITY</span>
         <span class="author-badge author-juanes">Juanes</span>
@@ -422,8 +504,8 @@
       </div>
     </details>
 
-    <!-- BQ-13 -->
-    <details class="bq13 collapsible" open>
+    <!-- BQ-13 dedicated accuracy section -->
+    <details class="bq13 collapsible">
       <summary class="bq13-header">
         <span class="bq13-badge">BQ-13</span>
         <span class="author-badge author-juanes">Juanes</span>
@@ -622,27 +704,30 @@ async function load() {
     `Entry / Exit Activity — ${rangeType.charAt(0).toUpperCase()+rangeType.slice(1)}`;
 
   try {
-    const [spotsSnap, configSnap, recordsSnap, recentSnap, allExitsSnap, occHistSnap, usersSnap] = await Promise.all([
-      db.collection('parkingSpots').get(),
-      db.collection('config').doc('parking').get(),
-      db.collection('vehicleRecords')
-        .where('timestamp', '>=', firebase.firestore.Timestamp.fromDate(start))
-        .where('timestamp', '<', firebase.firestore.Timestamp.fromDate(end))
-        .orderBy('timestamp')
-        .get(),
-      db.collection('vehicleRecords')
-        .orderBy('timestamp', 'desc')
-        .limit(10)
-        .get(),
-      // All exit records ever (for BQ-PLATES and BQ-DURATION — not filtered by period)
-      db.collection('vehicleRecords')
-        .where('type', '==', 'exit')
-        .get(),
-      // Full occupancy history (for BQ-OCCUPANCY)
-      db.collection('parking_occupancy_history').get(),
-      // All users (for BQ-USERS)
-      db.collection('users').get()
+    const [
+      [spotsSnap, configSnap, recordsSnap, recentSnap],
+      [usersResult, allRecordsResult]
+    ] = await Promise.all([
+      Promise.all([
+        db.collection('parkingSpots').get(),
+        db.collection('config').doc('parking').get(),
+        db.collection('vehicleRecords')
+          .where('timestamp', '>=', firebase.firestore.Timestamp.fromDate(start))
+          .where('timestamp', '<', firebase.firestore.Timestamp.fromDate(end))
+          .orderBy('timestamp')
+          .get(),
+        db.collection('vehicleRecords')
+          .orderBy('timestamp', 'desc')
+          .limit(10)
+          .get()
+      ]),
+      Promise.allSettled([
+        db.collection('users').get(),
+        db.collection('vehicleRecords').orderBy('timestamp', 'desc').limit(500).get()
+      ])
     ]);
+    const usersSnap      = usersResult.status      === 'fulfilled' ? usersResult.value      : { docs: [] };
+    const allRecordsSnap = allRecordsResult.status === 'fulfilled' ? allRecordsResult.value : { docs: [] };
 
     const cfg = configSnap.exists ? configSnap.data() : {};
     const spots = spotsSnap.docs.map(d => d.data());
@@ -1216,24 +1301,242 @@ async function load() {
       }
     });
 
-    // ═══════════════════════════════════════════════════════════════════════
-    // BQ-USERS: % of registered users with at least one entry record
-    // ═══════════════════════════════════════════════════════════════════════
-    const totalRegisteredUsers = usersSnap.size;
-    // Get all entry records to find unique active user emails
-    const allEntriesSnap = await db.collection('vehicleRecords').where('type', '==', 'entry').get();
-    const allEntryEmails = new Set(allEntriesSnap.docs.map(d => d.data().ownerEmail).filter(Boolean));
-    const activeUsers = allEntryEmails.size;
-    const neverVisited = Math.max(0, totalRegisteredUsers - activeUsers);
-    const activeUsersPct = totalRegisteredUsers > 0 ? Math.round((activeUsers / totalRegisteredUsers) * 100) : 0;
-    const neverVisitedPct = 100 - activeUsersPct;
+    // ── BQ-DIEGO: BQ8, BQ9, BQ10 ────────────────────────────────────────────
+    const allRecords = allRecordsSnap.docs.map(d => ({
+      ...d.data(),
+      ts: d.data().timestamp?.toDate?.() || new Date(d.data().timestamp)
+    }));
 
-    // Visit frequency distribution for active users
-    const visitCountByEmail = {};
-    allEntriesSnap.docs.forEach(d => {
-      const email = d.data().ownerEmail;
-      if (!email) return;
-      visitCountByEmail[email] = (visitCountByEmail[email] || 0) + 1;
+    // ── Shared: PeakHoursSchedule replication ────────────────────────────────
+    function buildDemandSchedule(entryList) {
+      const hourCounts = Array(24).fill(0);
+      entryList.forEach(r => { hourCounts[r.ts.getHours()]++; });
+      const active = hourCounts.filter(c => c > 0);
+      if (active.length < 3) return null;
+      const mean = active.reduce((a,b) => a+b, 0) / active.length;
+      const stdDev = Math.sqrt(active.reduce((s,c) => s+(c-mean)**2, 0) / active.length);
+      return { hourCounts, mean, stdDev };
+    }
+    function demandLevel(hour, sched) {
+      if (!sched) return 'normal';
+      const c = sched.hourCounts[hour];
+      if (c > sched.mean + sched.stdDev) return 'peak';
+      if (c < sched.mean - sched.stdDev && c > 0) return 'valley';
+      return 'normal';
+    }
+    const allEntries = allRecords.filter(r => r.type === 'entry');
+    const globalSched = buildDemandSchedule(allEntries);
+
+    // ── BQ8: Preferred floor match rate ──────────────────────────────────────
+    const users = usersSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+    const usersWithPref = users.filter(u => u.preferences?.preferredFloor != null);
+
+    // Build plate→floor lookup from all entry records
+    const plateLastFloor = {};
+    allRecords.filter(r => r.type === 'entry' && r.plate && r.floor != null)
+      .forEach(r => { plateLastFloor[r.plate.toUpperCase()] = r.floor; });
+
+    // Per-user: collect plates, find entries, calculate match rate
+    function getPlates(u) {
+      const cars = u.cars;
+      if (!cars) return [];
+      if (Array.isArray(cars)) return cars.map(c => (c.plate||'').toUpperCase()).filter(Boolean);
+      if (typeof cars === 'object') return Object.values(cars).map(c => (c.plate||'').toUpperCase()).filter(Boolean);
+      return [];
+    }
+
+    const bq8Users = usersWithPref.map(u => {
+      const pref = u.preferences.preferredFloor;
+      const plates = getPlates(u);
+      const userEntries = allRecords.filter(r => r.type === 'entry' && r.floor != null && plates.includes((r.plate||'').toUpperCase()));
+      const onPref = userEntries.filter(r => r.floor === pref).length;
+      const total  = userEntries.length;
+      return { name: u.name || u.email || u.id, pref, total, onPref, rate: total > 0 ? onPref/total : null };
+    }).filter(u => u.total > 0);
+
+    const globalPrefTotal = bq8Users.reduce((s,u) => s + u.total, 0);
+    const globalPrefHit   = bq8Users.reduce((s,u) => s + u.onPref, 0);
+    const globalPrefRate  = globalPrefTotal > 0 ? Math.round(globalPrefHit/globalPrefTotal*100) : 0;
+
+    document.getElementById('bq8Kpis').innerHTML = [
+      { label: 'Users with preferred floor', value: usersWithPref.length },
+      { label: 'Users with entry data',      value: bq8Users.length },
+      { label: 'Global match rate',          value: globalPrefRate + '%', color: globalPrefRate >= 60 ? '#15803d' : globalPrefRate >= 30 ? '#b45309' : '#dc2626' },
+      { label: 'Total pref-user entries',    value: globalPrefTotal },
+    ].map(k => `<div class="bq-diego-kpi"><div class="label">${k.label}</div><div class="value" style="color:${k.color||'#1a1a2e'}">${k.value}</div></div>`).join('');
+
+    document.getElementById('bq8UserBars').innerHTML = bq8Users.length === 0
+      ? '<p style="color:#888;font-size:.8rem">No users with preferred floor and entry data found.</p>'
+      : bq8Users.sort((a,b) => (b.rate??-1)-(a.rate??-1)).slice(0,10).map(u => {
+          const pct  = u.rate != null ? Math.round(u.rate*100) : 0;
+          const col  = pct >= 60 ? '#6366f1' : pct >= 30 ? '#f59e0b' : '#ef4444';
+          return `<div class="pref-row">
+            <div class="pref-name" title="${u.name}">F${u.pref} · ${u.name}</div>
+            <div class="pref-bar-bg"><div class="pref-bar" style="width:${pct}%;background:${col}"></div></div>
+            <div class="pref-val">${pct}%</div>
+          </div>`;
+        }).join('');
+
+    const bq8Buckets = [[0,25,'0–25%'],[25,50,'25–50%'],[50,75,'50–75%'],[75,101,'75–100%']];
+    let bq8Inst = Chart.getChart('bq8DistChart');
+    if (bq8Inst) bq8Inst.destroy();
+    new Chart(document.getElementById('bq8DistChart'), {
+      type: 'bar',
+      data: {
+        labels: bq8Buckets.map(b => b[2]),
+        datasets: [{ label: 'Users', data: bq8Buckets.map(([lo,hi]) => bq8Users.filter(u => u.rate!=null && u.rate*100>=lo && u.rate*100<hi).length), backgroundColor: ['#ef4444','#f59e0b','#6366f1','#22c55e'], borderRadius: 4 }]
+      },
+      options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+    });
+
+    // ── BQ9: Cap overstays clustered in peak hours ────────────────────────────
+    const cappedExits = allRecords.filter(r => r.type === 'exit' && r.hitDailyCap);
+
+    // For each capped exit, find the matching entry for that plate
+    const bq9Buckets = { peak: { capped: 0, total: 0 }, normal: { capped: 0, total: 0 }, valley: { capped: 0, total: 0 } };
+    const hourDemand = Array(24).fill('normal').map((_,h) => demandLevel(h, globalSched));
+
+    // All exits grouped by demand level of their entry hour
+    allRecords.filter(r => r.type === 'exit').forEach(r => {
+      const entryForPlate = allRecords.filter(e => e.type==='entry' && e.plate===r.plate && e.ts <= r.ts).sort((a,b)=>b.ts-a.ts)[0];
+      const entryHour = entryForPlate ? entryForPlate.ts.getHours() : r.ts.getHours();
+      const level = demandLevel(entryHour, globalSched);
+      bq9Buckets[level].total++;
+      if (r.hitDailyCap) bq9Buckets[level].capped++;
+    });
+
+    const bq9Labels = ['peak','normal','valley'];
+    const bq9Colors = { peak: '#ef4444', normal: '#6366f1', valley: '#22c55e' };
+    const bq9CapRates = bq9Labels.map(l => bq9Buckets[l].total > 0 ? Math.round(bq9Buckets[l].capped/bq9Buckets[l].total*100) : 0);
+    const peakConcentrated = bq9Buckets.peak.total > 0 && bq9CapRates[0] > bq9CapRates[1] + 10;
+
+    document.getElementById('bq9Kpis').innerHTML = [
+      { label: 'Capped exits (peak arrival)',   value: `${bq9Buckets.peak.capped} / ${bq9Buckets.peak.total}`,   color: '#dc2626' },
+      { label: 'Capped exits (normal arrival)', value: `${bq9Buckets.normal.capped} / ${bq9Buckets.normal.total}` },
+      { label: 'Capped exits (valley arrival)', value: `${bq9Buckets.valley.capped} / ${bq9Buckets.valley.total}`, color: '#15803d' },
+      { label: 'Peak concentration',            value: peakConcentrated ? '⚠ Yes' : 'Not detected', color: peakConcentrated ? '#dc2626' : '#15803d' },
+    ].map(k => `<div class="bq-diego-kpi"><div class="label">${k.label}</div><div class="value" style="color:${k.color||'#1a1a2e'}">${k.value}</div></div>`).join('');
+
+    let bq9Inst = Chart.getChart('bq9BucketChart');
+    if (bq9Inst) bq9Inst.destroy();
+    new Chart(document.getElementById('bq9BucketChart'), {
+      type: 'bar',
+      data: {
+        labels: ['Peak arrivals','Normal arrivals','Valley arrivals'],
+        datasets: [
+          { label: 'Capped',     data: bq9Labels.map(l=>bq9Buckets[l].capped),               backgroundColor: ['#ef4444','#6366f1','#22c55e'], borderRadius: 4 },
+          { label: 'Not capped', data: bq9Labels.map(l=>bq9Buckets[l].total-bq9Buckets[l].capped), backgroundColor: ['#fecaca','#c7d2fe','#bbf7d0'], borderRadius: 4 }
+        ]
+      },
+      options: { responsive: true, plugins: { legend: { position:'bottom', labels:{font:{size:10}} } }, scales: { x:{stacked:true}, y:{stacked:true, beginAtZero:true} } }
+    });
+
+    let bq9HourInst = Chart.getChart('bq9HourChart');
+    if (bq9HourInst) bq9HourInst.destroy();
+    new Chart(document.getElementById('bq9HourChart'), {
+      type: 'bar',
+      data: {
+        labels: Array.from({length:24},(_,i)=>`${String(i).padStart(2,'0')}:00`),
+        datasets: [{ label: 'Entries', data: globalSched ? globalSched.hourCounts : Array(24).fill(0), backgroundColor: hourDemand.map(l=>l==='peak'?'#ef4444':l==='valley'?'#22c55e':'#6366f1'), borderRadius: 2 }]
+      },
+      options: { responsive: true, plugins:{ legend:{display:false}, tooltip:{callbacks:{label:ctx=>`${ctx.parsed.y} entries — ${hourDemand[ctx.dataIndex]}`}} }, scales:{x:{ticks:{font:{size:9},maxRotation:45}},y:{beginAtZero:true}} }
+    });
+
+    // ── BQ10: Banner label accuracy (Z-score vs HistoricDemandSchedule) ───────
+    function buildWeekdayWeekendSchedule(entryList) {
+      const wdCounts = Array(24).fill(0), weCounts = Array(24).fill(0);
+      entryList.forEach(r => {
+        const day = r.ts.getDay();
+        const h   = r.ts.getHours();
+        if (day === 0 || day === 6) weCounts[h]++; else wdCounts[h]++;
+      });
+      function stats(counts) {
+        const active = counts.filter(c=>c>0);
+        if (active.length < 2) return null;
+        const mean   = active.reduce((a,b)=>a+b,0)/active.length;
+        const stdDev = Math.sqrt(active.reduce((s,c)=>s+(c-mean)**2,0)/active.length) || 1;
+        return { counts, mean, stdDev };
+      }
+      return { weekday: stats(wdCounts), weekend: stats(weCounts) };
+    }
+
+    function classifyHour(count, stats) {
+      if (!stats || count === 0) return 'normal';
+      if (count > stats.mean + stats.stdDev) return 'peak';
+      if (count < stats.mean - stats.stdDev) return 'valley';
+      return 'normal';
+    }
+
+    function zScore(count, stats) {
+      if (!stats || stats.stdDev === 0) return 0;
+      return ((count - stats.mean) / stats.stdDev).toFixed(2);
+    }
+
+    const bq10Sched = buildWeekdayWeekendSchedule(allEntries);
+    const bq10Types = [
+      { key: 'weekday', label: 'Weekdays', sched: bq10Sched.weekday, chartId: 'bq10WeekdayChart' },
+      { key: 'weekend', label: 'Weekends', sched: bq10Sched.weekend, chartId: 'bq10WeekendChart' }
+    ];
+
+    let totalBuckets = 0, correctLabels = 0, mismatches = [];
+
+    bq10Types.forEach(({ label, sched, chartId }) => {
+      if (!sched) { Chart.getChart(chartId)?.destroy(); return; }
+      const colors = [], zScores = [];
+      for (let h = 0; h < 24; h++) {
+        const count  = sched.counts[h];
+        const label2 = classifyHour(count, sched);
+        const z      = parseFloat(zScore(count, sched));
+        zScores.push(z);
+        // Empirical agreement: label matches sign of z-score
+        const empirical = z > 1 ? 'peak' : z < -1 ? 'valley' : 'normal';
+        if (count > 0) {
+          totalBuckets++;
+          if (label2 === empirical) { correctLabels++; colors.push(label2==='peak'?'#ef4444':label2==='valley'?'#22c55e':'#6366f1'); }
+          else { colors.push('#f59e0b'); mismatches.push({ bucket: label, hour: hourLabels[h], scheduled: label2, empirical, z }); }
+        } else { colors.push('#e5e7eb'); }
+      }
+      let inst = Chart.getChart(chartId);
+      if (inst) inst.destroy();
+      new Chart(document.getElementById(chartId), {
+        type: 'bar',
+        data: {
+          labels: hourLabels,
+          datasets: [{ label: 'Z-score', data: zScores, backgroundColor: colors, borderRadius: 2 }]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend:{display:false}, tooltip:{callbacks:{label:ctx=>{const h=ctx.dataIndex; return `Z=${zScores[h]} | label: ${classifyHour(sched.counts[h],sched)} | count: ${sched.counts[h]}`;}}}}  ,
+          scales: { x:{ticks:{font:{size:9},maxRotation:45}}, y:{beginAtZero:false, title:{display:true,text:'Z-score'}} }
+        }
+      });
+    });
+
+    const accuracy = totalBuckets > 0 ? Math.round(correctLabels/totalBuckets*100) : 0;
+    document.getElementById('bq10Kpis').innerHTML = [
+      { label: 'Active hour buckets', value: totalBuckets },
+      { label: 'Correct labels',      value: `${correctLabels} (${accuracy}%)`, color: accuracy >= 80 ? '#15803d' : accuracy >= 60 ? '#b45309' : '#dc2626' },
+      { label: 'Mismatches flagged',  value: mismatches.length, color: mismatches.length > 0 ? '#dc2626' : '#15803d' },
+    ].map(k => `<div class="bq-diego-kpi"><div class="label">${k.label}</div><div class="value" style="color:${k.color||'#1a1a2e'}">${k.value}</div></div>`).join('');
+
+    document.getElementById('bq10MismatchTable').innerHTML = mismatches.length === 0
+      ? '<p style="font-size:.82rem;color:#15803d;font-weight:600">✓ No label mismatches detected — banner copy matches empirical volume for all active hours.</p>'
+      : `<div class="section-title" style="margin-bottom:8px">Mismatch details (label ≠ empirical Z-score)</div>
+         <table class="recent-table"><thead><tr><th>Bucket</th><th>Hour</th><th>Banner Label</th><th>Empirical</th><th>Z-score</th></tr></thead><tbody>
+         ${mismatches.map(m=>`<tr><td>${m.bucket}</td><td>${m.hour}</td><td><span class="acc-badge ${m.scheduled==='peak'?'badge-red':m.scheduled==='valley'?'badge-green':'badge-yellow'}">${m.scheduled}</span></td><td><span class="acc-badge ${m.empirical==='peak'?'badge-red':m.empirical==='valley'?'badge-green':'badge-yellow'}">${m.empirical}</span></td><td>${m.z}</td></tr>`).join('')}
+         </tbody></table>`;
+
+    // ── BQ-RELIABILITY: OCR Confidence & Admin Review ───────────────────────
+    const OCR_THRESHOLD = 0.75;
+    const relByFloor = {};
+
+    records.forEach(r => {
+      const conf  = r.ocrConfidence ?? 1.0;
+      const floor = r.floor ?? 'Unknown';
+      if (!relByFloor[floor]) relByFloor[floor] = { total: 0, needsReview: 0, sumConf: 0 };
+      relByFloor[floor].total++;
+      relByFloor[floor].sumConf += conf;
+      if (conf < OCR_THRESHOLD) relByFloor[floor].needsReview++;
     });
     const visitCounts = Object.values(visitCountByEmail);
     const visits1     = visitCounts.filter(v => v === 1).length;

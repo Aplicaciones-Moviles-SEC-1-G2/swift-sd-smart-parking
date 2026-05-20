@@ -116,6 +116,22 @@ struct ProfileView: View {
                     }
                 }
 
+                // Juanes — Personal parking stats + cost breakdown (Sprint 4)
+                Section("Analytics") {
+                    NavigationLink(destination: PersonalStatsView()
+                        .environmentObject(parkingVM)
+                        .environmentObject(authVM)
+                        .environmentObject(NetworkMonitor.shared)) {
+                        Label("My Parking Stats", systemImage: "chart.bar.xaxis")
+                    }
+                    NavigationLink(destination: CostBreakdownView()
+                        .environmentObject(parkingVM)
+                        .environmentObject(authVM)
+                        .environmentObject(NetworkMonitor.shared)) {
+                        Label("Cost Breakdown", systemImage: "coloncurrencysign.circle.fill")
+                    }
+                }
+
                 // 3. Logout
                 Button(role: .destructive) {
                     authVM.signOut(userRepo: userRepo  )

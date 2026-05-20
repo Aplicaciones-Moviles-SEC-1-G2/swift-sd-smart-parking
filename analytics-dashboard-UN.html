@@ -105,6 +105,35 @@
   .floor-dur-bar { height: 100%; border-radius: 4px; background: #f59e0b; transition: width .4s; }
   .floor-dur-val { width: 60px; text-align: right; font-size: 0.78rem; font-weight: 700; color: #444; flex-shrink: 0; }
 
+  /* BQ-WEEKDAY */
+  .bq-weekday { background: white; border-radius: 10px; padding: 20px; box-shadow: 0 1px 4px rgba(0,0,0,.08); margin-bottom: 20px; border-top: 4px solid #6366f1; }
+  .bq-weekday-header { display: flex; align-items: center; gap: 12px; margin-bottom: 6px; }
+  .bq-weekday-badge { background: #6366f1; color: white; font-size: 0.7rem; font-weight: 700; padding: 3px 8px; border-radius: 4px; }
+  .bq-weekday-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px,1fr)); gap: 10px; margin-bottom: 16px; }
+  .bq-weekday-kpi { background: #f8f9fa; border-radius: 8px; padding: 10px 12px; }
+  .bq-weekday-kpi .label { font-size: 0.68rem; text-transform: uppercase; color: #888; letter-spacing:.4px; margin-bottom: 4px; }
+  .bq-weekday-kpi .value { font-size: 1.1rem; font-weight: 700; color: #1a1a2e; }
+  .bq-weekday-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  @media(max-width:700px) { .bq-weekday-cols { grid-template-columns: 1fr; } }
+
+  /* BQ-SESSIONS */
+  .bq-sessions { background: white; border-radius: 10px; padding: 20px; box-shadow: 0 1px 4px rgba(0,0,0,.08); margin-bottom: 20px; border-top: 4px solid #10b981; }
+  .bq-sessions-header { display: flex; align-items: center; gap: 12px; margin-bottom: 6px; }
+  .bq-sessions-badge { background: #10b981; color: white; font-size: 0.7rem; font-weight: 700; padding: 3px 8px; border-radius: 4px; }
+  .bq-sessions-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px,1fr)); gap: 10px; margin-bottom: 16px; }
+  .bq-sessions-kpi { background: #f8f9fa; border-radius: 8px; padding: 10px 12px; }
+  .bq-sessions-kpi .label { font-size: 0.68rem; text-transform: uppercase; color: #888; letter-spacing:.4px; margin-bottom: 4px; }
+  .bq-sessions-kpi .value { font-size: 1.1rem; font-weight: 700; color: #1a1a2e; }
+
+  /* BQ-MONTHLY */
+  .bq-monthly { background: white; border-radius: 10px; padding: 20px; box-shadow: 0 1px 4px rgba(0,0,0,.08); margin-bottom: 20px; border-top: 4px solid #f43f5e; }
+  .bq-monthly-header { display: flex; align-items: center; gap: 12px; margin-bottom: 6px; }
+  .bq-monthly-badge { background: #f43f5e; color: white; font-size: 0.7rem; font-weight: 700; padding: 3px 8px; border-radius: 4px; }
+  .bq-monthly-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px,1fr)); gap: 10px; margin-bottom: 16px; }
+  .bq-monthly-kpi { background: #f8f9fa; border-radius: 8px; padding: 10px 12px; }
+  .bq-monthly-kpi .label { font-size: 0.68rem; text-transform: uppercase; color: #888; letter-spacing:.4px; margin-bottom: 4px; }
+  .bq-monthly-kpi .value { font-size: 1.1rem; font-weight: 700; color: #1a1a2e; }
+
   /* BQ-13 */
   .bq13 { background: white; border-radius: 10px; padding: 20px; box-shadow: 0 1px 4px rgba(0,0,0,.08); margin-bottom: 20px; border-top: 4px solid #4f8ef7; }
   .bq13-header { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
@@ -375,6 +404,57 @@
           <div id="floorDurBars"></div>
         </div>
       </div>
+    </details>
+
+    <!-- BQ-WEEKDAY -->
+    <details class="bq-weekday collapsible" open>
+      <summary class="bq-weekday-header">
+        <span class="bq-weekday-badge">BQ-WEEKDAY</span>
+        <span class="author-badge author-juanes">Juanes</span>
+        <h2 style="font-size:.95rem;color:#1a1a2e;font-weight:600">Weekday Patterns — How does average parking duration vary across days of the week?</h2>
+      </summary>
+      <p style="font-size:.82rem;color:#555;margin:0 0 14px;line-height:1.6;">
+        Derived from <code>vehicleRecords</code> (type=exit, durationHours&gt;0), grouped by day-of-week. Reveals whether Monday rush vs Friday afternoon patterns differ — informs staffing and capacity planning by day.
+      </p>
+      <div class="bq-weekday-kpis" id="weekdayKpis"></div>
+      <div class="bq-weekday-cols">
+        <div>
+          <div class="section-title">Avg Duration by Day of Week (hrs)</div>
+          <canvas id="weekdayBarChart" height="220"></canvas>
+        </div>
+        <div>
+          <div class="section-title">Sessions per Day of Week</div>
+          <canvas id="weekdayCountChart" height="220"></canvas>
+        </div>
+      </div>
+    </details>
+
+    <!-- BQ-SESSIONS -->
+    <details class="bq-sessions collapsible" open>
+      <summary class="bq-sessions-header">
+        <span class="bq-sessions-badge">BQ-SESSIONS</span>
+        <span class="author-badge author-juanes">Juanes</span>
+        <h2 style="font-size:.95rem;color:#1a1a2e;font-weight:600">Session Distribution — How are parking sessions distributed by duration bucket?</h2>
+      </summary>
+      <p style="font-size:.82rem;color:#555;margin:0 0 14px;line-height:1.6;">
+        Exit records grouped into five fine-grained buckets (&lt;30 min, 30–60 min, 1–2 h, 2–4 h, &gt;4 h). Informs pricing tier design: if most sessions are under 1 h, flat-rate plans beat per-hour pricing for most users.
+      </p>
+      <div class="bq-sessions-kpis" id="sessionsKpis"></div>
+      <canvas id="sessionsDistChart" height="160"></canvas>
+    </details>
+
+    <!-- BQ-MONTHLY -->
+    <details class="bq-monthly collapsible" open>
+      <summary class="bq-monthly-header">
+        <span class="bq-monthly-badge">BQ-MONTHLY</span>
+        <span class="author-badge author-juanes">Juanes</span>
+        <h2 style="font-size:.95rem;color:#1a1a2e;font-weight:600">Monthly Volume Trend — How does parking demand change month over month?</h2>
+      </summary>
+      <p style="font-size:.82rem;color:#555;margin:0 0 14px;line-height:1.6;">
+        All records (entry + exit) grouped by calendar month. Reveals seasonality, growth, and whether capacity planning needs to anticipate demand spikes.
+      </p>
+      <div class="bq-monthly-kpis" id="monthlyKpis"></div>
+      <canvas id="monthlyTrendChart" height="160"></canvas>
     </details>
 
     <!-- BQ-COST -->
@@ -1012,6 +1092,115 @@ async function load() {
       const barPct = avg ? Math.round((avg / maxDur) * 100) : 0;
       return `<div class="floor-dur-row"><div class="floor-dur-label">Floor ${f}</div><div class="floor-dur-bar-bg"><div class="floor-dur-bar" style="width:${barPct}%"></div></div><div class="floor-dur-val">${avg ? avg + ' hrs' : 'No data'}</div></div>`;
     }).join('') || '<p style="color:#888;font-size:.8rem">No duration data available</p>';
+
+    // BQ-WEEKDAY
+    const DAY_NAMES = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    const wdExits = records.filter(r => r.type === 'exit' && r.durationHours > 0);
+    const wdBuckets = {};
+    DAY_NAMES.forEach(d => { wdBuckets[d] = { totalHours: 0, count: 0 }; });
+    wdExits.forEach(r => {
+      const d = new Date(r.ts ?? r.timestamp?.toDate?.() ?? r.timestamp);
+      const name = DAY_NAMES[d.getDay()];
+      wdBuckets[name].totalHours += r.durationHours;
+      wdBuckets[name].count += 1;
+    });
+    const orderedDays = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+    const wdAvgs  = orderedDays.map(d => wdBuckets[d].count > 0 ? +(wdBuckets[d].totalHours / wdBuckets[d].count).toFixed(2) : 0);
+    const wdCounts = orderedDays.map(d => wdBuckets[d].count);
+    const maxWdAvg = Math.max(...wdAvgs, 0.01);
+    const busiestWdIdx  = wdAvgs.indexOf(maxWdAvg);
+    const busiestWdName = busiestWdIdx >= 0 ? orderedDays[busiestWdIdx] : '—';
+    const maxWdCount    = Math.max(...wdCounts, 0);
+    const busiestBySessionIdx  = wdCounts.indexOf(maxWdCount);
+    const busiestBySessionName = busiestBySessionIdx >= 0 ? orderedDays[busiestBySessionIdx] : '—';
+    const wdColors = orderedDays.map(d => ['Sat','Sun'].includes(d) ? 'rgba(99,102,241,.55)' : 'rgba(99,102,241,.8)');
+    document.getElementById('weekdayKpis').innerHTML = [
+      { label: 'Total exit sessions', value: wdExits.length },
+      { label: 'Busiest day (avg hrs)', value: busiestWdName },
+      { label: 'Longest avg stay', value: maxWdAvg.toFixed(2) + ' h' },
+      { label: 'Most sessions on', value: busiestBySessionName },
+    ].map(k => `<div class="bq-weekday-kpi"><div class="label">${k.label}</div><div class="value">${k.value}</div></div>`).join('');
+    if (window._wdBarInst) window._wdBarInst.destroy();
+    window._wdBarInst = new Chart(document.getElementById('weekdayBarChart'), {
+      type: 'bar',
+      data: { labels: orderedDays, datasets: [{ label: 'Avg duration (hrs)', data: wdAvgs, backgroundColor: wdColors, borderRadius: 5 }] },
+      options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, title: { display: true, text: 'hrs' } } } }
+    });
+    if (window._wdCountInst) window._wdCountInst.destroy();
+    window._wdCountInst = new Chart(document.getElementById('weekdayCountChart'), {
+      type: 'bar',
+      data: { labels: orderedDays, datasets: [{ label: 'Sessions', data: wdCounts, backgroundColor: wdColors, borderRadius: 5 }] },
+      options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+    });
+
+    // BQ-SESSIONS
+    const durExits = records.filter(r => r.type === 'exit' && r.durationHours > 0);
+    const durBuckets = { '<30 min': 0, '30–60 min': 0, '1–2 h': 0, '2–4 h': 0, '>4 h': 0 };
+    durExits.forEach(r => {
+      const h = r.durationHours;
+      if      (h < 0.5) durBuckets['<30 min']++;
+      else if (h < 1)   durBuckets['30–60 min']++;
+      else if (h < 2)   durBuckets['1–2 h']++;
+      else if (h < 4)   durBuckets['2–4 h']++;
+      else              durBuckets['>4 h']++;
+    });
+    const durLabels = Object.keys(durBuckets);
+    const durData   = Object.values(durBuckets);
+    const durTotal  = durData.reduce((s, v) => s + v, 0);
+    const durPeakIdx = durData.indexOf(Math.max(...durData));
+    const durAvg = durExits.length > 0
+      ? (durExits.reduce((s, r) => s + r.durationHours, 0) / durExits.length).toFixed(2)
+      : '0';
+    document.getElementById('sessionsKpis').innerHTML = [
+      { label: 'Total sessions',   value: durTotal },
+      { label: 'Most common',      value: durLabels[durPeakIdx] },
+      { label: 'Avg session',      value: durAvg + ' h' },
+    ].map(k => `<div class="bq-sessions-kpi"><div class="label">${k.label}</div><div class="value">${k.value}</div></div>`).join('');
+    if (window._sessDistInst) window._sessDistInst.destroy();
+    window._sessDistInst = new Chart(document.getElementById('sessionsDistChart'), {
+      type: 'bar',
+      data: {
+        labels: durLabels,
+        datasets: [{ label: 'Sessions', data: durData,
+          backgroundColor: ['rgba(16,185,129,.7)','rgba(16,185,129,.6)','rgba(16,185,129,.5)','rgba(16,185,129,.4)','rgba(16,185,129,.3)'],
+          borderRadius: 5 }]
+      },
+      options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+    });
+
+    // BQ-MONTHLY
+    const monthBuckets = {};
+    records.forEach(r => {
+      const d = new Date(r.ts ?? r.timestamp?.toDate?.() ?? r.timestamp);
+      const key = d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+      monthBuckets[key] = (monthBuckets[key] || 0) + 1;
+    });
+    // Sort chronologically
+    const monthEntries = Object.entries(monthBuckets).sort((a, b) => {
+      return new Date(a[0]) - new Date(b[0]);
+    });
+    const monthLabels = monthEntries.map(([k]) => k);
+    const monthData   = monthEntries.map(([, v]) => v);
+    const maxMonth    = monthData.length ? Math.max(...monthData) : 0;
+    const maxMonthLabel = monthData.length ? monthLabels[monthData.indexOf(maxMonth)] : '—';
+    const growthPct = monthData.length >= 2
+      ? (((monthData[monthData.length-1] - monthData[monthData.length-2]) / (monthData[monthData.length-2] || 1)) * 100).toFixed(0)
+      : null;
+    document.getElementById('monthlyKpis').innerHTML = [
+      { label: 'Months tracked',  value: monthLabels.length },
+      { label: 'Busiest month',   value: maxMonthLabel },
+      { label: 'MoM change',      value: growthPct !== null ? (growthPct > 0 ? '+' : '') + growthPct + '%' : '—' },
+    ].map(k => `<div class="bq-monthly-kpi"><div class="label">${k.label}</div><div class="value">${k.value}</div></div>`).join('');
+    if (window._monthlyInst) window._monthlyInst.destroy();
+    window._monthlyInst = new Chart(document.getElementById('monthlyTrendChart'), {
+      type: 'bar',
+      data: {
+        labels: monthLabels,
+        datasets: [{ label: 'Total events', data: monthData,
+          backgroundColor: 'rgba(244,63,94,.7)', borderRadius: 5 }]
+      },
+      options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+    });
 
     // BQ-COST
     const HOURLY_RATE = 2000, DAILY_CAP = 16000;
