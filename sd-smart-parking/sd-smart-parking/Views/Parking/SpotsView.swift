@@ -16,7 +16,8 @@ struct SpotsView: View {
     @State private var expandedFloors: Set<Int> = []
     @State private var pendingBulkFree          = false
     @State private var pendingBulkOccupy        = false
-    @State private var showPreferencesSheet    = false
+    @State private var showPreferencesSheet     = false
+    @State private var showFloorMonitor         = false
 
     let columns = [
         GridItem(.flexible(), spacing: 15),
@@ -106,6 +107,20 @@ struct SpotsView: View {
                         Image(systemName: "arrow.clockwise")
                     }
                 }
+                ToolbarItem(placement: .navigationBarLeading) {
+                    if !authVM.isGerente {
+                        Button {
+                            showFloorMonitor = true
+                        } label: {
+                            Image(systemName: "antenna.radiowaves.left.and.right")
+                        }
+                    }
+                }
+            }
+            .sheet(isPresented: $showFloorMonitor) {
+                FloorMonitorView()
+                    .environmentObject(vm)
+                    .environmentObject(networkMonitor)
             }
             .onAppear { syncExpandedFloors() }
             .onChange(of: vm.totalAvailable) { _, _ in syncExpandedFloors() }
