@@ -94,7 +94,7 @@ struct VehicleAIScannerSheet: View {
                 switch vm.state {
                 case .idle:
                     if !networkMonitor.isConnected {
-                        OfflineNoticeBadge(message: "Sin conexión — usaremos OCR local")
+                        OfflineNoticeBadge(message: "Offline — falling back to on-device OCR")
                             .padding(.top, 12)
                     }
                     Text("Take a photo of the vehicle to analyze it.")
@@ -197,7 +197,7 @@ struct VehicleAIScannerSheet: View {
     private func errorView(_ message: String) -> some View {
         VStack(spacing: 12) {
             if !networkMonitor.isConnected {
-                OfflineNoticeBadge(message: "Sin conexión — usa el OCR local")
+                OfflineNoticeBadge(message: "Offline — use on-device OCR")
             }
 
             Image(systemName: "exclamationmark.triangle.fill")

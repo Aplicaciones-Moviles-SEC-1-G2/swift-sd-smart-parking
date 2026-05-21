@@ -41,7 +41,7 @@ struct TripPlannerSheetView: View {
                 if !networkMonitor.isConnected {
                     Section {
                         OfflineNoticeBadge(
-                            message: "Sin conexión — el costo y exportar al calendario siguen funcionando"
+                            message: "Offline — cost estimate and Calendar export still work"
                         )
                     }
                 }
