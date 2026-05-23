@@ -29,6 +29,10 @@ struct BulkPlateLookupView: View {
                     .padding(.horizontal)
                 }
 
+                if !vm.recentTerms.isEmpty {
+                    recentSearchesCard
+                }
+
                 inputCard
 
                 if let err = vm.lastError {
@@ -116,7 +120,8 @@ struct BulkPlateLookupView: View {
                     PlateResultCard(
                         plate: plate,
                         records: vm.resultsByPlate[plate] ?? [],
-                        isLoading: vm.inFlight.contains(plate)
+                        isLoading: vm.inFlight.contains(plate),
+                        servedFromCache: vm.cachedPlates.contains(plate)
                     )
                 }
 
@@ -127,6 +132,56 @@ struct BulkPlateLookupView: View {
             .padding(.horizontal)
             .padding(.bottom, 24)
         }
+    }
+
+    private var recentSearchesCard: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Label("Recent searches", systemImage: "clock.arrow.circlepath")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.secondary)
+                Spacer()
+                Button("Clear", role: .destructive) { vm.clearRecentTerms() }
+                    .font(.caption2)
+                    .buttonStyle(.plain)
+                    .foregroundStyle(.red)
+            }
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 8) {
+                    ForEach(vm.recentTerms, id: \.self) { term in
+                        Button {
+                            inputFocused = false
+                            Task {
+                                await vm.rerun(
+                                    term: term,
+                                    isOnline: network.isConnected,
+                                    localFallback: parkingVM.vehicleRecords
+                                )
+                            }
+                        } label: {
+                            Text(displayLabel(for: term))
+                                .font(.caption)
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 6)
+                                .background(Color.blue.opacity(0.12))
+                                .foregroundStyle(.blue)
+                                .clipShape(Capsule())
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+            }
+        }
+        .padding(12)
+        .background(Color.white)
+        .clipShape(RoundedRectangle(cornerRadius: 14))
+        .padding(.horizontal)
+    }
+
+    private func displayLabel(for term: String) -> String {
+        let plates = vm.parsePlates(term)
+        if plates.count <= 2 { return plates.joined(separator: ", ") }
+        return "\(plates[0]), \(plates[1]) +\(plates.count - 2)"
     }
 
     private var orderedPlates: [String] {
@@ -157,12 +212,19 @@ private struct PlateResultCard: View {
     let plate: String
     let records: [VehicleRecord]
     let isLoading: Bool
+    let servedFromCache: Bool
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 8) {
                 Text(plate)
                     .font(.headline)
+                if servedFromCache {
+                    Image(systemName: "clock.arrow.circlepath")
+                        .font(.caption2)
+                        .foregroundStyle(.orange)
+                        .accessibilityLabel("Served from cache")
+                }
                 Spacer()
                 if isLoading {
                     ProgressView().scaleEffect(0.75)
