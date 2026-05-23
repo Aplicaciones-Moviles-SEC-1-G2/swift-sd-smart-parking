@@ -14,6 +14,9 @@ struct RegistroVehiculosView: View {
     @State private var selectedFilter: RecordFilter = .all
     @State private var selectedRecord: VehicleRecord? = nil
     @State private var showingCreateRecord: Bool = false
+    @State private var showingBulkLookup: Bool = false
+    @State private var showingPinned: Bool = false
+    @StateObject private var pinnedVM = PinnedPlatesViewModel()
     
     
     
@@ -87,6 +90,18 @@ struct RegistroVehiculosView: View {
                                     Label("Delete", systemImage: "trash")
                                 }
                             }
+                            .swipeActions(edge: .leading, allowsFullSwipe: true) {
+                                Button {
+                                    pinnedVM.toggle(record.plate)
+                                } label: {
+                                    if pinnedVM.isPinned(record.plate) {
+                                        Label("Unpin", systemImage: "star.slash")
+                                    } else {
+                                        Label("Pin", systemImage: "star.fill")
+                                    }
+                                }
+                                .tint(.yellow)
+                            }
                         }
                     }
                     .listStyle(.plain)
@@ -98,9 +113,29 @@ struct RegistroVehiculosView: View {
             .navigationTitle("Vehicle Registry")
             .searchable(text: $searchText, prompt: "Search plate")
             .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button {
+                        showingBulkLookup = true
+                    } label: {
+                        Image(systemName: "magnifyingglass.circle")
+                            .foregroundStyle(.blue)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Bulk plate lookup")
+                }
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button {
+                        showingPinned = true
+                    } label: {
+                        Image(systemName: pinnedVM.pinned.isEmpty ? "star" : "star.fill")
+                            .foregroundStyle(.yellow)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Pinned plates")
+                }
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button {
-                        
+
                         showingCreateRecord = true
                     } label: {
                         Image(systemName: "plus")
@@ -116,6 +151,15 @@ struct RegistroVehiculosView: View {
             }
             .sheet(item: $selectedRecord) { record in
                 RecordDetailView(record: record).environmentObject(vm)
+            }
+            .sheet(isPresented: $showingBulkLookup) {
+                BulkPlateLookupView()
+                    .environmentObject(vm)
+                    .environmentObject(NetworkMonitor.shared)
+            }
+            .sheet(isPresented: $showingPinned, onDismiss: { pinnedVM.reload() }) {
+                PinnedPlatesView()
+                    .environmentObject(vm)
             }
         }
     }

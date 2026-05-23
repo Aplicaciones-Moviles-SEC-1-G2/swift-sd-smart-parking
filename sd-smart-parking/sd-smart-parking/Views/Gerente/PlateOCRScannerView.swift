@@ -3,8 +3,8 @@
 //  sd-smart-parking
 //
 
-import SwiftUI
 import AVFoundation
+import SwiftUI
 import Vision
 
 // MARK: - UIKit camera view for plate OCR
@@ -39,8 +39,47 @@ struct PlateOCRCameraView: UIViewRepresentable {
         private var session: AVCaptureSession?
         private var photoOutput: AVCapturePhotoOutput?
 
-        init(onPlateRecognized: @escaping (String, Float) -> Void,
-             onError: @escaping (String) -> Void) {
+        // Sprint 4 micro-optimization: a single VNRecognizeTextRequest is
+        // reused across captures instead of allocating + configuring a fresh
+        // one per photo. The completion handler is wired at init (Vision marks
+        // the property get-only after construction) and dispatches to the
+        // stored `onPlateRecognized` / `onError` callbacks, which don't change
+        // across the coordinator's lifetime.
+        private lazy var recognizeTextRequest: VNRecognizeTextRequest = {
+            let request = VNRecognizeTextRequest { [weak self] request, error in
+                guard let self else { return }
+
+                if let error {
+                    DispatchQueue.main.async { self.onError(error.localizedDescription) }
+                    return
+                }
+
+                guard let observations = request.results as? [VNRecognizedTextObservation] else {
+                    DispatchQueue.main.async { self.onError("No text found in image.") }
+                    return
+                }
+
+                let candidates: [(text: String, confidence: Float)] = observations.compactMap { obs in
+                    guard let top = obs.topCandidates(1).first else { return nil }
+                    return (text: top.string, confidence: top.confidence)
+                }
+
+                DispatchQueue.main.async {
+                    if let match = findColombianPlate(in: candidates) {
+                        self.onPlateRecognized(match.plate, match.confidence)
+                    } else {
+                        self.onError("No valid license plate found. Try again.")
+                    }
+                }
+            }
+            request.recognitionLevel = .accurate
+            return request
+        }()
+
+        init(
+            onPlateRecognized: @escaping (String, Float) -> Void,
+            onError: @escaping (String) -> Void
+        ) {
             self.onPlateRecognized = onPlateRecognized
             self.onError = onError
         }
@@ -52,8 +91,11 @@ struct PlateOCRCameraView: UIViewRepresentable {
             case .notDetermined:
                 AVCaptureDevice.requestAccess(for: .video) { [weak self] granted in
                     DispatchQueue.main.async {
-                        if granted { self?.startSession(view: view) }
-                        else { self?.onError("Camera access denied.") }
+                        if granted {
+                            self?.startSession(view: view)
+                        } else {
+                            self?.onError("Camera access denied.")
+                        }
                     }
                 }
             default:
@@ -66,7 +108,8 @@ struct PlateOCRCameraView: UIViewRepresentable {
             self.session = session
 
             guard let device = AVCaptureDevice.default(for: .video),
-                  let input = try? AVCaptureDeviceInput(device: device) else {
+                let input = try? AVCaptureDeviceInput(device: device)
+            else {
                 onError("Could not access the camera.")
                 return
             }
@@ -95,9 +138,11 @@ struct PlateOCRCameraView: UIViewRepresentable {
             photoOutput.capturePhoto(with: settings, delegate: self)
         }
 
-        func photoOutput(_ output: AVCapturePhotoOutput,
-                         didFinishProcessingPhoto photo: AVCapturePhoto,
-                         error: Error?) {
+        func photoOutput(
+            _ output: AVCapturePhotoOutput,
+            didFinishProcessingPhoto photo: AVCapturePhoto,
+            error: Error?
+        ) {
             if let error {
                 DispatchQueue.main.async { self.onError(error.localizedDescription) }
                 return
@@ -109,36 +154,8 @@ struct PlateOCRCameraView: UIViewRepresentable {
             }
 
             let handler = VNImageRequestHandler(cgImage: cgImage, options: [:])
-            let request = VNRecognizeTextRequest { [weak self] request, error in
-                guard let self else { return }
-
-                if let error {
-                    DispatchQueue.main.async { self.onError(error.localizedDescription) }
-                    return
-                }
-
-                guard let observations = request.results as? [VNRecognizedTextObservation] else {
-                    DispatchQueue.main.async { self.onError("No text found in image.") }
-                    return
-                }
-
-                let candidates: [(text: String, confidence: Float)] = observations.compactMap { obs in
-                    guard let top = obs.topCandidates(1).first else { return nil }
-                    return (text: top.string, confidence: top.confidence)
-                }
-
-                DispatchQueue.main.async {
-                    if let match = findColombianPlate(in: candidates) {
-                        self.onPlateRecognized(match.plate, match.confidence)
-                    } else {
-                        self.onError("No valid license plate found. Try again.")
-                    }
-                }
-            }
-            request.recognitionLevel = .accurate
-
             do {
-                try handler.perform([request])
+                try handler.perform([recognizeTextRequest])
             } catch {
                 DispatchQueue.main.async { self.onError(error.localizedDescription) }
             }
@@ -191,7 +208,7 @@ struct PlateOCRSheet: View {
 
                 switch state {
                 case .scanning, .processing:
-                    EmptyView() // camera + overlay handled above
+                    EmptyView()  // camera + overlay handled above
                 case .recognized(let plate, let confidence):
                     recognizedView(plate: plate, confidence: confidence)
                 case .error(let message):
@@ -255,7 +272,11 @@ struct PlateOCRSheet: View {
             }
             .buttonStyle(.borderedProminent)
             .controlSize(.large)
-            .disabled({ if case .processing = state { return true }; return false }())
+            .disabled(
+                {
+                    if case .processing = state { return true }
+                    return false
+                }())
         }
     }
 

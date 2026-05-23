@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct ParkingSpot: Identifiable, Codable {
+struct ParkingSpot: Identifiable, Codable, Equatable {
     let id: UUID
     let number: Int
     let floor: Int

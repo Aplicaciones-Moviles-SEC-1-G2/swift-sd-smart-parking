@@ -29,9 +29,24 @@ class ParkingViewModel: ObservableObject {
     //   the render path reduces main-thread CPU by ~15-20% during live updates.
     // ─────────────────────────────────────────────────────────────────────────
     @Published var spots: [ParkingSpot] = [] {
-        didSet { floorAvailability = Self.buildFloorAvailability(spots) }
+        didSet {
+            // Sprint 4 micro-optimization: skip recomputes + downstream view
+            // invalidations when Firestore re-emits an identical snapshot.
+            guard spots != oldValue else { return }
+            floorAvailability = Self.buildFloorAvailability(spots)
+            spotsByFloor = Dictionary(grouping: spots, by: { $0.floor })
+                .mapValues { $0.sorted { $0.number < $1.number } }
+            floorHasAvailable = spotsByFloor.mapValues { floorSpots in
+                floorSpots.contains { $0.isAvailable }
+            }
+        }
     }
     @Published private(set) var floorAvailability: [Int: (available: Int, total: Int)] = [:]
+    // Sprint 4 micro-optimization: render-time indices precomputed alongside
+    // floorAvailability so SpotsView's per-floor ForEach and the expanded-floor
+    // sync can do O(1) lookups instead of repeating filter+sort/contains.
+    @Published private(set) var spotsByFloor: [Int: [ParkingSpot]] = [:]
+    @Published private(set) var floorHasAvailable: [Int: Bool] = [:]
     @Published var vehicleRecords: [VehicleRecord] = []
     @Published var hourlyRate: Double = 2000
     @Published var isLoading: Bool = false
@@ -43,6 +58,7 @@ class ParkingViewModel: ObservableObject {
     let db = Firestore.firestore()
     private var spotsListener: ListenerRegistration?
     private var recordsListener: ListenerRegistration?
+    private var userCarsListener: ListenerRegistration?
     private var configCancellable: AnyCancellable?
 
     // MARK: - Computed Properties
@@ -249,6 +265,7 @@ class ParkingViewModel: ObservableObject {
     deinit {
         spotsListener?.remove()
         recordsListener?.remove()
+        userCarsListener?.remove()
     }
  
     // MARK: - Real-time listeners
@@ -303,7 +320,7 @@ class ParkingViewModel: ObservableObject {
             .limit(to: 100)
             .addSnapshotListener { [weak self] snapshot, error in
                 guard let self, let docs = snapshot?.documents else { return }
-                self.vehicleRecords = docs.compactMap { doc in
+                let next: [VehicleRecord] = docs.compactMap { doc in
                     let data = doc.data()
                     guard let plate     = data["plate"]     as? String,
                           let typeRaw   = data["type"]      as? String,
@@ -326,7 +343,11 @@ class ParkingViewModel: ObservableObject {
                         hitDailyCap: data["hitDailyCap"] as? Bool ?? false
                     )
                 }
-                self.historicSchedule = HistoricDemandSchedule.build(from: self.vehicleRecords)
+                // Sprint 4 micro-optimization: avoid republishing identical
+                // arrays + rebuilding the demand schedule on no-op snapshot ticks.
+                guard next != self.vehicleRecords else { return }
+                self.vehicleRecords = next
+                self.historicSchedule = HistoricDemandSchedule.build(from: next)
             }
     }
  
@@ -689,19 +710,23 @@ extension ParkingViewModel {
     
     // Esta función filtra los registros de los carros del usuario
     func listenToUserCars(for user: User) {
+        // Sprint 4 micro-optimization: tear down any prior registration so
+        // repeated calls (view re-appears, user re-auth) don't stack listeners.
+        userCarsListener?.remove()
+
         // 1. Extraemos las placas usando allValues() del ArrayMap
         let plates = user.cars.allValues().map { $0.plate.uppercased() }
-        
+
         print("DEBUG: Buscando estas placas: \(plates)")
-        
+
         guard !plates.isEmpty else {
             print("DEBUG: El usuario no tiene placas registradas.")
             // Limpiamos los registros si el usuario ya no tiene carros
             DispatchQueue.main.async { self.activeUserRecords = [] }
             return
         }
-        
-        db.collection("vehicleRecords")
+
+        userCarsListener = db.collection("vehicleRecords")
             .whereField("plate", in: plates) // Firestore permite hasta 30 elementos en 'in'
             .order(by: "timestamp", descending: true)
             .addSnapshotListener { [weak self] snapshot, error in

@@ -60,16 +60,27 @@ class VehicleAIScannerViewModel: ObservableObject {
 
     func analyze(image: UIImage) {
         state = .analyzing
-        // TODO: move `resized` + `jpegData` to `Task.detached` so the camera
-        // sheet doesn't pay the resize cost on MainActor. Skipped here because
-        // the synchronous HIT branch is what the unit tests assert; deferring
-        // until that test surface is rebuilt around an `await` analyze.
-        let prepared = Self.resized(image, maxSide: 1280)
-        let preparedJPEG = prepared.jpegData(compressionQuality: 0.7)
+        // Sprint 4 micro-optimization: move the synchronous prep (resize +
+        // JPEG encode + SHA256) off the MainActor so the camera sheet doesn't
+        // jank during capture. The cache key is computed once and reused by
+        // both the lookup and (on MISS) the cache-write path.
+        Task.detached(priority: .userInitiated) { [weak self] in
+            let prepared = Self.resized(image, maxSide: 1280)
+            let preparedJPEG = prepared.jpegData(compressionQuality: 0.7)
+            let cacheKey = preparedJPEG.map { AIScanCache.key(forJPEGData: $0) }
+            await self?.continueAnalysis(
+                prepared: prepared,
+                preparedJPEG: preparedJPEG,
+                cacheKey: cacheKey
+            )
+        }
+    }
 
-        // Cache lookup — saves a Gemini round-trip when the operator re-scans
-        // the exact same vehicle photo (same JPEG bytes -> same SHA256 key).
-        let cacheKey = preparedJPEG.map { AIScanCache.key(forJPEGData: $0) }
+    private func continueAnalysis(
+        prepared: UIImage,
+        preparedJPEG: Data?,
+        cacheKey: NSString?
+    ) async {
         if let key = cacheKey, let cached = cache.get(key) {
             state = .success(cached)
             // History + stats must run on HIT too, otherwise re-scanning the
@@ -79,28 +90,26 @@ class VehicleAIScannerViewModel: ObservableObject {
             return
         }
 
-        Task {
-            do {
-                let response = try await model.generateContent(prepared, Self.prompt)
-                guard let raw = response.text, !raw.isEmpty else {
-                    self.state = .failure("The AI returned an empty response. Try again.")
-                    return
-                }
-                let identification = try Self.decode(raw)
-                self.state = .success(identification)
-
-                // Cache write — only if we have a stable key and JPEG bytes.
-                if let key = cacheKey, let data = preparedJPEG {
-                    cache.put(identification, for: key, cost: data.count)
-                }
-
-                let hashHex = (cacheKey as String?) ?? ""
-                recordSuccess(identification, hashHex: hashHex)
-            } catch let decodingError as VehicleAIScannerError {
-                self.state = .failure(decodingError.message)
-            } catch {
-                self.state = .failure("AI error: \(error.localizedDescription)")
+        do {
+            let response = try await model.generateContent(prepared, Self.prompt)
+            guard let raw = response.text, !raw.isEmpty else {
+                state = .failure("The AI returned an empty response. Try again.")
+                return
             }
+            let identification = try Self.decode(raw)
+            state = .success(identification)
+
+            // Cache write — only if we have a stable key and JPEG bytes.
+            if let key = cacheKey, let data = preparedJPEG {
+                cache.put(identification, for: key, cost: data.count)
+            }
+
+            let hashHex = (cacheKey as String?) ?? ""
+            recordSuccess(identification, hashHex: hashHex)
+        } catch let decodingError as VehicleAIScannerError {
+            state = .failure(decodingError.message)
+        } catch {
+            state = .failure("AI error: \(error.localizedDescription)")
         }
     }
 
@@ -163,7 +172,9 @@ class VehicleAIScannerViewModel: ObservableObject {
         return t.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
-    private static func resized(_ image: UIImage, maxSide: CGFloat) -> UIImage {
+    // Pure function — safe to call from a detached background task as part of
+    // the Sprint 4 micro-optimization that moves image prep off the MainActor.
+    nonisolated private static func resized(_ image: UIImage, maxSide: CGFloat) -> UIImage {
         let size = image.size
         let longest = max(size.width, size.height)
         guard longest > maxSide else { return image }
