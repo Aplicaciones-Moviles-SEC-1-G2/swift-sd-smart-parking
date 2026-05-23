@@ -115,7 +115,10 @@ struct SpotsView: View {
                             .padding(.horizontal)
 
                             LazyVGrid(columns: columns, spacing: 15) {
-                                ForEach(vm.spots.filter { $0.floor == floor }.sorted(by: { $0.number < $1.number })) { spot in
+                                // Sprint 4 micro-optimization: read the
+                                // ViewModel's precomputed per-floor index
+                                // instead of repeating filter+sort per render.
+                                ForEach(vm.spotsByFloor[floor] ?? []) { spot in
                                     SpotCardView(spot: spot, isGerente: authVM.isGerente)
                                 }
                             }
@@ -388,7 +391,9 @@ struct SpotsView: View {
 
     private func syncExpandedFloors() {
         for floor in sortedFloors {
-            let hasAvailable = vm.spots.filter { $0.floor == floor }.contains { $0.isAvailable }
+            // Sprint 4 micro-optimization: O(1) lookup against the
+            // ViewModel's precomputed index instead of filter+contains.
+            let hasAvailable = vm.floorHasAvailable[floor] ?? false
             if hasAvailable { expandedFloors.insert(floor) }
             else            { expandedFloors.remove(floor) }
         }
@@ -560,7 +565,9 @@ struct SpotsView: View {
 
     @ViewBuilder
     private func floorSection(floor: Int) -> some View {
-        let floorSpots      = vm.spots.filter { $0.floor == floor }.sorted { $0.number < $1.number }
+        // Sprint 4 micro-optimization: reuse the ViewModel's precomputed
+        // per-floor index instead of filter+sort on every render.
+        let floorSpots      = vm.spotsByFloor[floor] ?? []
         let available       = floorSpots.filter { $0.isAvailable }.count
         let isExpanded      = expandedFloors.contains(floor)
         let isFullyOccupied = available == 0
