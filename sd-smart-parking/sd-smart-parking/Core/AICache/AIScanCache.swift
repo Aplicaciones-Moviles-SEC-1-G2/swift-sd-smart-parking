@@ -53,7 +53,10 @@ final class AIScanCache: @unchecked Sendable {
         return Self.key(forJPEGData: data)
     }
 
-    static func key(forJPEGData data: Data) -> NSString {
+    // Pure SHA256 — `nonisolated` so callers on background tasks (Sprint 4
+    // image-prep offload) can compute the cache key without bouncing back
+    // to the MainActor for what is fundamentally CPU work.
+    nonisolated static func key(forJPEGData data: Data) -> NSString {
         let digest = SHA256.hash(data: data)
         let hex = digest.compactMap { String(format: "%02x", $0) }.joined()
         return hex as NSString
