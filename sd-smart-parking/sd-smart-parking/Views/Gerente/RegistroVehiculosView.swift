@@ -14,6 +14,7 @@ struct RegistroVehiculosView: View {
     @State private var selectedFilter: RecordFilter = .all
     @State private var selectedRecord: VehicleRecord? = nil
     @State private var showingCreateRecord: Bool = false
+    @State private var showingBulkLookup: Bool = false
     
     
     
@@ -98,9 +99,19 @@ struct RegistroVehiculosView: View {
             .navigationTitle("Vehicle Registry")
             .searchable(text: $searchText, prompt: "Search plate")
             .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button {
+                        showingBulkLookup = true
+                    } label: {
+                        Image(systemName: "magnifyingglass.circle")
+                            .foregroundStyle(.blue)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Bulk plate lookup")
+                }
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button {
-                        
+
                         showingCreateRecord = true
                     } label: {
                         Image(systemName: "plus")
@@ -116,6 +127,11 @@ struct RegistroVehiculosView: View {
             }
             .sheet(item: $selectedRecord) { record in
                 RecordDetailView(record: record).environmentObject(vm)
+            }
+            .sheet(isPresented: $showingBulkLookup) {
+                BulkPlateLookupView()
+                    .environmentObject(vm)
+                    .environmentObject(NetworkMonitor.shared)
             }
         }
     }
