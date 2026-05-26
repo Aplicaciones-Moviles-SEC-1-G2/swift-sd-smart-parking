@@ -2,7 +2,14 @@
 //  MyHistoryView.swift
 //  sd-smart-parking
 //
-
+// ─────────────────────────────────────────────────────────────────────────
+// SPRINT 4 — NEW VIEW + EVENTUAL CONNECTIVITY + CACHING
+// File: Views/Usuario/ActiveInfo/MyHistoryView.swift
+//
+// Session history grouped by calendar month with filter picker (All/Week/
+// Month/Year). Checks `networkMonitor.isConnected` on open: offline →
+// loads from NSCache/disk (orange banner); online → builds fresh via actor.
+// ─────────────────────────────────────────────────────────────────────────
 import SwiftUI
 
 struct MyHistoryView: View {
@@ -49,7 +56,7 @@ struct MyHistoryView: View {
                 }
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button {
-                        Task { await historyVM.load(records: vm.vehicleRecords,
+                        Task { await historyVM.load(records: vm.userHistoryRecords,
                                                     userPlates: userPlates) }
                     } label: { Image(systemName: "arrow.clockwise") }
                     .disabled(historyVM.isLoading)
@@ -59,7 +66,7 @@ struct MyHistoryView: View {
                 if !networkMonitor.isConnected {
                     historyVM.loadCachedIfOffline(userPlates: userPlates)
                 } else {
-                    await historyVM.load(records: vm.vehicleRecords, userPlates: userPlates)
+                    await historyVM.load(records: vm.userHistoryRecords, userPlates: userPlates)
                 }
             }
         }

@@ -1,3 +1,11 @@
+// ─────────────────────────────────────────────────────────────────────────
+// SPRINT 4 — NEW VIEW + EVENTUAL CONNECTIVITY
+// File: Views/Usuario/ActiveInfo/CostBreakdownView.swift
+//
+// Monthly spending chart, floor-cost chart, and KPI row. On open, checks
+// `networkMonitor.isConnected`: offline → serves disk snapshot with orange
+// banner; online → computes fresh via 4 concurrent async let tasks.
+// ─────────────────────────────────────────────────────────────────────────
 import SwiftUI
 
 struct CostBreakdownView: View {
@@ -40,7 +48,7 @@ struct CostBreakdownView: View {
                 }
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button {
-                        Task { await costVM.load(records: vm.vehicleRecords,
+                        Task { await costVM.load(records: vm.userHistoryRecords,
                                                  userPlates: userPlates) }
                     } label: {
                         Image(systemName: "arrow.clockwise")
@@ -52,7 +60,7 @@ struct CostBreakdownView: View {
                 if !networkMonitor.isConnected {
                     costVM.loadCachedIfOffline(userPlates: userPlates)
                 } else {
-                    await costVM.load(records: vm.vehicleRecords, userPlates: userPlates)
+                    await costVM.load(records: vm.userHistoryRecords, userPlates: userPlates)
                 }
             }
         }

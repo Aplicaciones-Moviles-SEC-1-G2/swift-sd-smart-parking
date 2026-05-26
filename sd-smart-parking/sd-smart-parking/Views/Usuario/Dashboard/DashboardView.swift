@@ -177,6 +177,11 @@ struct DashboardView: View {
                 lastSyncedAt: vm.vehicleRecords.first?.timestamp
             )
         }
+        .onAppear {
+            if let user = authVM.currentUser {
+                vm.listenToUserCars(for: user)
+            }
+        }
     }
     
     // MARK: - Availability Card

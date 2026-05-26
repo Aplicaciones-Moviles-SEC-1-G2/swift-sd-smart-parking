@@ -1,3 +1,11 @@
+// ─────────────────────────────────────────────────────────────────────────
+// SPRINT 4 — NEW VIEW + EVENTUAL CONNECTIVITY
+// File: Views/Usuario/ActiveInfo/PersonalStatsView.swift
+//
+// Displays personal KPIs + weekday bar chart. On open, checks
+// `networkMonitor.isConnected`: offline → serves NSCache/disk snapshot
+// with orange banner; online → computes fresh via 5 concurrent async let.
+// ─────────────────────────────────────────────────────────────────────────
 import SwiftUI
 
 struct PersonalStatsView: View {
@@ -49,7 +57,7 @@ struct PersonalStatsView: View {
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button {
-                        Task { await statsVM.load(records: vm.vehicleRecords,
+                        Task { await statsVM.load(records: vm.userHistoryRecords,
                                                   userPlates: userPlates) }
                     } label: {
                         Image(systemName: "arrow.clockwise")
@@ -61,7 +69,7 @@ struct PersonalStatsView: View {
                 if !networkMonitor.isConnected {
                     statsVM.loadCachedIfOffline(userPlates: userPlates)
                 } else {
-                    await statsVM.load(records: vm.vehicleRecords, userPlates: userPlates)
+                    await statsVM.load(records: vm.userHistoryRecords, userPlates: userPlates)
                 }
             }
         }
