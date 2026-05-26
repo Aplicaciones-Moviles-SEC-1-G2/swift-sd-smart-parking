@@ -1512,6 +1512,217 @@ async function load() {
       });
     });
 
+    // ── BQ-DIEGO: BQ8, BQ9, BQ10 ────────────────────────────────────────────
+    const allRecords = allRecordsSnap.docs.map(d => ({
+      ...d.data(),
+      ts: d.data().timestamp?.toDate?.() || new Date(d.data().timestamp)
+    }));
+
+    // ── Shared: PeakHoursSchedule replication ────────────────────────────────
+    function buildDemandSchedule(entryList) {
+      const hourCounts = Array(24).fill(0);
+      entryList.forEach(r => { hourCounts[r.ts.getHours()]++; });
+      const active = hourCounts.filter(c => c > 0);
+      if (active.length < 3) return null;
+      const mean = active.reduce((a,b) => a+b, 0) / active.length;
+      const stdDev = Math.sqrt(active.reduce((s,c) => s+(c-mean)**2, 0) / active.length);
+      return { hourCounts, mean, stdDev };
+    }
+    function demandLevel(hour, sched) {
+      if (!sched) return 'normal';
+      const c = sched.hourCounts[hour];
+      if (c > sched.mean + sched.stdDev) return 'peak';
+      if (c < sched.mean - sched.stdDev && c > 0) return 'valley';
+      return 'normal';
+    }
+    const allEntries = allRecords.filter(r => r.type === 'entry');
+    const globalSched = buildDemandSchedule(allEntries);
+
+    // ── BQ8: Preferred floor match rate ──────────────────────────────────────
+    const users = usersSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+    const usersWithPref = users.filter(u => u.preferences?.preferredFloor != null);
+
+    // Build plate→floor lookup from all entry records
+    const plateLastFloor = {};
+    allRecords.filter(r => r.type === 'entry' && r.plate && r.floor != null)
+      .forEach(r => { plateLastFloor[r.plate.toUpperCase()] = r.floor; });
+
+    // Per-user: collect plates, find entries, calculate match rate
+    function getPlates(u) {
+      const cars = u.cars;
+      if (!cars) return [];
+      if (Array.isArray(cars)) return cars.map(c => (c.plate||'').toUpperCase()).filter(Boolean);
+      if (typeof cars === 'object') return Object.values(cars).map(c => (c.plate||'').toUpperCase()).filter(Boolean);
+      return [];
+    }
+
+    const bq8Users = usersWithPref.map(u => {
+      const pref = u.preferences.preferredFloor;
+      const plates = getPlates(u);
+      const userEntries = allRecords.filter(r => r.type === 'entry' && r.floor != null && plates.includes((r.plate||'').toUpperCase()));
+      const onPref = userEntries.filter(r => r.floor === pref).length;
+      const total  = userEntries.length;
+      return { name: u.name || u.email || u.id, pref, total, onPref, rate: total > 0 ? onPref/total : null };
+    }).filter(u => u.total > 0);
+
+    const globalPrefTotal = bq8Users.reduce((s,u) => s + u.total, 0);
+    const globalPrefHit   = bq8Users.reduce((s,u) => s + u.onPref, 0);
+    const globalPrefRate  = globalPrefTotal > 0 ? Math.round(globalPrefHit/globalPrefTotal*100) : 0;
+
+    document.getElementById('bq8Kpis').innerHTML = [
+      { label: 'Users with preferred floor', value: usersWithPref.length },
+      { label: 'Users with entry data',      value: bq8Users.length },
+      { label: 'Global match rate',          value: globalPrefRate + '%', color: globalPrefRate >= 60 ? '#15803d' : globalPrefRate >= 30 ? '#b45309' : '#dc2626' },
+      { label: 'Total pref-user entries',    value: globalPrefTotal },
+    ].map(k => `<div class="bq-diego-kpi"><div class="label">${k.label}</div><div class="value" style="color:${k.color||'#1a1a2e'}">${k.value}</div></div>`).join('');
+
+    document.getElementById('bq8UserBars').innerHTML = bq8Users.length === 0
+      ? '<p style="color:#888;font-size:.8rem">No users with preferred floor and entry data found.</p>'
+      : bq8Users.sort((a,b) => (b.rate??-1)-(a.rate??-1)).slice(0,10).map(u => {
+          const pct  = u.rate != null ? Math.round(u.rate*100) : 0;
+          const col  = pct >= 60 ? '#6366f1' : pct >= 30 ? '#f59e0b' : '#ef4444';
+          return `<div class="pref-row">
+            <div class="pref-name" title="${u.name}">F${u.pref} · ${u.name}</div>
+            <div class="pref-bar-bg"><div class="pref-bar" style="width:${pct}%;background:${col}"></div></div>
+            <div class="pref-val">${pct}%</div>
+          </div>`;
+        }).join('');
+
+    const bq8Buckets = [[0,25,'0–25%'],[25,50,'25–50%'],[50,75,'50–75%'],[75,101,'75–100%']];
+    let bq8Inst = Chart.getChart('bq8DistChart');
+    if (bq8Inst) bq8Inst.destroy();
+    new Chart(document.getElementById('bq8DistChart'), {
+      type: 'bar',
+      data: {
+        labels: bq8Buckets.map(b => b[2]),
+        datasets: [{ label: 'Users', data: bq8Buckets.map(([lo,hi]) => bq8Users.filter(u => u.rate!=null && u.rate*100>=lo && u.rate*100<hi).length), backgroundColor: ['#ef4444','#f59e0b','#6366f1','#22c55e'], borderRadius: 4 }]
+      },
+      options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+    });
+
+    // ── BQ9: Cap overstays clustered in peak hours ────────────────────────────
+    const cappedExits = allRecords.filter(r => r.type === 'exit' && r.hitDailyCap);
+
+    // For each capped exit, find the matching entry for that plate
+    const bq9Buckets = { peak: { capped: 0, total: 0 }, normal: { capped: 0, total: 0 }, valley: { capped: 0, total: 0 } };
+    const hourDemand = Array(24).fill('normal').map((_,h) => demandLevel(h, globalSched));
+
+    // All exits grouped by demand level of their entry hour
+    allRecords.filter(r => r.type === 'exit').forEach(r => {
+      const entryForPlate = allRecords.filter(e => e.type==='entry' && e.plate===r.plate && e.ts <= r.ts).sort((a,b)=>b.ts-a.ts)[0];
+      const entryHour = entryForPlate ? entryForPlate.ts.getHours() : r.ts.getHours();
+      const level = demandLevel(entryHour, globalSched);
+      bq9Buckets[level].total++;
+      if (r.hitDailyCap) bq9Buckets[level].capped++;
+    });
+
+    const bq9Labels = ['peak','normal','valley'];
+    const bq9Colors = { peak: '#ef4444', normal: '#6366f1', valley: '#22c55e' };
+    const bq9CapRates = bq9Labels.map(l => bq9Buckets[l].total > 0 ? Math.round(bq9Buckets[l].capped/bq9Buckets[l].total*100) : 0);
+    const peakConcentrated = bq9Buckets.peak.total > 0 && bq9CapRates[0] > bq9CapRates[1] + 10;
+
+    document.getElementById('bq9Kpis').innerHTML = [
+      { label: 'Capped exits (peak arrival)',   value: `${bq9Buckets.peak.capped} / ${bq9Buckets.peak.total}`,   color: '#dc2626' },
+      { label: 'Capped exits (normal arrival)', value: `${bq9Buckets.normal.capped} / ${bq9Buckets.normal.total}` },
+      { label: 'Capped exits (valley arrival)', value: `${bq9Buckets.valley.capped} / ${bq9Buckets.valley.total}`, color: '#15803d' },
+      { label: 'Peak concentration',            value: peakConcentrated ? '⚠ Yes' : 'Not detected', color: peakConcentrated ? '#dc2626' : '#15803d' },
+    ].map(k => `<div class="bq-diego-kpi"><div class="label">${k.label}</div><div class="value" style="color:${k.color||'#1a1a2e'}">${k.value}</div></div>`).join('');
+
+    let bq9Inst = Chart.getChart('bq9BucketChart');
+    if (bq9Inst) bq9Inst.destroy();
+    new Chart(document.getElementById('bq9BucketChart'), {
+      type: 'bar',
+      data: {
+        labels: ['Peak arrivals','Normal arrivals','Valley arrivals'],
+        datasets: [
+          { label: 'Capped',     data: bq9Labels.map(l=>bq9Buckets[l].capped),               backgroundColor: ['#ef4444','#6366f1','#22c55e'], borderRadius: 4 },
+          { label: 'Not capped', data: bq9Labels.map(l=>bq9Buckets[l].total-bq9Buckets[l].capped), backgroundColor: ['#fecaca','#c7d2fe','#bbf7d0'], borderRadius: 4 }
+        ]
+      },
+      options: { responsive: true, plugins: { legend: { position:'bottom', labels:{font:{size:10}} } }, scales: { x:{stacked:true}, y:{stacked:true, beginAtZero:true} } }
+    });
+
+    let bq9HourInst = Chart.getChart('bq9HourChart');
+    if (bq9HourInst) bq9HourInst.destroy();
+    new Chart(document.getElementById('bq9HourChart'), {
+      type: 'bar',
+      data: {
+        labels: Array.from({length:24},(_,i)=>`${String(i).padStart(2,'0')}:00`),
+        datasets: [{ label: 'Entries', data: globalSched ? globalSched.hourCounts : Array(24).fill(0), backgroundColor: hourDemand.map(l=>l==='peak'?'#ef4444':l==='valley'?'#22c55e':'#6366f1'), borderRadius: 2 }]
+      },
+      options: { responsive: true, plugins:{ legend:{display:false}, tooltip:{callbacks:{label:ctx=>`${ctx.parsed.y} entries — ${hourDemand[ctx.dataIndex]}`}} }, scales:{x:{ticks:{font:{size:9},maxRotation:45}},y:{beginAtZero:true}} }
+    });
+
+    // ── BQ10: Banner label accuracy (Z-score vs HistoricDemandSchedule) ───────
+    function buildWeekdayWeekendSchedule(entryList) {
+      const wdCounts = Array(24).fill(0), weCounts = Array(24).fill(0);
+      entryList.forEach(r => {
+        const day = r.ts.getDay();
+        const h   = r.ts.getHours();
+        if (day === 0 || day === 6) weCounts[h]++; else wdCounts[h]++;
+      });
+      function stats(counts) {
+        const active = counts.filter(c=>c>0);
+        if (active.length < 2) return null;
+        const mean   = active.reduce((a,b)=>a+b,0)/active.length;
+        const stdDev = Math.sqrt(active.reduce((s,c)=>s+(c-mean)**2,0)/active.length) || 1;
+        return { counts, mean, stdDev };
+      }
+      return { weekday: stats(wdCounts), weekend: stats(weCounts) };
+    }
+
+    function classifyHour(count, stats) {
+      if (!stats || count === 0) return 'normal';
+      if (count > stats.mean + stats.stdDev) return 'peak';
+      if (count < stats.mean - stats.stdDev) return 'valley';
+      return 'normal';
+    }
+
+    function zScore(count, stats) {
+      if (!stats || stats.stdDev === 0) return 0;
+      return ((count - stats.mean) / stats.stdDev).toFixed(2);
+    }
+
+    const bq10Sched = buildWeekdayWeekendSchedule(allEntries);
+    const bq10Types = [
+      { key: 'weekday', label: 'Weekdays', sched: bq10Sched.weekday, chartId: 'bq10WeekdayChart' },
+      { key: 'weekend', label: 'Weekends', sched: bq10Sched.weekend, chartId: 'bq10WeekendChart' }
+    ];
+
+    let totalBuckets = 0, correctLabels = 0, mismatches = [];
+
+    bq10Types.forEach(({ label, sched, chartId }) => {
+      if (!sched) { Chart.getChart(chartId)?.destroy(); return; }
+      const colors = [], zScores = [];
+      for (let h = 0; h < 24; h++) {
+        const count  = sched.counts[h];
+        const label2 = classifyHour(count, sched);
+        const z      = parseFloat(zScore(count, sched));
+        zScores.push(z);
+        // Empirical agreement: label matches sign of z-score
+        const empirical = z > 1 ? 'peak' : z < -1 ? 'valley' : 'normal';
+        if (count > 0) {
+          totalBuckets++;
+          if (label2 === empirical) { correctLabels++; colors.push(label2==='peak'?'#ef4444':label2==='valley'?'#22c55e':'#6366f1'); }
+          else { colors.push('#f59e0b'); mismatches.push({ bucket: label, hour: hourLabels[h], scheduled: label2, empirical, z }); }
+        } else { colors.push('#e5e7eb'); }
+      }
+      let inst = Chart.getChart(chartId);
+      if (inst) inst.destroy();
+      new Chart(document.getElementById(chartId), {
+        type: 'bar',
+        data: {
+          labels: hourLabels,
+          datasets: [{ label: 'Z-score', data: zScores, backgroundColor: colors, borderRadius: 2 }]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend:{display:false}, tooltip:{callbacks:{label:ctx=>{const h=ctx.dataIndex; return `Z=${zScores[h]} | label: ${classifyHour(sched.counts[h],sched)} | count: ${sched.counts[h]}`;}}}}  ,
+          scales: { x:{ticks:{font:{size:9},maxRotation:45}}, y:{beginAtZero:false, title:{display:true,text:'Z-score'}} }
+        }
+      });
+    });
+
     const accuracy = totalBuckets > 0 ? Math.round(correctLabels/totalBuckets*100) : 0;
     document.getElementById('bq10Kpis').innerHTML = [
       { label: 'Active hour buckets', value: totalBuckets },
